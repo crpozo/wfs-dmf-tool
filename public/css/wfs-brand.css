@@ -1,0 +1,63 @@
+/* Western Fence Supply - brand tokens for Draw My Fence
+ * Extracted from westernfencesupply.com (Oct 2026) so the app matches the website.
+ * Load this before any screen-specific stylesheet. Do not hardcode colors elsewhere; use the variables.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Alfa+Slab+One&family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  /* Colors */
+  --wfs-ink:        #263166;                 /* navy: headings, nav, primary surfaces */
+  --wfs-blue:       #2e59c1;                 /* action blue: primary CTA, links, focus */
+  --wfs-blue-ice:   #a8c5ff;                 /* light accent on dark surfaces */
+  --wfs-charcoal:   rgba(0, 0, 0, 0.68);     /* body text */
+  --wfs-muted:      rgba(38, 49, 102, 0.55); /* secondary text on light */
+  --wfs-sea:        rgba(38, 49, 102, 0.06); /* subtle tinted background */
+  --wfs-line:       rgba(38, 49, 102, 0.20); /* borders, dividers */
+  --wfs-white:      #ffffff;
+  --wfs-on-ink:     rgba(255, 255, 255, 0.82); /* text on navy */
+  --wfs-danger:     #cf2e2e;
+
+  /* Typography */
+  --wfs-font-display: "Alfa Slab One", "Alfa WFS", Rockwell, Georgia, serif;   /* headings */
+  --wfs-font-sans:    "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; /* UI, buttons, labels */
+  --wfs-font-body:    "Inter", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif; /* paragraphs */
+
+  /* Shape */
+  --wfs-radius:     14px;
+  --wfs-radius-lg:  22px;
+  --wfs-radius-pill: 999px;
+  --wfs-shadow:     0 10px 30px rgba(38, 49, 102, 0.08);
+
+  /* Spacing */
+  --wfs-pad: clamp(16px, 3vw, 40px);
+  --wfs-max: 1440px;
+}
+
+/* Base type */
+.wfs-body, body.wfs { font-family: var(--wfs-font-sans); color: var(--wfs-ink); background: var(--wfs-white); }
+.wfs-display { font-family: var(--wfs-font-display); font-weight: 400; color: var(--wfs-ink); letter-spacing: -0.02em; line-height: 1; text-transform: capitalize; }
+.wfs-eyebrow { font-family: var(--wfs-font-sans); font-size: 12.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--wfs-blue); }
+.wfs-copy { font-family: var(--wfs-font-body); color: var(--wfs-charcoal); font-size: 17px; line-height: 1.5; }
+
+/* Buttons (match website pills) */
+.wfs-btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--wfs-font-sans); font-weight: 700; font-size: 15px; line-height: 1; padding: 12px 20px; border-radius: var(--wfs-radius-pill); border: 0; cursor: pointer; text-decoration: none; transition: background .15s, color .15s, box-shadow .15s; }
+.wfs-btn-primary { background: var(--wfs-blue); color: var(--wfs-white); letter-spacing: 0.08em; }
+.wfs-btn-primary:hover { background: #244ba6; }
+.wfs-btn-ink { background: var(--wfs-ink); color: var(--wfs-white); }
+.wfs-btn-ink:hover { background: #1c2550; }
+.wfs-btn-outline { background: transparent; color: var(--wfs-ink); border: 1.5px solid var(--wfs-ink); border-radius: 6px; font-size: 14px; }
+.wfs-btn-outline:hover, .wfs-btn-outline.is-active { background: var(--wfs-ink); color: var(--wfs-white); }
+
+/* Option chips (COMMERCIAL / RESIDENTIAL / 4 FEET ...) */
+.wfs-chip { font-family: var(--wfs-font-sans); font-weight: 700; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 18px; border: 1.5px solid var(--wfs-ink); border-radius: 6px; background: var(--wfs-white); color: var(--wfs-ink); cursor: pointer; }
+.wfs-chip.is-active, .wfs-chip:hover { background: var(--wfs-ink); color: var(--wfs-white); }
+
+/* Cards & panels */
+.wfs-card { background: var(--wfs-white); border: 1px solid var(--wfs-line); border-radius: var(--wfs-radius); box-shadow: var(--wfs-shadow); }
+.wfs-panel-ink { background: var(--wfs-ink); color: var(--wfs-on-ink); border-radius: var(--wfs-radius-lg); }
+.wfs-panel-ink .wfs-display { color: var(--wfs-white); }
+
+/* Forms */
+.wfs-input { font-family: var(--wfs-font-sans); font-size: 15px; color: var(--wfs-ink); background: var(--wfs-white); border: 1.5px solid var(--wfs-line); border-radius: 8px; padding: 12px 14px; width: 100%; }
+.wfs-input:focus { outline: none; border-color: var(--wfs-blue); box-shadow: 0 0 0 3px rgba(46, 89, 193, 0.18); }
+.wfs-label { font-family: var(--wfs-font-sans); font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--wfs-ink); }
