@@ -1,0 +1,119 @@
+html,
+body.drawing-embedded {
+    width: 100%;
+    height: 100%;
+    min-height: 520px;
+}
+
+.drawing-embedded #navbar,
+.drawing-embedded .drawing-toolbar-title,
+.drawing-embedded a[href^="/goto"] {
+    display: none !important;
+}
+
+body.drawing-embedded {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+}
+
+.drawing-embedded .drawing-embed-toolbar {
+    flex: 0 0 auto;
+    background: #0b1547;
+    text-shadow: none;
+}
+
+.drawing-embedded .drawing-embed-toolbar .hero {
+    padding: 4px 10px;
+}
+
+.drawing-embedded .drawing-embed-toolbar .row {
+    --bs-gutter-x: 0;
+    margin: 0;
+}
+
+.drawing-embedded .drawing-toolbar-actions {
+    width: 100%;
+    padding-left: 0 !important;
+}
+
+.drawing-embedded .btn-files {
+    margin: 3px 6px 3px 0;
+    white-space: nowrap;
+}
+
+.drawing-embedded .drawing-workspace {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-height: 0;
+    margin: 0;
+    padding-right: 0 !important;
+}
+
+.drawing-embedded .drawing-canvas-column {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+}
+
+.drawing-embedded .drawing-canvas-host {
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.drawing-embedded .drawing-canvas-host canvas {
+    max-width: 100%;
+    touch-action: none;
+}
+
+.drawing-embedded #panelDims {
+    flex: 0 0 clamp(220px, 20vw, 340px);
+    width: clamp(220px, 20vw, 340px);
+    max-height: none !important;
+    padding: 0 10px;
+    overflow: auto !important;
+    border-left: 1px solid #dee2e6;
+    background: #fff;
+}
+
+@media (max-width: 767.98px) {
+    html,
+    body.drawing-embedded {
+        min-height: 640px;
+    }
+
+    .drawing-embedded .drawing-embed-toolbar .hero {
+        padding: 3px 6px;
+    }
+
+    .drawing-embedded .btn-files {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .drawing-embedded .drawing-workspace {
+        flex-direction: column;
+    }
+
+    .drawing-embedded .drawing-canvas-column {
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 360px;
+    }
+
+    .drawing-embedded #panelDims {
+        flex: 0 0 auto;
+        width: 100%;
+        max-height: 32vh !important;
+        padding: 0 8px 8px;
+        border-top: 1px solid #dee2e6;
+        border-left: 0;
+    }
+}

@@ -1,0 +1,31 @@
+# Local development environment for Draw My Fence.
+# Usage:
+#   docker compose up -d --build        # start php + nginx on http://localhost:8080
+#   docker compose exec php composer install
+#   docker compose exec php php artisan ...
+#   docker compose run --rm node npm install && docker compose run --rm node npm run build
+# Database: uses the existing local PostgreSQL 17 container (wfs-pg) on host port 5433.
+services:
+  php:
+    build: ./docker/php
+    volumes:
+      - ./:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+
+  node:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    profiles: ["tools"]

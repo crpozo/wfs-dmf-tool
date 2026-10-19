@@ -1,0 +1,32 @@
+# Dependencies (rebuilt with composer install / npm install)
+/vendor/
+/node_modules/
+
+# Build output (rebuilt with npm run build)
+/public/build/
+/public/hot
+/public/storage
+
+# Secrets and environment
+.env
+.env.*
+!.env.example
+/storage/app/google/service-account.json
+
+# Laravel runtime
+/storage/*.key
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/framework/testing/*
+/storage/framework/lsp-*.php
+/storage/logs/*
+!/storage/**/.gitignore
+
+# Tooling
+/.phpunit.cache
+/.idea
+/.vscode
+/.fleet
+.DS_Store
+Thumbs.db

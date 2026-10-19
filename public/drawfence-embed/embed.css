@@ -1,0 +1,201 @@
+/*
+ * Styles for the customizable Draw Fence embed.
+ * The first rules reproduce the inline styles from simple_draw.blade.php;
+ * the responsive overrides at the end make the drawing fit its iframe.
+ */
+.quote-request-swal {
+            padding: 0;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .quote-request-swal .swal2-title {
+            width: 100%;
+            margin: 0;
+            padding: 18px 24px;
+            background: #0b1547;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: left;
+        }
+
+        .quote-request-swal .swal2-html-container {
+            margin: 0;
+            padding: 22px 24px 8px;
+        }
+
+        .quote-request-swal .swal2-actions {
+            width: 100%;
+            margin: 0;
+            padding: 10px 24px 24px;
+            justify-content: flex-end;
+        }
+
+        .quote-request-swal .form-label {
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .quote-request-swal .form-control,
+        .quote-request-swal .form-select,
+        .quote-request-swal .select2-container--default .select2-selection--single {
+            min-height: 42px;
+            border-radius: 8px;
+            border-color: #cbd5e1;
+        }
+
+        .quote-request-swal .swal2-confirm {
+            background: #0b1547 !important;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        .quote-request-swal .swal2-cancel {
+            border-radius: 8px;
+        }
+
+/* Embedded layout overrides */
+
+/*
+ * Customizable Draw Fence presentation.
+ *
+ * This file is intentionally public and self-contained so it can be handed to
+ * an external developer. The variables below are the quickest way to resize
+ * the overall tool, canvas area and dimensions panel.
+ */
+:root {
+    --wfs-embed-min-height: 520px;
+    --wfs-canvas-min-height: 360px;
+    --wfs-panel-width: clamp(220px, 20vw, 340px);
+    --wfs-toolbar-background: #0b1547;
+    --wfs-canvas-background: #fff;
+    --wfs-panel-border: #dee2e6;
+}
+
+html,
+body.drawing-embedded {
+    width: 100%;
+    height: 100%;
+    min-height: var(--wfs-embed-min-height);
+}
+
+.drawing-embedded #navbar,
+.drawing-embedded .drawing-toolbar-title,
+.drawing-embedded a[href^="/goto"] {
+    display: none !important;
+}
+
+body.drawing-embedded {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--wfs-canvas-background);
+}
+
+.drawing-embedded .drawing-embed-toolbar {
+    flex: 0 0 auto;
+    background: var(--wfs-toolbar-background);
+    text-shadow: none;
+}
+
+.drawing-embedded .drawing-embed-toolbar .hero {
+    padding: 4px 10px;
+}
+
+.drawing-embedded .drawing-embed-toolbar .row {
+    --bs-gutter-x: 0;
+    margin: 0;
+}
+
+.drawing-embedded .drawing-toolbar-actions {
+    width: 100%;
+    padding-left: 0 !important;
+}
+
+.drawing-embedded .btn-files {
+    margin: 3px 6px 3px 0;
+    white-space: nowrap;
+}
+
+.drawing-embedded .drawing-workspace {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-height: 0;
+    margin: 0;
+    padding-right: 0 !important;
+}
+
+.drawing-embedded .drawing-canvas-column {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+}
+
+.drawing-embedded .drawing-canvas-host {
+    width: 100%;
+    height: 100%;
+    min-height: var(--wfs-canvas-min-height);
+    overflow: hidden;
+    background: var(--wfs-canvas-background);
+}
+
+.drawing-embedded .drawing-canvas-host canvas {
+    max-width: 100%;
+    touch-action: none;
+}
+
+.drawing-embedded #panelDims {
+    flex: 0 0 var(--wfs-panel-width);
+    width: var(--wfs-panel-width);
+    max-height: none !important;
+    padding: 0 10px;
+    overflow: auto !important;
+    border-left: 1px solid var(--wfs-panel-border);
+    background: #fff;
+}
+
+/* Examples of safe visual changes for the external implementation:
+ *
+ * .drawing-embedded #btnPrintSketch { display: none; }
+ * .drawing-embedded #btnRestart { order: 99; }
+ * .drawing-embedded .btn-files { border-radius: 999px; }
+ */
+
+@media (max-width: 767.98px) {
+    :root {
+        --wfs-embed-min-height: 640px;
+    }
+
+    .drawing-embedded .drawing-embed-toolbar .hero {
+        padding: 3px 6px;
+    }
+
+    .drawing-embedded .btn-files {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .drawing-embedded .drawing-workspace {
+        flex-direction: column;
+    }
+
+    .drawing-embedded .drawing-canvas-column {
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: var(--wfs-canvas-min-height);
+    }
+
+    .drawing-embedded #panelDims {
+        flex: 0 0 auto;
+        width: 100%;
+        max-height: 32vh !important;
+        padding: 0 8px 8px;
+        border-top: 1px solid var(--wfs-panel-border);
+        border-left: 0;
+    }
+}

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="{{ url('/') }}/">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script> -->
+    <link rel="stylesheet" type="text/css" href="@assetv('css/style.css')">
+    <link rel="stylesheet" href="@assetv('css/styles.css')" />
+    <link rel="stylesheet" href="@assetv('css/fontawesome.css')" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="@assetv('css/bootstrap.css')" />
+    <link rel="stylesheet" href="@assetv('css/styles.css')" />
+    <link rel="stylesheet" href="@assetv('css/app.css')" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
+    <link href="@assetv('css/select2.min.css')" rel="stylesheet" />
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/shepherd.js/dist/css/shepherd.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs"></script>
+
+    <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body class="drawing drawing-embedded">
+
+    
+    <nav id="navbar" class="navbar" role="navigation">
+        <div class="nav-inner">
+            <div class="nav-inner-left">
+                <div class="logo-wrap">
+                    <a href="https://app.westernfencesupply.com" class="navbar-brand mr-auto align-left">
+                        <!-- <img class="site-logo site-logo-scroll" src="/wp-content/themes/westernfencesupply/img/global/western-fence-supply-logo.svg" alt="Western Fence Supply Logo"> -->
+                        <img class="site-logo-white" style="height:36px;" src="/images/wfs-logo-wht.svg" alt="Western Fence Supply Logo White">
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        
+    </nav>
+
+    <header id="header" class="header">
+        <div class="hero text-white header-shadow">
+            <div>
+                <div class="row">
+                    <div class="col-md-9" style="padding-left: 75px;">
+                        <!--
+                    </div>
+                    <div class="col-md-1">
+                        -->
+                        <input type="file" id="fileInput" style="display: none;" accept=".wfs">
+
+                        <button
+                            id="btnLoad"
+                            type="button"
+                            class="btn btn-files"
+                            data-toolbar-help-video="Load Project"
+                            data-toolbar-help-label="Load Project"
+                        >
+                            <i class="fas fa-folder-open me-2"></i> Load Project
+                        </button>
+                        <!--
+                    </div>
+                    <div class="col-md-1">
+                        -->
+                        <button
+                            id="btnSave"
+                            type="button"
+                            class="btn btn-files"
+                            data-toolbar-help-video="Save Project"
+                            data-toolbar-help-label="Save Project"
+                        >
+                            <i class="fas fa-save me-2"></i> Save Project
+                        </button>
+                        <!--
+                    </div>
+                    <div class="col-md-2">
+                    -->
+                        <button
+                            id="btnTemplate"
+                            type="button"
+                            class="btn btn-files"
+                            onclick="loadTemplates();"
+                            data-toolbar-help-video="Use Template"
+                            data-toolbar-help-label="Use Template"
+                        >
+                            <i class="fas fa-map me-2"></i> Use Template
+                        </button>
+
+                        <a href="/goto?m={{ $m }}&c={{ $c }}" class="btn btn-files">
+                            <i class="fas fa-arrow-left me-2"></i> Previous Step
+                        </a>
+
+                        <button id="btnHelp" type="button" class="btn btn-files">
+                            <i class="fas fa-question me-2"></i> Help
+                        </button>                        
+
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="text-container d-flex flex-column justify-content-center h-100" style="margin-right: 15px;">
+                            <h1 class="text-uppercase text-end fw-bold">
+                                EASY DRAW YOUR FENCE
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div
+        class="video-help-modal"
+        id="toolHelpVideoModal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="toolHelpVideoTitle"
+    >
+        <div class="video-help-dialog">
+            <button
+                type="button"
+                class="video-help-close"
+                id="toolHelpVideoClose"
+                aria-label="Close tool help video"
+            >
+                X
+            </button>
+            <h2 class="visually-hidden" id="toolHelpVideoTitle">Tool help video</h2>
+            <video
+                class="video-help-player"
+                id="toolHelpVideoPlayer"
+                controls
+                playsinline
+                preload="metadata"
+            >
+                <source src="@assetv('vid/wfs.mp4')" type="video/mp4" />
+            </video>
+        </div>
+    </div>
+
+    <button id="btnDim" style="display:none;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalDim" data-bs-whatever="@mdo">Dim</button>
+    <div class="modal fade" id="modalDim" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalLbl" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="modalContentDim">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLbl">Enter length</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <div class="input-group mb-3">
+                                <span id="spDim" class="input-group-text">d</span>
+                                <input id="txtLength" type="text" class="form-control" placeholder="Enter length" aria-label="Enter length" aria-describedby="basic-addon2">
+                                <span class="input-group-text" id="basic-addon2">ft</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <div class="col-1">
+                        <!-- <button class="btn btn-warning float-left" data-bs-target="#modalDims" data-bs-toggle="modal" data-bs-dismiss="modal">List</button> -->
+                        <!-- <button class="btn btn-warning float-left" onclick="loadDynamicContentModal()" data-bs-target="#modalDims" data-bs-toggle="modal" data-bs-dismiss="modal">List</button>-->
+
+                    </div>
+                    <div class="col-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button id="btnDimOK" type="button" class="btn btn-primary">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalDims" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalLbl" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLbl">Enter length</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div id="formDims" class="mb-3">
+                            <!--
+                            <div class="input-group mb-3">
+                                <span id="spDim" class="input-group-text">d</span>
+                                <input id="txtLength" type="text" class="form-control" placeholder="Enter length" aria-label="Enter length" aria-describedby="basic-addon2">
+                                <span class="input-group-text" id="basic-addon2">ft</span>
+                            </div>
+                            -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button id="btnDimsOK" type="button" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="btnGate" style="display:none;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalGates" data-bs-whatever="@mdo">Gate</button>
+    <div class="modal fade" id="modalGates" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalGatesLbl" aria-hidden="true">
+        <div class="modal-dialog" style="display:table;">
+            <div class="modal-content" >
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalGatesLbl">Select Gate Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="row mb-3">
+                            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                                <!--
+                                <input type="radio" class="btn-check" name="radioGate" id="btnSwing" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="btnSwing">Swing Gate</label>
+
+                                <input type="radio" class="btn-check" name="radioGate" id="btnRolling" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btnRolling">Rolling Gate</label>
+
+                                <input type="radio" class="btn-check" name="radioGate" id="btnSliding" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btnSliding">Sliding Gate</label>
+
+                                <input type="radio" class="btn-check" name="radioGate" id="btnCantilever" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btnCantilever">Cantilever Gate</label>
+                                -->
+                                @if($hayAl)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Alum_Single_Swing_Gate.png" alt="Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Alum_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnCantilever" value="3" autocomplete="off">
+                                    <img class="btn-door" src="img/Alum_Cantilever_Gate.png" alt="Cantilever Gate">
+                                </label>
+                                @endif
+                                @if($hayChain)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Chain_Single_Swing_Gate.png" alt="Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Chain_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnRolling" value="1" autocomplete="off">
+                                    <img class="btn-door" src="img/Chain_Rolling_Gate.png" alt="Rolling Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnCantilever" value="3" autocomplete="off">
+                                    <img class="btn-door" src="img/Chain_Cantilever_Gate.png" alt="Cantilever Gate">
+                                </label>
+                                @endif
+                                @if($hayPVC)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Vinyl_Single_Swing_Gate.png" alt="Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Vinyl_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                @endif
+                                @if($hayMetal)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Metal_Single_Swing_Gate.png" alt="Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Metal_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+
+                            <div class="btn-group" role="group" aria-label="Door Width">
+                                <!--
+                                <button type="button" class="btn btn-primary">4 FT</button>
+                                <button type="button" class="btn btn-primary">5 FT</button>
+                                <button type="button" class="btn btn-primary">6 FT</button>
+                                <button type="button" class="btn btn-primary">CUSTOM</button>
+                                -->
+
+
+                                <label class="btn btn-primary dwBtn active">
+                                    <input type="radio" class="doorWidth" name="sDoorWidth" id="sdoor4" value="4" checked> 4 FT
+                                </label>
+                                <label class="btn btn-primary dwBtn">
+                                    <input type="radio" class="doorWidth" name="sDoorWidth" id="sdoor5" value="5"> 5 FT
+                                </label>
+                                <label class="btn btn-primary dwBtn">
+                                    <input type="radio" class="doorWidth" name="sDoorWidth" id="sdoor6" value="6"> 6 FT
+                                </label>
+                                <label class="btn btn-primary dwBtn text-end" id="lblSCustom">
+                                    <input type="radio" class="doorWidth" name="sDoorWidth" id="sdoorCustom" onclick="$.noop(); $('#sDoorCustomWidth').focus();" value="0"> CUSTOM:
+                                </label>
+
+                                <input type="text" id="sDoorCustomWidth" style="width:100px;" class="form-control" aria-label="Custom Width FT">
+                                <span class="input-group-text">FT</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div id="gateDisclaimer" class="px-3 pb-2 text-danger fw-bold" style="display: none;font-size:13px;">
+                    * Specialty or custom width gates require sales representative review before final quote confirmation
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button id="btnGateOK" type="button" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="btnDblGate" style="display:none;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalDblGates" data-bs-whatever="@mdo">Double Gate</button>
+    <div class="modal fade" id="modalDblGates" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalDblGatesLbl" aria-hidden="true">
+        <div class="modal-dialog" style="display:table;">
+            <div class="modal-content" >
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalDblGatesLbl">Select Gate Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="row mb-3">
+                            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                                @if($hayAl)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnDblSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Alum_Double_Swing_Gate.png" alt="Double Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Alum_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnCantilever" value="3" autocomplete="off">
+                                    <img class="btn-door" src="img/Alum_Cantilever_Gate.png" alt="Cantilever Gate">
+                                </label>
+                                @endif
+                                @if($hayChain)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnDblSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Chain_Double_Swing_Gate.png" alt="Double Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Chain_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnRolling" value="1" autocomplete="off">
+                                    <img class="btn-door" src="img/Chain_Rolling_Gate.png" alt="Rolling Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnCantilever" value="3" autocomplete="off">
+                                    <img class="btn-door" src="img/Chain_Cantilever_Gate.png" alt="Cantilever Gate">
+                                </label>
+                                @endif
+                                @if($hayPVC)
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnDblSwing" value="0" autocomplete="off" checked>
+                                    <img class="btn-door" src="img/Vinyl_Double_Swing_Gate.png" alt="Double Swing Gate">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                    <img class="btn-door"src="img/Vinyl_Sliding_Gate.png" alt="Sliding Gate">
+                                </label>
+                                @endif
+                                @if($hayMetal)
+                                    <label class="lbl-door">
+                                        <input type="radio" class="btn-check" name="radioGate" id="btnDblSwing" value="0" autocomplete="off" checked>
+                                        <img class="btn-door" src="img/Metal_Double_Swing_Gate.png" alt="Double Swing Gate">
+                                    </label>
+                                    <label class="lbl-door">
+                                        <input type="radio" class="btn-check" name="radioGate" id="btnSliding" value="2" autocomplete="off">
+                                        <img class="btn-door"src="img/Metal_Sliding_Gate.png" alt="Sliding Gate">
+                                    </label>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+
+                            <div class="btn-group" role="group" aria-label="Door Width">
+
+                                <label class="btn btn-primary dwBtn active">
+                                    <input type="radio" class="dDoorWidth" name="dDoorWidth" id="ddoor8" value="8" checked> 8 FT
+                                </label>
+                                <label class="btn btn-primary dwBtn">
+                                    <input type="radio" class="dDoorWidth" name="dDoorWidth" id="ddoor10" value="10"> 10 FT
+                                </label>
+                                <label class="btn btn-primary dwBtn">
+                                    <input type="radio" class="dDoorWidth" name="dDoorWidth" id="ddoor12" value="12"> 12 FT
+                                </label>
+                                <label class="btn btn-primary dwBtn text-end" id="lblDCustom">
+                                    <input type="radio" class="dDoorWidth" name="dDoorWidth" id="ddoorCustom" onclick="$.noop(); $('#dDoorCustomWidth').focus();" value="0"> CUSTOM:
+                                </label>
+
+                                <input type="text" id="dDoorCustomWidth" style="width:100px;" class="form-control" aria-label="Custom Width FT">
+                                <span class="input-group-text">FT</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div id="dblGateDisclaimer" class="px-3 pb-2 text-danger fw-bold" style="display: none;font-size:13px;">
+                    * Specialty or custom width gates require sales representative review before final quote confirmation
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button id="btnDblGateOK" type="button" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="btnTemplates" style="display:none;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTemplates" data-bs-whatever="@mdo">Gate</button>
+    <div class="modal fade" id="modalTemplates" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalTemplatesLbl" aria-hidden="true">
+        <div class="modal-dialog" style="display:table;">
+            <div class="modal-content" >
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTemplatesLbl">Load Sketch from Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="row mb-3">
+                            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnRTemplate" value="r" autocomplete="off">
+                                    <img class="btn-door" src="img/Template_R.jpg" alt="Rectangular">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnUTemplate" value="u" autocomplete="off">
+                                    <img class="btn-door"src="img/Template_U.jpg" alt="UShaped">
+                                </label>
+                                <label class="lbl-door">
+                                    <input type="radio" class="btn-check" name="radioGate" id="btnCTemplate" value="c" autocomplete="off">
+                                    <img class="btn-door"src="img/Template_C.jpg" alt="CShaped">
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onClick="canvasEnabled = true;" data-bs-dismiss="modal">Cancel</button>
+                    <button id="btnTemplateOK" type="button" onClick="loadTemplate();" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="padding-right: 15px;">
+        <div class="col-10">
+            <main>
+            </main>
+        </div>
+        <div id="panelDims" class="col-2" style="overflow-y:scroll;">
+            <form>
+                <!--
+                <div class="row padded">
+                    <div class="col">
+                        <input type="file" id="fileInput" style="display: none;" accept=".wfs">
+
+                        <button id="btnLoad" type="button" class="btn btn-primary btn-files">
+                            <i class="fas fa-folder-open me-2"></i> Load Project
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button id="btnSave" type="button" class="btn btn-success btn-files">
+                            <i class="fas fa-save me-2"></i> Save Project
+                        </button>
+                    </div>
+                </div>
+                -->
+                <div class="table-responsive">
+                    <table class="table" id="dynamic_field">
+
+                    </table>
+                    <input type="button" name="submit" id="submitDims" style="display:none;" class="btn btn-info float-end" value="Update Layout" />
+                    <div class="d-flex justify-content-center">
+                        <input type="button" name="estimate" id="btnEstimate" style="display:none;width:75%;" class="btn orange" value="Get Estimate" />
+                    </div>
+                    <div class="form-group" id="formEstimate" style="display:none;">
+                        <label style="margin-top:15px;" for="txtMaterials">List of Materials</label>
+                        <textarea style="height:500px;" class="form-control" id="txtMaterials" rows="10"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button type="button" class="btn blue" id="btnQuote" style="display:none;width:75%;margin-top:15px;">
+                            Request a quote
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"></script>
+    <script
+        src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <script src="@assetv('js/select2.min.js')"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+
+    <script src="@assetv('js/s_utils.js')"></script>
+    <script src="@assetv('js/s_tool.js')"></script>
+    <script src="@assetv('js/s_toolbar.js')"></script>
+    <script src="@assetv('js/s_dim.js')"></script>
+    <script src="@assetv('js/s_edge.js')"></script>
+    <script src="@assetv('js/s_vert.js')"></script>
+    <script src="@assetv('js/s_graph.js')"></script>
+    <script src="@assetv('js/point.js')"></script>
+    <script src="@assetv('js/s_sketch.js')"></script>
+
+    <style>
+/* WFS_EMBED_CSS */
+</style>
+    <script>
+        window.WFS_DRAWING_PARENT_ORIGIN = @json($embedParentOrigin);
+    </script>
+    <script>
+/* WFS_EMBED_JS */
+    </script>
+</body>
+</html>
