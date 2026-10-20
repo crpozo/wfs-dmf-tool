@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="@assetv('css/app.css')" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
     <link href="@assetv('css/select2.min.css')" rel="stylesheet" />
+    <link rel="stylesheet" href="@assetv('css/wfs-brand.css')" />
+    <link rel="stylesheet" href="@assetv('drawfence-embed/embed.css')" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
@@ -19,7 +21,9 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs"></script>
 
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Draw Your Fence | Western Fence Supply</title>
     <style>
         .quote-request-swal {
             padding: 0;
@@ -31,7 +35,7 @@
             width: 100%;
             margin: 0;
             padding: 18px 24px;
-            background: #0b1547;
+            background: var(--wfs-ink);
             color: #fff;
             font-size: 20px;
             font-weight: 700;
@@ -65,7 +69,7 @@
         }
 
         .quote-request-swal .swal2-confirm {
-            background: #0b1547 !important;
+            background: var(--wfs-ink) !important;
             border-radius: 8px;
             font-weight: 700;
         }
@@ -84,7 +88,7 @@
                 <div class="logo-wrap">
                     <a href="https://app.westernfencesupply.com" class="navbar-brand mr-auto align-left">
                         <!-- <img class="site-logo site-logo-scroll" src="/wp-content/themes/westernfencesupply/img/global/western-fence-supply-logo.svg" alt="Western Fence Supply Logo"> -->
-                        <img class="site-logo-white" style="height:36px;" src="/images/wfs-logo-wht.svg" alt="Western Fence Supply Logo White">
+                        <img class="site-logo-white" style="height:36px;" src="/images/wfs-logo.svg" alt="Western Fence Supply">
                     </a>
                 </div>
             </div>
@@ -137,18 +141,14 @@
         @endif
     </nav>
 
-    <header id="header" class="header">
-        <div class="hero text-white header-shadow">
+    <header id="header" class="header wfs-toolbar">
+        <div class="hero">
             <div>
                 <div class="row">
-                    <div class="col-md-9" style="padding-left: 75px;">
+                    <div class="col-md-9 wfs-toolbar-actions">
                         <button id="btnRestart" type="button" class="btn btn-files" onclick="restart();">
                             <i class="fas fa-repeat me-2"></i> Restart Project
                         </button>
-                        <!--
-                    </div>
-                    <div class="col-md-1">
-                        -->
                         <input type="file" id="fileInput" style="display: none;" accept=".wfs">
 
                         <button
@@ -160,10 +160,6 @@
                         >
                             <i class="fas fa-folder-open me-2"></i> Load Project
                         </button>
-                        <!--
-                    </div>
-                    <div class="col-md-1">
-                        -->
                         <button
                             id="btnSave"
                             type="button"
@@ -173,10 +169,6 @@
                         >
                             <i class="fas fa-save me-2"></i> Save Project
                         </button>
-                        <!--
-                    </div>
-                    <div class="col-md-2">
-                    -->
                         <button
                             id="btnTemplate"
                             type="button"
@@ -196,17 +188,15 @@
                             <i class="fas fa-print me-2"></i> Print Sketch
                         </button>
 
-                        <button id="btnHelp" type="button" class="btn btn-files">
+                        <button id="btnHelp" type="button" class="btn btn-files btn-files-help">
                             <i class="fas fa-question me-2"></i> Help
-                        </button>                        
-
+                        </button>
                     </div>
 
-                    <div class="col-md-3">
-                        <div class="text-container d-flex flex-column justify-content-center h-100" style="margin-right: 15px;">
-                            <h1 class="text-uppercase text-end fw-bold">
-                                EASY DRAW YOUR FENCE
-                            </h1>
+                    <div class="col-md-3 wfs-toolbar-title">
+                        <div class="text-container d-flex flex-column justify-content-center h-100">
+                            <span class="wfs-eyebrow">Easy</span>
+                            <h1 class="wfs-display">Draw Your Fence</h1>
                         </div>
                     </div>
                 </div>
@@ -249,7 +239,7 @@
         <div class="modal-dialog">
             <div class="modal-content" id="modalContentDim">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalLbl">Enter length</h5>
+                    <h5 class="modal-title wfs-display" id="modalLbl">Enter length</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -282,7 +272,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalLbl">Enter length</h5>
+                    <h5 class="modal-title wfs-display" id="modalLbl">Enter length</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -311,7 +301,7 @@
         <div class="modal-dialog" style="display:table;">
             <div class="modal-content" >
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalGatesLbl">Select Gate Type</h5>
+                    <h5 class="modal-title wfs-display" id="modalGatesLbl">Select Gate Type</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -431,7 +421,7 @@
         <div class="modal-dialog" style="display:table;">
             <div class="modal-content" >
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalDblGatesLbl">Select Gate Type</h5>
+                    <h5 class="modal-title wfs-display" id="modalDblGatesLbl">Select Gate Type</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -531,7 +521,7 @@
         <div class="modal-dialog" style="display:table;">
             <div class="modal-content" >
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalTemplatesLbl">Load Sketch from Template</h5>
+                    <h5 class="modal-title wfs-display" id="modalTemplatesLbl">Load Sketch from Template</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -562,55 +552,35 @@
         </div>
     </div>
 
-    <div class="row" style="padding-right: 15px;">
-        <div class="col-10">
-            <main>
-            </main>
+    <div class="row wfs-workspace">
+        <div class="col-10 wfs-canvas-column">
+            <main></main>
         </div>
-        <div id="panelDims" class="col-2" style="overflow-y:scroll;">
+        <div id="panelDims" class="col-2 wfs-panel">
             <form>
-                <!--
-                <div class="row padded">
-                    <div class="col">
-                        <input type="file" id="fileInput" style="display: none;" accept=".wfs">
-
-                        <button id="btnLoad" type="button" class="btn btn-primary btn-files">
-                            <i class="fas fa-folder-open me-2"></i> Load Project
-                        </button>
-                    </div>
-                    <div class="col">
-                        <button id="btnSave" type="button" class="btn btn-success btn-files">
-                            <i class="fas fa-save me-2"></i> Save Project
-                        </button>
-                    </div>
+                <div class="wfs-panel-head">
+                    <span class="wfs-eyebrow">Your sketch</span>
+                    <h2 class="wfs-display">Dimensions</h2>
+                    <p class="wfs-panel-hint">Draw each side of your fence, then enter its length in feet.</p>
                 </div>
-                -->
                 <div class="table-responsive">
-                    <table class="table" id="dynamic_field">
+                    <table class="table wfs-dims-table" id="dynamic_field">
 
                     </table>
-                    <input type="button" name="submit" id="submitDims" style="display:none;" class="btn btn-info float-end" value="Update Layout" />
+                    <input type="button" name="submit" id="submitDims" style="display:none;" class="btn wfs-btn wfs-btn-outline" value="Update Layout" />
                     <div class="d-flex justify-content-center">
-                        <input type="button" name="estimate" id="btnEstimate" style="display:none;width:75%;" class="btn orange" value="Get Estimate" />
+                        <input type="button" name="estimate" id="btnEstimate" style="display:none;" class="btn wfs-btn wfs-btn-primary wfs-btn-block" value="Get Estimate" />
                     </div>
-                    <div class="form-group" id="formEstimate" style="display:none;">
-                        <label style="margin-top:15px;" for="txtMaterials">List of Materials</label>
-                        <textarea style="height:500px;" class="form-control" id="txtMaterials" rows="10"></textarea>
+                    <div class="form-group wfs-materials" id="formEstimate" style="display:none;">
+                        <label class="wfs-label" for="txtMaterials">List of Materials</label>
+                        <textarea class="form-control wfs-input" id="txtMaterials" rows="10"></textarea>
                     </div>
                     <div class="d-flex justify-content-center">
-                        <!-- <input type="button" name="quote" id="btnQuote" style="display:none;width:75%;margin-top:15px;" class="btn blue" value="Request a quote" /> -->
-                        @auth
-                        <button type="button" class="btn blue" id="btnQuote" style="display:none;width:75%;margin-top:15px;">
-                            Request a quote
+                        <button type="button" class="btn wfs-btn wfs-btn-ink wfs-btn-block" id="btnQuote" style="display:none;">
+                            Request a quote <i class="fas fa-arrow-right ms-2"></i>
                         </button>
-                        @else
-                        <button type="button" class="btn blue" id="btnQuote" style="display:none;width:75%;margin-top:15px;">
-                            Request a quote
-                        </button>
-                        @endauth
                     </div>
                 </div>
-
             </form>
             @auth
                 <form id="quoteRequestUserForm" method="POST" action="{{ route('estimate.store') }}" style="display:none;">

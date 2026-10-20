@@ -20,7 +20,8 @@ body.drawing { overflow: hidden; }
 .drawing h1, .drawing h2, .drawing h5.modal-title { text-shadow: none; }
 
 /* ---------- Top navbar (standalone page only; hidden when embedded) ---------- */
-.drawing #navbar { background: var(--wfs-ink); border-bottom: 0; padding: 0.6rem 0; }
+.drawing #navbar { background: var(--wfs-white); border-bottom: 1px solid var(--wfs-line); padding: 0.75rem 0; backdrop-filter: none; }
+.drawing #navbar .nav-inner { align-items: center; }
 
 /* ---------- Toolbar ---------- */
 .drawing #header.wfs-toolbar {
