@@ -485,8 +485,9 @@ class HomeController extends Controller
                     session(['step' => $this->step_actual]);
 
                     $this->step_actual++;
-                    // TMP De momento no preguntar por 2do o 3er material
-                    return redirect('/drawfence');
+                    // Configuration complete: show the summary (fragment loaded into #contenido)
+                    // instead of jumping straight to the drawing tool. Multi-material questions stay disabled.
+                    return view('summary', ['materials' => session('materials'), 'from' => $from, 'slot' => $material]);
 
                     $title = "Does your project require a second type of fencing material?";
                     if($material == 2){

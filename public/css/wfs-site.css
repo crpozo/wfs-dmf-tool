@@ -1,0 +1,73 @@
+/* Draw My Fence - site chrome (top bar, navigation, footer) and configuration summary.
+ * Mirrors westernfencesupply.com. Tokens live in wfs-brand.css. */
+
+/* ---------- Top bar ---------- */
+.wfs-topbar { background: var(--wfs-ink); color: var(--wfs-on-ink); }
+.wfs-topbar .wfs-container { display: flex; justify-content: space-between; align-items: center; min-height: 42px; gap: 16px; }
+.wfs-topbar-links { display: flex; align-items: center; gap: 18px; }
+.wfs-topbar a { font-family: var(--wfs-font-sans); font-size: 12.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(219, 233, 238, 0.85); text-decoration: none; }
+.wfs-topbar a:hover { color: var(--wfs-white); }
+.wfs-topbar a i { font-size: 11px; margin-right: 4px; }
+.wfs-topbar-sep { width: 1px; height: 14px; background: rgba(255, 255, 255, 0.25); }
+
+/* ---------- Header / navigation ---------- */
+.wfs-header .wfs-container { min-height: 88px; gap: 28px; }
+.wfs-logo img { height: 44px; }
+.wfs-nav { display: flex; align-items: center; gap: 28px; margin-right: auto; }
+.wfs-nav a { font-family: var(--wfs-font-sans); font-size: 16px; font-weight: 500; color: var(--wfs-ink); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+.wfs-nav a:hover, .wfs-nav a.is-current { border-bottom-color: var(--wfs-blue); color: var(--wfs-ink); }
+.wfs-header-right { gap: 10px; }
+.wfs-btn-sm { padding: 10px 16px; font-size: 14px; letter-spacing: 0.04em; white-space: nowrap; }
+.wfs-btn-sm .wfs-btn-arrow { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--wfs-blue); color: var(--wfs-white); font-size: 11px; margin-left: 4px; }
+.wfs-btn-sm i { font-size: 12px; }
+
+/* ---------- Footer ---------- */
+.wfs-footer { padding: 64px 0 28px; }
+.wfs-footer-grid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+.wfs-footer-brand img { height: 44px; width: auto; display: block; margin-bottom: 18px; }
+.wfs-footer-brand p { font-family: var(--wfs-font-body); font-size: 14px; line-height: 1.55; color: rgba(255, 255, 255, 0.82); margin: 0 0 16px; max-width: 320px; }
+.wfs-footer-phone { font-family: var(--wfs-font-sans); font-weight: 700; color: var(--wfs-white); text-decoration: none; letter-spacing: 0.04em; }
+.wfs-footer h4 { font-family: var(--wfs-font-sans); font-size: 12.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--wfs-blue-ice); margin: 0 0 14px; }
+.wfs-footer-grid > div > a { display: block; font-family: var(--wfs-font-body); font-size: 14px; color: rgba(255, 255, 255, 0.82); text-decoration: none; margin-bottom: 9px; }
+.wfs-footer-grid > div > a:hover { color: var(--wfs-white); text-decoration: underline; }
+.wfs-footer-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 22px; font-family: var(--wfs-font-body); font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+.wfs-footer-bottom a { color: rgba(255, 255, 255, 0.82); }
+
+/* ---------- Configuration summary ---------- */
+.wfs-summary { max-width: 960px; margin: 0 auto; background: var(--wfs-ink); color: var(--wfs-on-ink); border-radius: var(--wfs-radius-lg); padding: 40px 44px; }
+.wfs-summary .wfs-eyebrow { color: var(--wfs-blue-ice); }
+.wfs-summary h2 { font-family: var(--wfs-font-display); font-weight: 400; font-size: clamp(26px, 3vw, 36px); text-transform: uppercase; color: var(--wfs-white); margin: 8px 0 26px; letter-spacing: 0.01em; }
+.wfs-summary-rows { border-top: 1px solid rgba(255, 255, 255, 0.15); }
+.wfs-summary-row { display: grid; grid-template-columns: 240px 1fr; gap: 24px; padding: 16px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.15); align-items: start; }
+.wfs-summary-row .wfs-label { color: var(--wfs-blue-ice); font-size: 14px; letter-spacing: 0.14em; }
+.wfs-summary-row span:last-child { font-family: var(--wfs-font-sans); font-size: 17px; color: var(--wfs-white); }
+.wfs-summary-group + .wfs-summary-group { margin-top: 32px; }
+.wfs-summary-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 32px; }
+.wfs-summary-actions .wfs-btn { font-size: 17px; padding: 18px 28px; border-radius: 6px; letter-spacing: 0; text-transform: none; }
+.wfs-summary-actions .wfs-btn-ice { background: var(--wfs-blue-ice); color: var(--wfs-ink); }
+.wfs-summary-actions .wfs-btn-ice:hover { background: var(--wfs-white); }
+.wfs-summary-actions .wfs-btn-ghost { background: transparent; color: var(--wfs-white); border: 1.5px solid rgba(255, 255, 255, 0.7); }
+.wfs-summary-actions .wfs-btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+.wfs-summary-note { font-family: var(--wfs-font-body); font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); margin: 18px 0 0; }
+.wfs-summary-links { margin-top: 18px; display: flex; gap: 18px; }
+.wfs-summary-links a { font-family: var(--wfs-font-sans); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wfs-blue-ice); text-decoration: none; }
+.wfs-summary-links a:hover { color: var(--wfs-white); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1199.98px) {
+    .wfs-nav { display: none; }
+    .wfs-footer-grid { grid-template-columns: repeat(3, 1fr); }
+    .wfs-footer-brand { grid-column: span 3; }
+}
+@media (max-width: 767.98px) {
+    .wfs-topbar .wfs-container { justify-content: center; }
+    .wfs-topbar-links + .wfs-topbar-links { display: none; }
+    .wfs-header .wfs-container { min-height: 72px; }
+    .wfs-logo img { height: 34px; }
+    .wfs-header-right .wfs-btn-ink { display: none; }
+    .wfs-footer-grid { grid-template-columns: 1fr 1fr; }
+    .wfs-footer-brand { grid-column: span 2; }
+    .wfs-summary { padding: 26px 22px; }
+    .wfs-summary-row { grid-template-columns: 1fr; gap: 4px; }
+    .wfs-summary-actions .wfs-btn { width: 100%; justify-content: center; }
+}
