@@ -113,6 +113,7 @@ class HomeController extends Controller
             'white' => 'white', 'black' => 'black', 'bronze' => 'bronze', 'woodgrain' => 'woodgrain',
             'sand' => 'sand', 'gray' => 'grey', 'galvanized' => 'galvanized',
             'black vinyl coated' => 'black', 'green vinyl coated' => 'green',
+            'white + sand' => 'white_sand', 'white + gray' => 'white_grey',
         ];
         $c = $colorKeys[$color] ?? null;
 
@@ -121,9 +122,10 @@ class HomeController extends Controller
                 return $c ? "/images/ChainLink_standard_$c.webp" : null;
             case "3": // Metal: Original and Modern share the privacy panel image
                 return $c ? "/images/Metal_privacy_$c.webp" : null;
-            case "4": // Vinyl: design image recolored; two-tone colors keep the design image
+            case "4": // Vinyl: design image recolored
                 $designs = [
                     'vinyl-privacy-fence.JPG' => 'privacy',
+                    'vinyl-two-tone-privacy-fence.JPG' => 'two_tone',
                     'viny-privacy-fence-with-lattice-accent.JPG' => 'privacy_lattice',
                     'vinyl-semi-privacy-fence.JPG' => 'semi_privacy',
                     'vinyl-shadowbox-fence.JPG' => 'shadowbox',
