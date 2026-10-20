@@ -79,15 +79,19 @@ body.drawing { overflow: hidden; }
 .drawing .wfs-panel-head .wfs-display { font-size: 24px; margin: 2px 0 6px; }
 .drawing .wfs-panel-hint { font-family: var(--wfs-font-body); font-size: 13.5px; line-height: 1.45; color: var(--wfs-charcoal); margin: 0; }
 
-.drawing .wfs-dims-table { margin-bottom: 12px; }
-.drawing .wfs-dims-table td { border: 0; padding: 4px 2px; vertical-align: middle; }
+.drawing .table-responsive { overflow: visible; }
+.drawing .wfs-dims-table { width: 100%; table-layout: fixed; margin-bottom: 12px; }
+.drawing .wfs-dims-table td { border: 0; padding: 4px 0; vertical-align: middle; }
+.drawing .wfs-dims-table .input-group { flex-wrap: nowrap; width: 100%; }
+.drawing .wfs-dims-table .input-group .form-control { flex: 1 1 auto; width: 1%; min-width: 0; border-radius: 0; }
+.drawing .wfs-dims-table .input-group .input-group-text:last-child { border-left: 0; border-right: 1.5px solid var(--wfs-line); border-radius: 0 8px 8px 0; }
 .drawing .wfs-dims-table .input-group-text {
     font-family: var(--wfs-font-sans); font-weight: 700; font-size: 13px; color: var(--wfs-ink);
     background: var(--wfs-sea); border: 1.5px solid var(--wfs-line); border-right: 0; border-radius: 8px 0 0 8px;
 }
 .drawing .wfs-dims-table .form-control {
     font-family: var(--wfs-font-sans); font-size: 14px; color: var(--wfs-ink);
-    border: 1.5px solid var(--wfs-line); border-radius: 0 8px 8px 0; min-height: 40px;
+    border: 1.5px solid var(--wfs-line); min-height: 40px;
 }
 .drawing .wfs-dims-table .form-control:focus { border-color: var(--wfs-blue); box-shadow: 0 0 0 3px rgba(46, 89, 193, .18); }
 
@@ -153,6 +157,12 @@ body.drawing { overflow: hidden; }
 .drawing .swal2-confirm.swal2-styled { background: var(--wfs-blue) !important; border-radius: var(--wfs-radius-pill); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; padding: 10px 20px; }
 .drawing .swal2-cancel.swal2-styled { background: transparent !important; color: var(--wfs-ink) !important; border: 1.5px solid var(--wfs-ink); border-radius: var(--wfs-radius-pill); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; padding: 10px 20px; }
 
+/* Compact toolbar on laptops so the buttons stay on one line */
+@media (max-width: 1499.98px) {
+    .drawing .btn-files { padding: 8px 10px; font-size: 12px; letter-spacing: 0.04em; }
+    .drawing .wfs-toolbar-title .wfs-display { font-size: 18px; }
+}
+
 /* ---------- Embedded layout (iframe on westernfencesupply.com) ---------- */
 html,
 body.drawing-embedded { width: 100%; height: 100%; min-height: var(--wfs-embed-min-height); }
@@ -188,4 +198,29 @@ body.drawing-embedded { display: flex; flex-direction: column; overflow: hidden;
     .drawing-embedded .drawing-canvas-column { flex: 1 1 auto; width: 100%; min-height: var(--wfs-canvas-min-height); }
     .drawing-embedded #panelDims { flex: 0 0 auto; width: 100%; max-height: 36vh !important; padding: 12px; border-top: 1px solid var(--wfs-panel-border); border-left: 0; }
     .drawing .wfs-panel-head .wfs-display { font-size: 20px; }
+}
+
+/* ---------- Standalone drawing page (/drawfence): same adapter, but keep the navbar and title ---------- */
+body.drawing-standalone { height: 100vh; }
+.drawing-standalone #navbar { display: flex !important; flex: 0 0 auto; height: auto; }
+.drawing-standalone #navbar .nav-inner { height: auto; }
+.drawing-standalone .drawing-toolbar-title { display: block !important; }
+.drawing-standalone a[href^="/goto"] { display: inline-flex !important; }
+@media (min-width: 768px) {
+    .drawing-standalone .drawing-embed-toolbar .row { flex-wrap: nowrap; align-items: center; }
+    .drawing-standalone .drawing-toolbar-actions { width: auto; flex: 1 1 auto; }
+    .drawing-standalone .drawing-toolbar-title { flex: 0 0 auto; width: auto; margin-left: auto; padding-left: 16px; }
+}
+
+@media (max-width: 767.98px) {
+    .drawing-standalone .drawing-toolbar-title { display: none !important; }
+    .drawing-standalone #navbar .site-logo-white { height: 28px !important; }
+    .drawing .btn-files { padding: 7px 9px; font-size: 11px; letter-spacing: 0.03em; }
+    .drawing .btn-files .fas { margin-right: 4px !important; }
+    .drawing .wfs-toolbar-actions { gap: 6px; }
+    .drawing #panelDims.wfs-panel { padding: 12px 12px 16px; }
+    .drawing .wfs-panel-head { margin-bottom: 8px; }
+    .drawing .wfs-panel-head .wfs-display { font-size: 18px; }
+    .drawing .wfs-panel-hint { font-size: 12.5px; }
+    .drawing .wfs-materials textarea.wfs-input { height: 180px; }
 }

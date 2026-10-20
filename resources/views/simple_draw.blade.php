@@ -79,7 +79,7 @@
         }
     </style>
 </head>
-<body class="drawing">
+<body class="drawing drawing-standalone">
 
     
     <nav id="navbar" class="navbar" role="navigation">
@@ -2467,5 +2467,6 @@
         });
     </script>
 
+    <script src="@assetv('js/drawfence-layout.js')"></script>
 </body>
 </html>
