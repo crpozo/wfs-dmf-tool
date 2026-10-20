@@ -7,7 +7,6 @@
         @include('partials.material-step', ['slot' => 1])
     </div>
 
-    @include('partials.video-help')
 @endsection
 
 @push('scripts')
