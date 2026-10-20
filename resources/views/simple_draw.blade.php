@@ -571,14 +571,14 @@
                     <div class="d-flex justify-content-center">
                         <input type="button" name="estimate" id="btnEstimate" style="display:none;" class="btn wfs-btn wfs-btn-primary wfs-btn-block" value="Get Estimate" />
                     </div>
-                    <div class="form-group wfs-materials" id="formEstimate" style="display:none;">
-                        <label class="wfs-label" for="txtMaterials">List of Materials</label>
-                        <textarea class="form-control wfs-input" id="txtMaterials" rows="10"></textarea>
-                    </div>
-                    <div class="d-flex justify-content-center">
+                                        <div class="d-flex justify-content-center">
                         <button type="button" class="btn wfs-btn wfs-btn-ink wfs-btn-block" id="btnQuote" style="display:none;">
                             Request a quote <i class="fas fa-arrow-right ms-2"></i>
                         </button>
+                    </div>
+                    <div class="form-group wfs-materials" id="formEstimate" style="display:none;">
+                        <label class="wfs-label" for="txtMaterials">List of Materials</label>
+                        <textarea class="form-control wfs-input" id="txtMaterials" rows="10"></textarea>
                     </div>
                 </div>
             </form>

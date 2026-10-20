@@ -100,7 +100,7 @@ body.drawing { overflow: hidden; }
 .drawing .wfs-materials { margin-top: 16px; }
 .drawing .wfs-materials .wfs-label { display: block; margin-bottom: 6px; }
 .drawing .wfs-materials textarea.wfs-input {
-    height: 320px; font-family: var(--wfs-font-body); font-size: 13.5px; line-height: 1.5; color: var(--wfs-charcoal);
+    height: 260px; font-family: var(--wfs-font-body); font-size: 13.5px; line-height: 1.5; color: var(--wfs-charcoal);
     background: var(--wfs-sea); border: 1.5px solid var(--wfs-line); border-radius: 10px; resize: vertical;
 }
 
