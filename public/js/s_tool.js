@@ -106,16 +106,19 @@ class Tool {
   show() {
     push();
 
-    strokeWeight(0.1);
-    stroke(0);
+    // WFS brand: white tools, light-blue when selected, tinted on hover (Oct 2026 redesign)
+    strokeWeight(1);
     if (this.selected) {
-      fill(140);
+      stroke(46, 89, 193);
+      fill(168, 197, 255);
     } else if (this.rollover) {
-      fill(200);
+      stroke(38, 49, 102, 120);
+      fill(232, 237, 250);
     } else {
+      stroke(38, 49, 102, 60);
       fill(255);
     }
-    rect(this.x+1, this.y+1, this.w-2, this.h-2, 5);
+    rect(this.x+1, this.y+1, this.w-2, this.h-2, 8);
     //this.img.position(this.x+1, this.y+1);
     image(this.img, this.x+6, this.y+6, 28, 28);
     //strokeWeight(1);

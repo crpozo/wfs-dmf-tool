@@ -1,6 +1,6 @@
 function gridlines(){
   buffer.textSize(fsGrid);
-  buffer.background(220);
+  buffer.background(255); // WFS redesign: white drawing surface (was gray 220)
   buffer.stroke(30, 30, 30, 20);
   buffer.strokeWeight(2);
   /*

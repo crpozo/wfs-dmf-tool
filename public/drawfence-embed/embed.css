@@ -1,201 +1,190 @@
 /*
- * Styles for the customizable Draw Fence embed.
- * The first rules reproduce the inline styles from simple_draw.blade.php;
- * the responsive overrides at the end make the drawing fit its iframe.
+ * Draw Your Fence - presentation for the customizable embed (Oct 2026 redesign).
+ * Visual language follows westernfencesupply.com: tokens come from /css/wfs-brand.css.
+ * This file is public and self-contained on purpose: it is the editable surface for the look
+ * of the tool. Layout rules at the end make the drawing fit its iframe; keep them when restyling.
  */
-.quote-request-swal {
-            padding: 0;
-            border-radius: 14px;
-            overflow: hidden;
-        }
 
-        .quote-request-swal .swal2-title {
-            width: 100%;
-            margin: 0;
-            padding: 18px 24px;
-            background: #0b1547;
-            color: #fff;
-            font-size: 20px;
-            font-weight: 700;
-            text-align: left;
-        }
-
-        .quote-request-swal .swal2-html-container {
-            margin: 0;
-            padding: 22px 24px 8px;
-        }
-
-        .quote-request-swal .swal2-actions {
-            width: 100%;
-            margin: 0;
-            padding: 10px 24px 24px;
-            justify-content: flex-end;
-        }
-
-        .quote-request-swal .form-label {
-            color: #1f2937;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .quote-request-swal .form-control,
-        .quote-request-swal .form-select,
-        .quote-request-swal .select2-container--default .select2-selection--single {
-            min-height: 42px;
-            border-radius: 8px;
-            border-color: #cbd5e1;
-        }
-
-        .quote-request-swal .swal2-confirm {
-            background: #0b1547 !important;
-            border-radius: 8px;
-            font-weight: 700;
-        }
-
-        .quote-request-swal .swal2-cancel {
-            border-radius: 8px;
-        }
-
-/* Embedded layout overrides */
-
-/*
- * Customizable Draw Fence presentation.
- *
- * This file is intentionally public and self-contained so it can be handed to
- * an external developer. The variables below are the quickest way to resize
- * the overall tool, canvas area and dimensions panel.
- */
 :root {
     --wfs-embed-min-height: 520px;
     --wfs-canvas-min-height: 360px;
-    --wfs-panel-width: clamp(220px, 20vw, 340px);
-    --wfs-toolbar-background: #0b1547;
-    --wfs-canvas-background: #fff;
-    --wfs-panel-border: #dee2e6;
+    --wfs-panel-width: clamp(240px, 22vw, 360px);
+    --wfs-toolbar-background: var(--wfs-white);
+    --wfs-canvas-background: var(--wfs-sea);
+    --wfs-panel-border: var(--wfs-line);
 }
 
-html,
-body.drawing-embedded {
-    width: 100%;
-    height: 100%;
-    min-height: var(--wfs-embed-min-height);
+/* ---------- Base ---------- */
+html, body.drawing { font-family: var(--wfs-font-sans); color: var(--wfs-ink); background: var(--wfs-white); }
+body.drawing { overflow: hidden; }
+.drawing h1, .drawing h2, .drawing h5.modal-title { text-shadow: none; }
+
+/* ---------- Top navbar (standalone page only; hidden when embedded) ---------- */
+.drawing #navbar { background: var(--wfs-ink); border-bottom: 0; padding: 0.6rem 0; }
+
+/* ---------- Toolbar ---------- */
+.drawing #header.wfs-toolbar {
+    background: var(--wfs-toolbar-background);
+    border-bottom: 1px solid var(--wfs-line);
+    text-shadow: none;
 }
+.drawing #header.wfs-toolbar .hero { padding: 10px var(--wfs-pad); }
+.drawing #header.wfs-toolbar .row { align-items: center; }
+.drawing .wfs-toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 0 !important; }
+.drawing .wfs-toolbar-title .wfs-eyebrow { display: block; text-align: right; }
+.drawing .wfs-toolbar-title .wfs-display { font-size: 22px; margin: 0; text-align: right; color: var(--wfs-ink); }
+
+.drawing .btn-files,
+.drawing .btn-files:focus {
+    font-family: var(--wfs-font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wfs-ink);
+    background: var(--wfs-white);
+    border: 1.5px solid var(--wfs-ink);
+    border-radius: 6px;
+    padding: 9px 14px;
+    margin: 0;
+    white-space: nowrap;
+    box-shadow: none;
+    transition: background .15s, color .15s;
+}
+.drawing .btn-files:hover { background: var(--wfs-ink); color: var(--wfs-white); border-color: var(--wfs-ink); }
+.drawing .btn-files:hover .fas { transform: none; }
+.drawing .btn-files .fas { color: var(--wfs-blue); transition: color .15s; }
+.drawing .btn-files:hover .fas { color: var(--wfs-blue-ice); }
+.drawing .btn-files-help { border-color: var(--wfs-blue); color: var(--wfs-blue); }
+.drawing .btn-files-help:hover { background: var(--wfs-blue); border-color: var(--wfs-blue); color: var(--wfs-white); }
+.drawing .btn-files-help .fas { color: inherit; }
+
+/* Help tooltip shown next to toolbar buttons (created by embed.js) */
+.drawing .toolbar-video-tooltip { font-family: var(--wfs-font-sans); border-radius: 8px; }
+
+/* ---------- Workspace ---------- */
+.drawing .wfs-workspace { margin: 0; }
+.drawing .wfs-canvas-column { padding: 0; background: var(--wfs-canvas-background); }
+.drawing .wfs-canvas-column main { display: block; }
+.drawing canvas { display: block; }
+
+/* ---------- Dimensions panel ---------- */
+.drawing #panelDims.wfs-panel {
+    background: var(--wfs-white);
+    border-left: 1px solid var(--wfs-panel-border);
+    padding: 18px 16px 24px;
+}
+.drawing .wfs-panel-head { margin-bottom: 14px; }
+.drawing .wfs-panel-head .wfs-display { font-size: 24px; margin: 2px 0 6px; }
+.drawing .wfs-panel-hint { font-family: var(--wfs-font-body); font-size: 13.5px; line-height: 1.45; color: var(--wfs-charcoal); margin: 0; }
+
+.drawing .wfs-dims-table { margin-bottom: 12px; }
+.drawing .wfs-dims-table td { border: 0; padding: 4px 2px; vertical-align: middle; }
+.drawing .wfs-dims-table .input-group-text {
+    font-family: var(--wfs-font-sans); font-weight: 700; font-size: 13px; color: var(--wfs-ink);
+    background: var(--wfs-sea); border: 1.5px solid var(--wfs-line); border-right: 0; border-radius: 8px 0 0 8px;
+}
+.drawing .wfs-dims-table .form-control {
+    font-family: var(--wfs-font-sans); font-size: 14px; color: var(--wfs-ink);
+    border: 1.5px solid var(--wfs-line); border-radius: 0 8px 8px 0; min-height: 40px;
+}
+.drawing .wfs-dims-table .form-control:focus { border-color: var(--wfs-blue); box-shadow: 0 0 0 3px rgba(46, 89, 193, .18); }
+
+.drawing #panelDims .wfs-btn { margin-top: 10px; }
+.drawing #panelDims .wfs-btn-block { width: 100%; justify-content: center; }
+.drawing #panelDims .wfs-btn-outline { width: 100%; justify-content: center; }
+.drawing #panelDims .wfs-btn-primary, .drawing #panelDims .wfs-btn-primary:focus { background: var(--wfs-blue); color: var(--wfs-white); border: 0; }
+.drawing #panelDims .wfs-btn-ink, .drawing #panelDims .wfs-btn-ink:focus { background: var(--wfs-ink); color: var(--wfs-white); border: 0; }
+
+.drawing .wfs-materials { margin-top: 16px; }
+.drawing .wfs-materials .wfs-label { display: block; margin-bottom: 6px; }
+.drawing .wfs-materials textarea.wfs-input {
+    height: 320px; font-family: var(--wfs-font-body); font-size: 13.5px; line-height: 1.5; color: var(--wfs-charcoal);
+    background: var(--wfs-sea); border: 1.5px solid var(--wfs-line); border-radius: 10px; resize: vertical;
+}
+
+/* ---------- Bootstrap modals (length, gates, templates) ---------- */
+.drawing .modal-content { border: 0; border-radius: var(--wfs-radius); box-shadow: 0 24px 60px rgba(38, 49, 102, .25); font-family: var(--wfs-font-sans); }
+.drawing .modal-header { border-bottom: 1px solid var(--wfs-line); padding: 18px 24px; }
+.drawing .modal-title.wfs-display { font-size: 22px; color: var(--wfs-ink); }
+.drawing .modal-body { padding: 20px 24px; }
+.drawing .modal-footer { border-top: 1px solid var(--wfs-line); padding: 14px 24px; }
+.drawing .modal .btn-primary, .drawing .modal .btn-primary:focus {
+    background: var(--wfs-blue); border-color: var(--wfs-blue); color: var(--wfs-white);
+    font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; border-radius: var(--wfs-radius-pill); padding: 10px 20px;
+}
+.drawing .modal .btn-primary:hover { background: #244ba6; border-color: #244ba6; }
+.drawing .modal .btn-secondary, .drawing .modal .btn-secondary:focus {
+    background: transparent; color: var(--wfs-ink); border: 1.5px solid var(--wfs-ink);
+    font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; border-radius: var(--wfs-radius-pill); padding: 10px 20px;
+}
+.drawing .modal .btn-secondary:hover { background: var(--wfs-ink); color: var(--wfs-white); }
+.drawing .modal .input-group-text { font-weight: 700; color: var(--wfs-ink); background: var(--wfs-sea); border: 1.5px solid var(--wfs-line); }
+.drawing .modal .form-control { border: 1.5px solid var(--wfs-line); min-height: 44px; font-size: 15px; }
+.drawing .modal .form-control:focus { border-color: var(--wfs-blue); box-shadow: 0 0 0 3px rgba(46, 89, 193, .18); }
+
+/* Gate type pictures */
+.drawing .modal .lbl-door { cursor: pointer; margin: 0 6px; }
+.drawing .modal .btn-door { scale: 1; border: 2px solid transparent; border-radius: 10px; padding: 6px; background: var(--wfs-white); transition: border-color .15s, transform .15s; }
+.drawing .modal .btn-door:hover { transform: scale(1.04); border-color: var(--wfs-line); }
+.drawing .modal .btn-check:checked + .btn-door { border-color: var(--wfs-blue); background: rgba(168, 197, 255, .25); }
+
+/* Gate width chips: the JS toggles .active on these labels */
+.drawing .modal .btn-group { gap: 8px; flex-wrap: wrap; align-items: center; }
+.drawing .modal .dwBtn, .drawing .modal .dwBtn:focus {
+    background: var(--wfs-white); color: var(--wfs-ink); border: 1.5px solid var(--wfs-ink) !important; border-radius: 6px !important;
+    font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; padding: 10px 14px;
+}
+.drawing .modal .dwBtn:hover { background: var(--wfs-sea); }
+.drawing .modal .dwBtn.active { background: var(--wfs-ink) !important; color: var(--wfs-white) !important; }
+.drawing .modal .dwBtn input { margin-right: 6px; accent-color: var(--wfs-blue); }
+.drawing .modal .btn-group .form-control { width: 110px !important; border-radius: 8px; }
+.drawing .modal .btn-group .input-group-text { border-radius: 8px; }
+.drawing #gateDisclaimer, .drawing #dblGateDisclaimer { color: var(--wfs-danger) !important; font-family: var(--wfs-font-body); font-weight: 600 !important; }
+
+/* Help video modal */
+.drawing .video-help-dialog { border-radius: var(--wfs-radius); overflow: hidden; }
+.drawing .video-help-close { font-family: var(--wfs-font-sans); font-weight: 700; }
+
+/* SweetAlert dialogs (estimate questions, warnings) */
+.drawing .swal2-popup { font-family: var(--wfs-font-sans); border-radius: var(--wfs-radius); }
+.drawing .swal2-title { font-family: var(--wfs-font-display); font-weight: 400; color: var(--wfs-ink); }
+.drawing .swal2-confirm.swal2-styled { background: var(--wfs-blue) !important; border-radius: var(--wfs-radius-pill); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; padding: 10px 20px; }
+.drawing .swal2-cancel.swal2-styled { background: transparent !important; color: var(--wfs-ink) !important; border: 1.5px solid var(--wfs-ink); border-radius: var(--wfs-radius-pill); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 13px; padding: 10px 20px; }
+
+/* ---------- Embedded layout (iframe on westernfencesupply.com) ---------- */
+html,
+body.drawing-embedded { width: 100%; height: 100%; min-height: var(--wfs-embed-min-height); }
 
 .drawing-embedded #navbar,
 .drawing-embedded .drawing-toolbar-title,
-.drawing-embedded a[href^="/goto"] {
-    display: none !important;
-}
+.drawing-embedded a[href^="/goto"] { display: none !important; }
 
-body.drawing-embedded {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--wfs-canvas-background);
-}
+body.drawing-embedded { display: flex; flex-direction: column; overflow: hidden; background: var(--wfs-white); }
 
-.drawing-embedded .drawing-embed-toolbar {
-    flex: 0 0 auto;
-    background: var(--wfs-toolbar-background);
-    text-shadow: none;
-}
+.drawing-embedded .drawing-embed-toolbar { flex: 0 0 auto; }
+.drawing-embedded .drawing-embed-toolbar .hero { padding: 8px 12px; }
+.drawing-embedded .drawing-embed-toolbar .row { --bs-gutter-x: 0; margin: 0; }
+.drawing-embedded .drawing-toolbar-actions { width: 100%; }
 
-.drawing-embedded .drawing-embed-toolbar .hero {
-    padding: 4px 10px;
-}
-
-.drawing-embedded .drawing-embed-toolbar .row {
-    --bs-gutter-x: 0;
-    margin: 0;
-}
-
-.drawing-embedded .drawing-toolbar-actions {
-    width: 100%;
-    padding-left: 0 !important;
-}
-
-.drawing-embedded .btn-files {
-    margin: 3px 6px 3px 0;
-    white-space: nowrap;
-}
-
-.drawing-embedded .drawing-workspace {
-    display: flex;
-    flex: 1 1 auto;
-    flex-wrap: nowrap;
-    min-height: 0;
-    margin: 0;
-    padding-right: 0 !important;
-}
-
-.drawing-embedded .drawing-canvas-column {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-    height: 100%;
-    padding: 0;
-}
-
-.drawing-embedded .drawing-canvas-host {
-    width: 100%;
-    height: 100%;
-    min-height: var(--wfs-canvas-min-height);
-    overflow: hidden;
-    background: var(--wfs-canvas-background);
-}
-
-.drawing-embedded .drawing-canvas-host canvas {
-    max-width: 100%;
-    touch-action: none;
-}
+.drawing-embedded .drawing-workspace { display: flex; flex: 1 1 auto; flex-wrap: nowrap; min-height: 0; margin: 0; padding-right: 0 !important; }
+.drawing-embedded .drawing-canvas-column { flex: 1 1 auto; width: auto; min-width: 0; height: 100%; padding: 0; }
+.drawing-embedded .drawing-canvas-host { width: 100%; height: 100%; min-height: var(--wfs-canvas-min-height); overflow: hidden; background: var(--wfs-canvas-background); }
+.drawing-embedded .drawing-canvas-host canvas { max-width: 100%; touch-action: none; }
 
 .drawing-embedded #panelDims {
     flex: 0 0 var(--wfs-panel-width);
     width: var(--wfs-panel-width);
     max-height: none !important;
-    padding: 0 10px;
     overflow: auto !important;
-    border-left: 1px solid var(--wfs-panel-border);
-    background: #fff;
 }
 
-/* Examples of safe visual changes for the external implementation:
- *
- * .drawing-embedded #btnPrintSketch { display: none; }
- * .drawing-embedded #btnRestart { order: 99; }
- * .drawing-embedded .btn-files { border-radius: 999px; }
- */
-
 @media (max-width: 767.98px) {
-    :root {
-        --wfs-embed-min-height: 640px;
-    }
-
-    .drawing-embedded .drawing-embed-toolbar .hero {
-        padding: 3px 6px;
-    }
-
-    .drawing-embedded .btn-files {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
-
-    .drawing-embedded .drawing-workspace {
-        flex-direction: column;
-    }
-
-    .drawing-embedded .drawing-canvas-column {
-        flex: 1 1 auto;
-        width: 100%;
-        min-height: var(--wfs-canvas-min-height);
-    }
-
-    .drawing-embedded #panelDims {
-        flex: 0 0 auto;
-        width: 100%;
-        max-height: 32vh !important;
-        padding: 0 8px 8px;
-        border-top: 1px solid var(--wfs-panel-border);
-        border-left: 0;
-    }
+    :root { --wfs-embed-min-height: 640px; }
+    .drawing-embedded .drawing-embed-toolbar .hero { padding: 6px 8px; }
+    .drawing .btn-files { padding: 7px 10px; font-size: 12px; }
+    .drawing-embedded .drawing-workspace { flex-direction: column; }
+    .drawing-embedded .drawing-canvas-column { flex: 1 1 auto; width: 100%; min-height: var(--wfs-canvas-min-height); }
+    .drawing-embedded #panelDims { flex: 0 0 auto; width: 100%; max-height: 36vh !important; padding: 12px; border-top: 1px solid var(--wfs-panel-border); border-left: 0; }
+    .drawing .wfs-panel-head .wfs-display { font-size: 20px; }
 }
