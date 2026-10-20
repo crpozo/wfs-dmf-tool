@@ -37,6 +37,11 @@
             @if ($materials->count() > 1)
                 <span class="wfs-eyebrow">Material {{ $loop->iteration }}</span>
             @endif
+            @if (!empty($previews[$slot]))
+                <div class="wfs-summary-preview">
+                    <img src="{{ asset(ltrim($previews[$slot], '/')) }}" alt="{{ $attributes['material'] ?? 'Fence' }}" />
+                </div>
+            @endif
             <div class="wfs-summary-rows">
                 @foreach ($labels as $key => $label)
                     @if (!empty($attributes[$key]))

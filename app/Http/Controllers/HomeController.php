@@ -77,6 +77,71 @@ class HomeController extends Controller
     }
 
     /**
+     * Preview image for the options chosen so far in a step code (e.g. "4130" or "41312").
+     * Walks steps.json along the code, takes the last chosen image (style/design) and the chosen
+     * color, and returns the matching per-color image in public/images, or null if there is none yet.
+     * Aluminum style cards already point to the per-color image, so its last image is used as is.
+     */
+    private function fencePreview($code){
+        $code = (string) $code;
+        $sel = $this->json_data;
+        if(!$sel || $code === '' || !isset($sel[$code[0]])){
+            return null;
+        }
+
+        $node = $sel[$code[0]];
+        $img = null;
+        $color = null;
+        $len = strlen($code);
+        if($code[$len-1] == "0"){
+            $len--;
+        }
+        for($i=2;$i<=$len;$i++){
+            $node = $node['next']['responses'][substr($code, 0, $i)] ?? null;
+            if(!$node){
+                break;
+            }
+            if(!empty($node['img'])){
+                $img = $node['img'];
+            }
+            if(!empty($node['color'])){
+                $color = strtolower($node['name']);
+            }
+        }
+
+        $colorKeys = [
+            'white' => 'white', 'black' => 'black', 'bronze' => 'bronze', 'woodgrain' => 'woodgrain',
+            'sand' => 'sand', 'gray' => 'grey', 'galvanized' => 'galvanized',
+            'black vinyl coated' => 'black', 'green vinyl coated' => 'green',
+        ];
+        $c = $colorKeys[$color] ?? null;
+
+        switch($code[0]){
+            case "2": // Chain Link: a single style, the image depends only on the color
+                return $c ? "/images/ChainLink_standard_$c.webp" : null;
+            case "3": // Metal: Original and Modern share the privacy panel image
+                return $c ? "/images/Metal_privacy_$c.webp" : null;
+            case "4": // Vinyl: design image recolored; two-tone colors keep the design image
+                $designs = [
+                    'vinyl-privacy-fence.JPG' => 'privacy',
+                    'viny-privacy-fence-with-lattice-accent.JPG' => 'privacy_lattice',
+                    'vinyl-semi-privacy-fence.JPG' => 'semi_privacy',
+                    'vinyl-shadowbox-fence.JPG' => 'shadowbox',
+                    'vinyl-louvered-fence.JPG' => 'louvered',
+                    'vinyl-picket-fence.JPG' => 'picket',
+                    'vinyl-open-picket-fence.JPG' => 'open_picket',
+                ];
+                $design = $img ? ($designs[basename($img)] ?? null) : null;
+                if($design && $c){
+                    return "/images/Vinyl_{$design}_$c.webp";
+                }
+                return $img;
+            default:
+                return $img;
+        }
+    }
+
+    /**
      * Show the application dashboard.
      *
      * @return \Illuminate\Contracts\Support\Renderable
@@ -464,7 +529,7 @@ class HomeController extends Controller
                 //$breadcrum .= "<li class='breadcrumb-item active' aria-current='page'>Data</li></ol></nav>";
                 $breadcrum .= "</ol></nav>";
                 
-                return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material ]);
+                return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material, 'preview' => $this->fencePreview($step) ]);
             }
             else{
                 if($i+1 == $size){
@@ -487,7 +552,11 @@ class HomeController extends Controller
                     $this->step_actual++;
                     // Configuration complete: show the summary (fragment loaded into #contenido)
                     // instead of jumping straight to the drawing tool. Multi-material questions stay disabled.
-                    return view('summary', ['materials' => session('materials'), 'from' => $from, 'slot' => $material]);
+                    $previews = [];
+                    foreach(session('materials') ?? [] as $slot => $data){
+                        $previews[$slot] = $this->fencePreview($data['code'] ?? '');
+                    }
+                    return view('summary', ['materials' => session('materials'), 'from' => $from, 'slot' => $material, 'previews' => $previews]);
 
                     $title = "Does your project require a second type of fencing material?";
                     if($material == 2){
@@ -517,7 +586,7 @@ class HomeController extends Controller
                     $breadcrum .= "<li class='breadcrumb-item'><a href='#'>" . $sel["responses"][$acum]["name"] . "</a></li>";
                     $breadcrum .= "</ol></nav>";
 
-                    return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material ]);
+                    return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material, 'preview' => $this->fencePreview($step) ]);
                     //return Redirect::to('/drawfence');
                     //return view('simple_draw');
                 }

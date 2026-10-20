@@ -29,7 +29,8 @@
     <aside class="wfs-step-aside">
         <div class="wfs-material-card">
             <div class="wfs-material-img">
-                <img src="{{ asset($type[1]) }}" alt="{{ $type[0] }}" />
+                {{-- Shows the chosen design/color once there is one; the material cover until then. --}}
+                <img src="{{ asset(ltrim($preview ?? $type[1], '/')) }}" alt="{{ $type[0] }}" />
             </div>
         </div>
         <span class="wfs-eyebrow">{{ $type[2] }}</span>
