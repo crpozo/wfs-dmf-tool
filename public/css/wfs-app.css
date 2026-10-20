@@ -1,0 +1,150 @@
+/* Draw My Fence - page styles for the configurator (home, steps), quote form and thank-you.
+ * Visual language follows westernfencesupply.com. Tokens live in wfs-brand.css. */
+
+/* ---------- Frame ---------- */
+body.wfs-page { margin: 0; font-family: var(--wfs-font-sans); color: var(--wfs-ink); background: var(--wfs-white); -webkit-font-smoothing: antialiased; }
+.wfs-container { width: min(var(--wfs-max), calc(100% - 2 * var(--wfs-pad))); margin-inline: auto; }
+
+.wfs-header { background: var(--wfs-white); border-bottom: 1px solid var(--wfs-line); position: sticky; top: 0; z-index: 50; }
+.wfs-header .wfs-container { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 84px; }
+.wfs-logo img { height: 40px; width: auto; display: block; }
+.wfs-header-right { display: flex; align-items: center; gap: 16px; }
+.wfs-header-link { font-size: 14px; font-weight: 600; color: var(--wfs-ink); text-decoration: none; }
+.wfs-header-link:hover { color: var(--wfs-blue); }
+.wfs-user-menu { position: relative; }
+.wfs-user-menu > button { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; font-weight: 600; color: var(--wfs-ink); background: var(--wfs-sea); border: 0; border-radius: var(--wfs-radius-pill); padding: 8px 14px; cursor: pointer; }
+.wfs-user-menu .wfs-dropdown { position: absolute; right: 0; top: calc(100% + 8px); min-width: 200px; background: var(--wfs-white); border: 1px solid var(--wfs-line); border-radius: 12px; box-shadow: var(--wfs-shadow); padding: 6px; z-index: 60; }
+.wfs-user-menu .wfs-dropdown a, .wfs-user-menu .wfs-dropdown button { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; color: var(--wfs-ink); background: none; border: 0; border-radius: 8px; padding: 9px 12px; text-decoration: none; cursor: pointer; }
+.wfs-user-menu .wfs-dropdown a:hover, .wfs-user-menu .wfs-dropdown button:hover { background: var(--wfs-sea); }
+.wfs-user-menu .wfs-dropdown.hidden { display: none; }
+
+.wfs-main { padding: 44px 0 80px; min-height: 60vh; }
+
+.wfs-footer { background: var(--wfs-ink); color: var(--wfs-on-ink); padding: 32px 0; font-family: var(--wfs-font-body); font-size: 14px; }
+.wfs-footer .wfs-container { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.wfs-footer a { color: var(--wfs-white); }
+
+/* ---------- Page head ("Start With The Material.") ---------- */
+.wfs-page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; padding-bottom: 22px; border-bottom: 1px solid var(--wfs-line); margin-bottom: 36px; }
+.wfs-page-head h1 { font-family: var(--wfs-font-display); font-weight: 400; font-size: clamp(30px, 3.4vw, 44px); line-height: 1.02; letter-spacing: -0.02em; margin: 0; color: var(--wfs-ink); }
+.wfs-page-head h1 em { font-style: normal; color: var(--wfs-blue); }
+.wfs-page-head p { font-family: var(--wfs-font-body); color: var(--wfs-charcoal); font-size: 17px; line-height: 1.45; max-width: 440px; text-align: right; margin: 0; }
+
+/* ---------- Material cards ---------- */
+.wfs-materials { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.wfs-material-card { display: flex; flex-direction: column; background: var(--wfs-white); border: 1px solid var(--wfs-line); border-radius: var(--wfs-radius); box-shadow: var(--wfs-shadow); overflow: hidden; text-decoration: none; color: var(--wfs-ink); transition: transform .18s, box-shadow .18s, border-color .18s; }
+a.wfs-material-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(38, 49, 102, .14); border-color: var(--wfs-blue); color: var(--wfs-ink); }
+.wfs-material-img { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--wfs-white); border-bottom: 1px solid var(--wfs-line); }
+.wfs-material-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.wfs-material-body { padding: 18px 20px 22px; }
+.wfs-material-body .wfs-eyebrow { display: block; margin-bottom: 6px; }
+.wfs-material-body h3 { font-family: var(--wfs-font-sans); font-weight: 700; font-size: 20px; margin: 0 0 4px; color: var(--wfs-ink); }
+.wfs-material-body p { font-family: var(--wfs-font-body); color: var(--wfs-charcoal); font-size: 15px; margin: 0; }
+.wfs-material-meta { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--wfs-line); font-size: 12.5px; color: var(--wfs-muted); }
+.wfs-material-meta span i { color: var(--wfs-blue); width: 18px; }
+
+/* ---------- Step (configurator) ---------- */
+.wfs-step-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+.wfs-step { display: grid; grid-template-columns: minmax(260px, 480px) 1fr; gap: 44px; align-items: start; }
+.wfs-step-aside .wfs-material-card { pointer-events: none; }
+.wfs-step-aside .wfs-eyebrow { display: block; margin-top: 18px; }
+.wfs-step-aside h2 { font-family: var(--wfs-font-display); font-weight: 400; font-size: 26px; margin: 4px 0 0; color: var(--wfs-ink); }
+
+.wfs-chosen { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+.wfs-chosen .wfs-label { display: block; margin-bottom: 2px; }
+.wfs-chosen-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.wfs-chosen-chips .wfs-chip { cursor: default; }
+
+.wfs-question .wfs-label { display: block; margin-bottom: 12px; font-size: 13px; }
+
+/* Options come from the controller as Bootstrap rows/cols/cards; turn them into chips and option cards. */
+.wfs-options .row { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 !important; --bs-gutter-x: 0; --bs-gutter-y: 0; }
+.wfs-options .row + .row { margin-top: 10px !important; }
+.wfs-options .row > [class*="col-"] { width: auto; max-width: none; flex: 0 0 auto; padding: 0; margin: 0 !important; }
+
+/* Text options -> chips */
+.wfs-options .card-step-alt { height: auto; min-height: 0; border-radius: 6px !important; border: 1.5px solid var(--wfs-ink) !important; background-color: var(--wfs-white); box-shadow: none; transition: background .15s, color .15s, outline-color .15s; }
+.wfs-options .card-step-alt a { display: block; text-decoration: none; }
+.wfs-options .card-step-alt .card-body > div { margin: 0 !important; padding: 11px 18px; font-family: var(--wfs-font-sans); font-weight: 700; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--wfs-ink); white-space: nowrap; }
+.wfs-options .card-step-alt:not([style*="background"]):hover { background-color: var(--wfs-ink); }
+.wfs-options .card-step-alt:not([style*="background"]):hover .card-body > div { color: var(--wfs-white); }
+/* Color options keep their inline background; give them white text and a blue outline on hover */
+.wfs-options .card-step-alt[style*="background"] .card-body > div { color: var(--wfs-white); text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.wfs-options .card-step-alt[style*="background"]:hover { outline: 3px solid var(--wfs-blue-ice); outline-offset: 2px; }
+.wfs-options .special_order_btn { font-family: var(--wfs-font-body); font-size: 12px; color: var(--wfs-danger); margin-top: 4px; }
+
+/* Picture options (styles, designs) -> option cards */
+.wfs-options .card-img-step { width: 212px; height: auto; border: 1px solid var(--wfs-line) !important; border-radius: var(--wfs-radius); padding: 12px; background: var(--wfs-white); box-shadow: var(--wfs-shadow); transition: transform .18s, border-color .18s; }
+.wfs-options .card-img-step:hover { transform: translateY(-2px); border-color: var(--wfs-blue) !important; }
+.wfs-options .card-img-step a { display: block; }
+.wfs-options .card-img-step img.img-opt { width: 100%; height: 140px; object-fit: contain; margin: 0 !important; }
+.wfs-options .card-img-step .card-title { font-family: var(--wfs-font-sans); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--wfs-ink); padding: 10px 0 2px !important; margin: 0; }
+.wfs-options .card-img-step .note { font-family: var(--wfs-font-body); font-size: 12px; color: var(--wfs-muted); }
+.wfs-options .card-img-step .special_order { font-family: var(--wfs-font-body); font-size: 12px; color: var(--wfs-danger); }
+.wfs-step-note { margin-top: 20px; font-family: var(--wfs-font-body); font-size: 14px; line-height: 1.5; color: var(--wfs-charcoal); max-width: 640px; }
+
+#contenido.is-loading { opacity: .45; transition: opacity .15s; }
+
+/* ---------- Bootstrap modal (custom height) ---------- */
+.wfs-page .modal-content { border: 0; border-radius: var(--wfs-radius); box-shadow: 0 24px 60px rgba(38, 49, 102, .25); }
+.wfs-page .modal-header { border-bottom: 1px solid var(--wfs-line); padding: 18px 24px; }
+.wfs-page .modal-title { font-family: var(--wfs-font-display); font-weight: 400; font-size: 22px; color: var(--wfs-ink); }
+.wfs-page .modal-body { padding: 20px 24px; }
+.wfs-page .modal-footer { border-top: 1px solid var(--wfs-line); padding: 14px 24px; }
+.wfs-page .modal .input-group-text { font-weight: 700; color: var(--wfs-ink); background: var(--wfs-sea); border: 1.5px solid var(--wfs-line); }
+.wfs-page .modal .form-control { border: 1.5px solid var(--wfs-line); min-height: 44px; font-size: 15px; }
+.wfs-page .modal .form-control:focus { border-color: var(--wfs-blue); box-shadow: 0 0 0 3px rgba(46, 89, 193, .18); }
+.wfs-page .modal .btn-primary, .wfs-page .modal .btn-primary:focus { background: var(--wfs-blue); border-color: var(--wfs-blue); color: var(--wfs-white); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; border-radius: var(--wfs-radius-pill); padding: 10px 20px; }
+.wfs-page .modal .btn-secondary, .wfs-page .modal .btn-secondary:focus { background: transparent; color: var(--wfs-ink); border: 1.5px solid var(--wfs-ink); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; border-radius: var(--wfs-radius-pill); padding: 10px 20px; }
+
+/* ---------- Quote form ---------- */
+.wfs-quote { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 40px; align-items: start; }
+.wfs-quote-summary { background: var(--wfs-ink); color: var(--wfs-on-ink); border-radius: var(--wfs-radius-lg); padding: 28px; }
+.wfs-quote-summary .wfs-eyebrow { color: var(--wfs-blue-ice); }
+.wfs-quote-summary h2 { font-family: var(--wfs-font-display); font-weight: 400; font-size: 26px; color: var(--wfs-white); margin: 6px 0 18px; }
+.wfs-quote-summary img { width: 100%; border-radius: 10px; background: var(--wfs-white); display: block; }
+.wfs-quote-summary p { font-family: var(--wfs-font-body); font-size: 14px; line-height: 1.5; margin: 16px 0 0; }
+.wfs-form { background: var(--wfs-white); border: 1px solid var(--wfs-line); border-radius: var(--wfs-radius-lg); box-shadow: var(--wfs-shadow); padding: 32px; }
+.wfs-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; }
+.wfs-form-grid .span-2 { grid-column: span 2; }
+.wfs-field .wfs-label { display: block; margin-bottom: 8px; }
+.wfs-field .wfs-hint { display: block; font-family: var(--wfs-font-body); font-size: 12.5px; color: var(--wfs-muted); margin: -4px 0 8px; }
+.wfs-field .wfs-input, .wfs-field select.wfs-input { font-family: var(--wfs-font-sans); font-size: 15px; color: var(--wfs-ink); background: var(--wfs-white); border: 1.5px solid var(--wfs-line); border-radius: 8px; padding: 12px 14px; width: 100%; min-height: 46px; }
+.wfs-field .wfs-input:focus { outline: none; border-color: var(--wfs-blue); box-shadow: 0 0 0 3px rgba(46, 89, 193, .18); }
+.wfs-field .text-danger { color: var(--wfs-danger); }
+.wfs-chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.wfs-chip-group input { position: absolute; opacity: 0; pointer-events: none; }
+.wfs-chip-group label { margin: 0; }
+.wfs-chip-group input:checked + label { background: var(--wfs-ink); color: var(--wfs-white); }
+.wfs-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--wfs-line); }
+.wfs-form-actions .wfs-note { font-family: var(--wfs-font-body); font-size: 13px; color: var(--wfs-muted); }
+
+/* ---------- Thank you ---------- */
+.wfs-thanks { max-width: 640px; margin: 0 auto; text-align: center; padding: 20px 0; }
+.wfs-thanks img { width: 140px; margin: 0 auto 22px; display: block; }
+.wfs-thanks h1 { font-family: var(--wfs-font-display); font-weight: 400; font-size: clamp(32px, 4vw, 46px); color: var(--wfs-ink); margin: 0 0 12px; }
+.wfs-thanks p { font-family: var(--wfs-font-body); font-size: 17px; line-height: 1.5; color: var(--wfs-charcoal); margin: 0 0 28px; }
+.wfs-thanks .wfs-btn { margin: 0 6px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1199.98px) { .wfs-materials { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 991.98px) {
+    .wfs-page-head { flex-direction: column; align-items: flex-start; }
+    .wfs-page-head p { text-align: left; }
+    .wfs-step { grid-template-columns: 1fr; gap: 28px; }
+    .wfs-step-aside { display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: center; }
+    .wfs-step-aside .wfs-material-img { padding: 12px; }
+    .wfs-step-aside .wfs-eyebrow { margin-top: 0; }
+    .wfs-quote { grid-template-columns: 1fr; }
+    .wfs-form-grid { grid-template-columns: 1fr; }
+    .wfs-form-grid .span-2 { grid-column: auto; }
+    .wfs-form-actions { flex-direction: column; align-items: stretch; }
+}
+@media (max-width: 575.98px) {
+    .wfs-materials { grid-template-columns: 1fr; }
+    .wfs-header .wfs-container { min-height: 68px; }
+    .wfs-logo img { height: 32px; }
+    .wfs-main { padding: 28px 0 56px; }
+    .wfs-form { padding: 22px; }
+    .wfs-options .card-img-step { width: calc(50% - 5px); }
+}

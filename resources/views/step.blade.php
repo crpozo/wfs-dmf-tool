@@ -1,132 +1,91 @@
-    <!-- Header
-    <header class="hero-image">
-      <div class="hero text-white">
-        <div class="container-xl">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="text-container p-3 d-flex flex-column justify-content-center h-100 step">
-                <h1 class="text-uppercase text-center fw-bold">
-                    {{ $step }}
-                </h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-    -->
-    <section>
-        <div class="hero text-black">
-            <div class="container-xl">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="row">
-                            {!! Blade::compileString($breadcrums) !!}
-                        </div>
-                        <div class="row">
-                            <a href="{{ route('quote.create') }}" class="btn btn-primary home" role="button">
-                                <i class="fas fa-home me-2"></i>
-                            </a>
+{{-- Configurator step. Rendered as an HTML fragment and loaded into #contenido by partials/step-loader. --}}
+@php
+    $types = [
+        1 => ['Aluminum Fence',   'images/cover-aluminum-fence.jpg',   'Lightweight, Lasting Protection'],
+        2 => ['Chain Link Fence', 'images/cover-chain-link-fence.jpg', 'A cost-effective solution'],
+        3 => ['Metal Fence',      'images/cover-metal-fence.jpg',      'Ultimate Privacy, Impeccable Design'],
+        4 => ['Vinyl Fence',      'images/cover-vinyl-fence.jpg',      'Timeless Elegance, Zero Maintenance'],
+    ];
+    $type = $types[(int) substr((string) ($code ?? '1'), 0, 1)] ?? $types[1];
+    $shortName = trim(str_replace('Fence', '', $type[0]));
 
-                            <a href="{{ $from }}" class="btn btn-primary prev_step" role="button">Previous Step</a>
-                        </div>
-                    </div>
-                    <!--
-                    <div class="col-md-6">
-                        <div class="text-container p-3 d-flex flex-column justify-content-center h-100" style="margin-top:15px;">
-                            <p class="text-uppercase text-center hide-margin fw-bold">
-                                {{ $title }}
-                            </p>
-                            <p class="text-center small hide-margin">Click to select</p>
-                        </div>
-                    </div>
-                    -->
+    // Breadcrumb links carry the selections made so far; the first one is the material itself.
+    preg_match_all("/<a href='#'>(.*?)<\\/a>/", $breadcrums ?? '', $matches);
+    $chosen = array_slice($matches[1] ?? [], 1);
+    $stepNote = $step_note ?? '';
+@endphp
+
+<div class="wfs-page-head">
+    <h1>{{ $shortName }}<br><em>At A Glance.</em></h1>
+    <p>Pick each option and the next one appears. Same options as the Easy Draw Your Fence tool.</p>
+</div>
+
+<div class="wfs-step-actions">
+    <a href="{{ route('quote.create') }}" class="wfs-btn wfs-btn-outline"><i class="fas fa-arrow-left"></i> Change material</a>
+    <a href="{{ $from }}" class="wfs-btn wfs-btn-outline">Previous step</a>
+</div>
+
+<div class="wfs-step">
+    <aside class="wfs-step-aside">
+        <div class="wfs-material-card">
+            <div class="wfs-material-img">
+                <img src="{{ asset($type[1]) }}" alt="{{ $type[0] }}" />
+            </div>
+        </div>
+        <span class="wfs-eyebrow">{{ $type[2] }}</span>
+        <h2>{{ $type[0] }}</h2>
+    </aside>
+
+    <section class="wfs-step-main">
+        @if (count($chosen))
+            <div class="wfs-chosen">
+                <span class="wfs-label">Your selections</span>
+                <div class="wfs-chosen-chips">
+                    @foreach ($chosen as $choice)
+                        <span class="wfs-chip is-active">{{ $choice }}</span>
+                    @endforeach
                 </div>
             </div>
-        </div>
-    </section>
+        @endif
 
-    <section>
-        <div class="hero text-black">
-            <div class="container-xl">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="text-container p-3 d-flex flex-column justify-content-center h-100">
-                            <p class="headline hide-margin fw-bold text-center">
-                                {{ $title }}
-                            </p>
-                            <p class="small hide-margin text-center">Click to select</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="wfs-question">
+            <span class="wfs-label">{{ $title }}</span>
+        </div>
+
+        <div class="wfs-options">
+            <div class="row g-4">
+                {!! Blade::compileString($cardsTxt) !!}
             </div>
         </div>
+
+        @if ($stepNote !== '')
+            <p class="wfs-step-note">{{ $stepNote }}</p>
+        @endif
     </section>
-    <!-- Selection -->
+</div>
 
-    <section class="selection py-4" id="selection">
-      <div class="container-xl">
-        <div class="row g-4">
-            {!! Blade::compileString($cardsTxt) !!}
-        </div>
-        <div class="text-container p-3 d-flex flex-column justify-content-center h-100">            
-            <p class="small hide-margin text-center step_note">{{ $step_note }}</p>
-        </div>
-      </div>
-    </section>
-
-    <section>
-        <button id="btnInput" style="display:none;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalInput" data-bs-whatever="@mdo">Input</button>
-        <div class="modal fade" id="modalInput" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalLbl" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content" id="modalContentInput">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalLbl">Enter height</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+{{-- Custom height dialog: ids and the OK button are wired by the controller, keep them as they are. --}}
+<button id="btnInput" style="display:none;" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalInput">Input</button>
+<div class="modal fade" id="modalInput" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalInputLbl" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="modalContentInput">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalInputLbl">Enter height</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="input-group">
+                        <span id="spInput" class="input-group-text">h</span>
+                        <input id="txtLength" type="number" steps="1" onkeydown="return event.key !== '.'" class="form-control" placeholder="Enter height" aria-label="Enter height" aria-describedby="basic-addon2">
+                        <span class="input-group-text" id="basic-addon2">ft</span>
                     </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="mb-3">
-                                <div class="input-group mb-3">
-                                    <span id="spInput" class="input-group-text">h</span>
-                                    <input id="txtLength" type="number" steps="1" onkeydown="return event.key !== '.'" class="form-control" placeholder="Enter height" aria-label="Enter height" aria-describedby="basic-addon2">
-                                    <span class="input-group-text" id="basic-addon2">ft</span>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer justify-content-between">
-                        <div class="col-1">
-                            <!-- <button class="btn btn-warning float-left" data-bs-target="#modalInputs" data-bs-toggle="modal" data-bs-dismiss="modal">List</button> -->
-                            <!-- <button class="btn btn-warning float-left" onclick="loadDynamicContentModal()" data-bs-target="#modalInputs" data-bs-toggle="modal" data-bs-dismiss="modal">List</button>-->
-
-                        </div>
-                        <div class="col-4">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            {!! Blade::compileString($inputBtn) !!}
-                        </div>
-                    </div>
-                </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                {!! Blade::compileString($inputBtn ?? '') !!}
             </div>
         </div>
-    </section>
-    <!--
-    <script>
-        $('a').bind('click', function(e) {
-            console.log("FOLLOW");
-            var url = $(this).attr('href');
-            if(url.includes("draw")){
-                window.location.href = url;
-            }
-            else {
-                if(!url.includes("javascript")) {
-                    if(this.id == 'btnInputOK') {
-                        url += "/" + document.getElementById('txtLength').value;
-                    }
-                    $('#contenido').load(url);
-                }
-            }
-            e.preventDefault();
-        });
-    </script>
-    -->
+    </div>
+</div>

@@ -464,7 +464,7 @@ class HomeController extends Controller
                 //$breadcrum .= "<li class='breadcrumb-item active' aria-current='page'>Data</li></ol></nav>";
                 $breadcrum .= "</ol></nav>";
                 
-                return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note ]);
+                return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material ]);
             }
             else{
                 if($i+1 == $size){
@@ -516,7 +516,7 @@ class HomeController extends Controller
                     $breadcrum .= "<li class='breadcrumb-item'><a href='#'>" . $sel["responses"][$acum]["name"] . "</a></li>";
                     $breadcrum .= "</ol></nav>";
 
-                    return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note ]);
+                    return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material ]);
                     //return Redirect::to('/drawfence');
                     //return view('simple_draw');
                 }

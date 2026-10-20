@@ -1,3 +1,25 @@
+/*
+ * Vite bundle shared by every page. Tailwind's global reset (preflight) is disabled in
+ * tailwind.config.js because the drawing, quote and thank-you pages also load Bootstrap.
+ * The rules below reproduce the parts of preflight the Breeze pages (login, admin, quote
+ * requests) need, scoped to their <body class="... antialiased"> so nothing else is affected.
+ * Zero-specificity selectors (:where) let the @tailwindcss/forms styles win for inputs.
+ */
+:where(body.antialiased) :where(*, *::before, *::after) {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #e5e7eb;
+}
+:where(body.antialiased) :where(img, svg, video, canvas) { display: block; vertical-align: middle; max-width: 100%; height: auto; }
+:where(body.antialiased) :where(button, input, select, textarea) { font-family: inherit; font-size: 100%; line-height: inherit; color: inherit; margin: 0; }
+:where(body.antialiased) :where(button, [type='button'], [type='submit']) { background-color: transparent; background-image: none; cursor: pointer; }
+:where(body.antialiased) :where(h1, h2, h3, h4, p, figure, blockquote) { margin: 0; }
+:where(body.antialiased) :where(ul, ol) { list-style: none; margin: 0; padding: 0; }
+:where(body.antialiased) :where(a) { color: inherit; text-decoration: inherit; }
+:where(body.antialiased) :where(table) { border-collapse: collapse; }
+:where(body.antialiased) { margin: 0; line-height: 1.5; }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
