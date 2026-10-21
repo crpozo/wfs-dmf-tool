@@ -16,7 +16,12 @@
                     return response.text().then(function (html) {
                         contenido.innerHTML = html;
                         contenido.classList.remove('is-loading');
-                        window.scrollTo({ top: Math.max(0, contenido.offsetTop - 110), behavior: 'smooth' });
+                        // The final summary scrolls to the result itself; steps scroll to the top of the configurator.
+                        var target = contenido.querySelector('.wfs-summary') || contenido;
+                        var header = document.querySelector('.wfs-header');
+                        var offset = (header ? header.offsetHeight : 90) + 16;
+                        var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
                     });
                 })
                 .catch(function () {
