@@ -43,7 +43,7 @@
     $quoteUrl = 'https://westernfencesupply.com/contact/?' . http_build_query([
         'project_type'  => $projectType,
         'configuration' => implode(' · ', $lines),
-        'details'       => "Fence configuration from Draw My Fence:\n" . implode("\n", $lines),
+        'details'       => implode("\n", $lines),
     ], '', '&', PHP_QUERY_RFC3986) . '#contact';
 @endphp
 
