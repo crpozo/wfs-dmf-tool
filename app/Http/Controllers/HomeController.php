@@ -78,9 +78,9 @@ class HomeController extends Controller
 
     /**
      * Preview image for the options chosen so far in a step code (e.g. "4130" or "41312").
-     * Walks steps.json along the code, takes the last chosen image (style/design) and the chosen
-     * color, and returns the matching per-color image in public/images, or null if there is none yet.
-     * Aluminum style cards already point to the per-color image, so its last image is used as is.
+     * Walks steps.json along the code and returns the last original image chosen (Vinyl design,
+     * Aluminum style); materials without option images (Chain Link, Metal) use their cover image.
+     * The client asked for the original photos only: no per-color recolored images.
      */
     private function fencePreview($code){
         $code = (string) $code;
@@ -91,7 +91,6 @@ class HomeController extends Controller
 
         $node = $sel[$code[0]];
         $img = null;
-        $color = null;
         $len = strlen($code);
         if($code[$len-1] == "0"){
             $len--;
@@ -104,43 +103,15 @@ class HomeController extends Controller
             if(!empty($node['img'])){
                 $img = $node['img'];
             }
-            if(!empty($node['color'])){
-                $color = strtolower($node['name']);
-            }
         }
 
-        $colorKeys = [
-            'white' => 'white', 'black' => 'black', 'bronze' => 'bronze', 'woodgrain' => 'woodgrain',
-            'sand' => 'sand', 'gray' => 'grey', 'galvanized' => 'galvanized',
-            'black vinyl coated' => 'black', 'green vinyl coated' => 'green',
-            'white + sand' => 'white_sand', 'white + gray' => 'white_grey',
+        $covers = [
+            '1' => '/images/cover-aluminum-fence.jpg',
+            '2' => '/images/cover-chain-link-fence.jpg',
+            '3' => '/images/cover-metal-fence.jpg',
+            '4' => '/images/cover-vinyl-fence.jpg',
         ];
-        $c = $colorKeys[$color] ?? null;
-
-        switch($code[0]){
-            case "2": // Chain Link: a single style, the image depends only on the color
-                return $c ? "/images/ChainLink_standard_$c.webp" : null;
-            case "3": // Metal: Original and Modern share the privacy panel image
-                return $c ? "/images/Metal_privacy_$c.webp" : null;
-            case "4": // Vinyl: design image recolored
-                $designs = [
-                    'vinyl-privacy-fence.JPG' => 'privacy',
-                    'vinyl-two-tone-privacy-fence.JPG' => 'two_tone',
-                    'viny-privacy-fence-with-lattice-accent.JPG' => 'privacy_lattice',
-                    'vinyl-semi-privacy-fence.JPG' => 'semi_privacy',
-                    'vinyl-shadowbox-fence.JPG' => 'shadowbox',
-                    'vinyl-louvered-fence.JPG' => 'louvered',
-                    'vinyl-picket-fence.JPG' => 'picket',
-                    'vinyl-open-picket-fence.JPG' => 'open_picket',
-                ];
-                $design = $img ? ($designs[basename($img)] ?? null) : null;
-                if($design && $c){
-                    return "/images/Vinyl_{$design}_$c.webp";
-                }
-                return $img;
-            default:
-                return $img;
-        }
+        return $img ?? $covers[$code[0]] ?? null;
     }
 
     /**
