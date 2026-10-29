@@ -580,5 +580,8 @@ class Graph{
         if(pend == 0 && graph.edgeCount > 0){
             $('#btnEstimate').css('display','block');
         }
+        if(typeof zoomToFit === 'function'){
+            zoomToFit();
+        }
     }
 }
