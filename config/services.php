@@ -6,6 +6,17 @@ return [
         'parent_origin' => env('DRAWFENCE_EMBED_PARENT_ORIGIN', 'https://www.westernfencesupply.com'),
     ],
 
+    // Property map (Phase 2, Feature 1). The browser key is restricted by HTTP referrer,
+    // the server key (Static Maps) by the server IP. A missing browser key keeps the
+    // classic canvas.
+    'google_maps' => [
+        'browser_key' => env('GOOGLE_MAPS_BROWSER_KEY'),
+        'server_key' => env('GOOGLE_MAPS_SERVER_KEY'),
+        'map_id' => env('GOOGLE_MAPS_MAP_ID', 'DEMO_MAP_ID'),
+        // Maps Static API URL signing secret (optional but recommended by Google).
+        'signing_secret' => env('GOOGLE_MAPS_SIGNING_SECRET'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

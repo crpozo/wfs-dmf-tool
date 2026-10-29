@@ -552,6 +552,8 @@
         </div>
     </div>
 
+    @include('partials.property_map')
+
     <div class="row wfs-workspace">
         <div class="col-10 wfs-canvas-column">
             <main></main>
@@ -777,6 +779,12 @@
         }
 
         function exportSketchCanvasImage(canvas) {
+            // Property map: the quote image is the satellite image of the map drawing.
+            const propertyMapImage = window.WFS?.propertyMap?.quoteImage?.();
+            if (propertyMapImage) {
+                return propertyMapImage;
+            }
+
             const logicalCanvasWidth = typeof _W === 'number' && _W > 0 ? _W : canvas.width;
             const logicalCanvasHeight = typeof _H === 'number' && _H > 0 ? _H : canvas.height;
             const scaleX = canvas.width / logicalCanvasWidth;

@@ -1,0 +1,334 @@
+/*
+ * Draw on your property (Phase 2, Feature 1).
+ * Uses the brand tokens from public/css/wfs-brand.css, which the drawing pages load.
+ */
+
+/* Map view vs classic canvas */
+body.pm-map-active .wfs-workspace { display: none; }
+/* Canvas-only actions (load/save .wfs, templates, print) don't apply to the map. */
+body.pm-map-active #header .btn-files { display: none; }
+body:not(.pm-map-active) #propertyMap { display: none; }
+/* The canvas pages lock the page to the viewport (embed.css); the map step is a normal scrolling page. */
+body.drawing.pm-map-active { height: auto; min-height: 100%; overflow-y: auto; }
+#propertyMap { scroll-margin-top: 0; }
+
+.pm {
+    --pm-touch: 44px;
+    padding: 0 var(--wfs-pad, 16px) 16px;
+    font-family: var(--wfs-font-sans);
+    color: var(--wfs-ink);
+}
+
+/* Header: title, search, use my location */
+.pm-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    gap: 12px 24px;
+    padding: 16px 0 12px;
+}
+.pm-title .wfs-display { font-size: clamp(24px, 3vw, 34px); margin: 4px 0 0; }
+.pm-search { display: flex; gap: 10px; align-items: stretch; min-width: 0; }
+.pm-search-field { flex: 1 1 auto; min-width: 0; }
+.pm-search-field gmp-place-autocomplete {
+    width: 100%;
+    min-height: var(--pm-touch);
+    color-scheme: light;
+}
+.pm-locate { min-height: var(--pm-touch); white-space: nowrap; }
+.pm-address {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-family: var(--wfs-font-body);
+    font-size: 14px;
+    color: var(--wfs-charcoal);
+}
+.pm-address::before { content: "\f3c5"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; color: var(--wfs-blue); }
+
+/* Body: map column + sides panel */
+.pm-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: start;
+}
+.pm-map-column { min-width: 0; }
+
+.pm-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+}
+.pm-toolbar-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.pm-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--pm-touch);
+    min-width: var(--pm-touch);
+    padding: 0 14px;
+    border: 1.5px solid var(--wfs-ink);
+    border-radius: 6px;
+    background: var(--wfs-white);
+    color: var(--wfs-ink);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+.pm-tool:hover:not(:disabled), .pm-tool.is-active { background: var(--wfs-ink); color: var(--wfs-white); }
+.pm-tool:disabled { opacity: 0.4; cursor: default; }
+.pm-tool:focus-visible, .pm-panel button:focus-visible, .pm-panel input:focus-visible { outline: 3px solid var(--wfs-blue); outline-offset: 2px; }
+.pm-tool-danger { border-color: var(--wfs-danger); color: var(--wfs-danger); }
+.pm-tool-danger:hover:not(:disabled) { background: var(--wfs-danger); color: var(--wfs-white); }
+.pm-mode .pm-tool { border-radius: 0; }
+.pm-mode .pm-tool:first-child { border-radius: 6px 0 0 6px; }
+.pm-mode .pm-tool:last-child { border-radius: 0 6px 6px 0; margin-left: -1.5px; }
+
+.pm-hint {
+    margin: 10px 0 8px;
+    font-family: var(--wfs-font-body);
+    font-size: 14px;
+    color: var(--wfs-charcoal);
+    min-height: 1.4em;
+}
+
+.pm-map-frame { position: relative; }
+.pm-map {
+    width: 100%;
+    /* Fills the screen below the step title, search and toolbar once the page scrolls to Step 1. */
+    height: clamp(420px, calc(100vh - 250px), 820px);
+    height: clamp(420px, calc(100dvh - 250px), 820px);
+    border-radius: var(--wfs-radius);
+    overflow: hidden;
+    background: var(--wfs-sea);
+}
+.pm-message {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+    margin: 0;
+    padding: 10px 16px;
+    border-radius: var(--wfs-radius-pill);
+    background: var(--wfs-ink);
+    color: var(--wfs-white);
+    font-size: 14px;
+    box-shadow: var(--wfs-shadow);
+}
+.pm-disclaimer {
+    margin: 8px 0 0;
+    font-family: var(--wfs-font-body);
+    font-size: 12.5px;
+    color: var(--wfs-muted);
+}
+
+/* Markers on the map. Advanced markers anchor at bottom center; shift them down to center on the point. */
+.pm-vertex {
+    width: 32px;
+    height: 32px;
+    transform: translateY(50%);
+    display: grid;
+    place-items: center;
+    cursor: grab;
+}
+.pm-vertex::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--wfs-white);
+    border: 3px solid var(--wfs-blue);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.pm-vertex.is-first::after {
+    width: 22px;
+    height: 22px;
+    background: var(--wfs-blue);
+    border-color: var(--wfs-white);
+    animation: pm-pulse 1.6s ease-in-out infinite;
+}
+@keyframes pm-pulse {
+    50% { box-shadow: 0 0 0 8px rgba(46, 89, 193, 0.35); }
+}
+
+.pm-label {
+    transform: translateY(50%);
+    padding: 4px 10px;
+    border: 0;
+    border-radius: var(--wfs-radius-pill);
+    background: rgba(38, 49, 102, 0.92);
+    color: var(--wfs-white);
+    font-family: var(--wfs-font-sans);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+}
+.pm-label.is-adjusted { background: var(--wfs-white); color: var(--wfs-ink); outline: 2px solid var(--wfs-blue); }
+.pm-label.is-adjusted::after { content: " *"; color: var(--wfs-blue); }
+.pm-label.is-selected { outline: 3px solid var(--wfs-blue-ice); }
+
+.pm-menu { padding: 4px; }
+.pm-menu-item {
+    min-height: var(--pm-touch);
+    padding: 0 16px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    font-family: var(--wfs-font-sans);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+.pm-menu-item-danger { color: var(--wfs-danger); }
+.pm-menu-item:hover { background: var(--wfs-sea); }
+
+/* Sides panel */
+.pm-panel {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+}
+.pm-runs-empty, .pm-total {
+    margin: 12px 0 0;
+    font-family: var(--wfs-font-body);
+    font-size: 14px;
+    color: var(--wfs-charcoal);
+}
+.pm-total { font-family: var(--wfs-font-sans); font-weight: 700; color: var(--wfs-ink); }
+.pm-runs { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.pm-run {
+    padding: 10px 12px;
+    border: 1px solid var(--wfs-line);
+    border-radius: 10px;
+    background: var(--wfs-white);
+}
+.pm-run.is-selected { border-color: var(--wfs-blue); box-shadow: 0 0 0 2px var(--wfs-blue-ice); }
+.pm-run.is-wall { background: var(--wfs-sea); }
+.pm-run-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pm-run-name {
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--wfs-ink);
+    cursor: pointer;
+}
+.pm-run-measured { font-size: 12.5px; color: var(--wfs-muted); text-align: right; }
+.pm-run.is-adjusted .pm-run-measured { color: var(--wfs-blue); }
+.pm-run-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.pm-run-length { display: flex; align-items: center; gap: 6px; margin: 0; }
+.pm-run-field-label { font-size: 13px; font-weight: 600; }
+.pm-run-length input { width: 90px; min-height: var(--pm-touch); }
+.pm-run-unit { font-size: 13px; }
+.pm-run-reset {
+    min-height: var(--pm-touch);
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--wfs-blue);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.pm-run-wall { display: flex; align-items: center; gap: 8px; min-height: var(--pm-touch); margin: 0; font-size: 13px; cursor: pointer; }
+.pm-run-wall input { width: 20px; height: 20px; }
+
+.pm-run.has-problem { border-color: var(--wfs-danger); }
+.pm-run-material { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; }
+.pm-run-material select { min-height: var(--pm-touch); font-size: 13px; }
+
+/* Gates */
+.pm-gate-label {
+    transform: translateY(50%);
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--wfs-ink);
+    color: var(--wfs-white);
+    border: 2px solid var(--wfs-white);
+    font-family: var(--wfs-font-sans);
+    font-weight: 700;
+    font-size: 12.5px;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    cursor: grab;
+}
+.pm-gate-label.is-problem { background: var(--wfs-danger); }
+.pm-gates { display: grid; gap: 8px; margin-top: 8px; }
+.pm-gate { padding: 8px; border-radius: 8px; background: var(--wfs-sea); }
+.pm-gate-fields { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pm-gate-fields select { width: auto; min-height: 40px; font-size: 13px; padding-right: 28px; }
+.pm-gate-custom { display: flex; align-items: center; gap: 4px; margin: 0; }
+.pm-gate-custom[hidden] { display: none; }
+.pm-gate-custom input { width: 72px; min-height: 40px; }
+.pm-gate-note { margin: 6px 0 0; font-size: 12px; font-weight: 700; color: var(--wfs-danger); }
+.pm-gate-add { display: flex; gap: 12px; margin-top: 6px; }
+.pm-gate-add[hidden] { display: none; }
+.pm-link-button {
+    min-height: 36px;
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: var(--wfs-blue);
+    font-family: var(--wfs-font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.pm-link-danger { color: var(--wfs-danger); }
+
+/* Panel actions, saved link, materials list */
+.pm-actions { display: grid; grid-template-columns: auto 1fr; gap: 8px; margin-top: 16px; }
+.pm-action { justify-content: center; min-height: var(--pm-touch); }
+.pm-action:disabled { opacity: 0.45; cursor: default; }
+.pm-saved, .pm-materials { margin-top: 14px; }
+.pm-saved-row { display: flex; gap: 8px; }
+.pm-saved-row input { min-height: var(--pm-touch); font-size: 13px; }
+.pm-materials textarea { font-family: var(--wfs-font-body); font-size: 12.5px; }
+.pm-materials-stale { margin: 0 0 6px; font-size: 13px; color: var(--wfs-danger); }
+
+/* Switch links */
+.pm-switch { margin: 12px 0 0; font-size: 14px; }
+.pm-switch a { color: var(--wfs-blue); font-weight: 700; }
+.pm-classic-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    padding: 10px var(--wfs-pad, 16px);
+}
+.pm-classic-bar[hidden] { display: none; }
+.pm-classic-notice {
+    margin: 0;
+    padding: 10px 14px;
+    border-left: 4px solid var(--wfs-blue);
+    background: var(--wfs-sea);
+    font-family: var(--wfs-font-body);
+    font-size: 14px;
+    color: var(--wfs-ink);
+}
+
+@media (max-width: 991.98px) {
+    .pm-head { grid-template-columns: minmax(0, 1fr); }
+    .pm-body { grid-template-columns: minmax(0, 1fr); }
+    .pm-panel { position: static; max-height: none; }
+}
+
+@media (max-width: 575.98px) {
+    .pm { padding: 0 12px 12px; }
+    .pm-search { flex-direction: column; }
+    .pm-map { height: 62vh; min-height: 360px; }
+    .pm-tool span { display: none; }
+    .pm-mode .pm-tool span { display: inline; }
+}
+
+.pm-quote { width: 100%; margin-top: 10px; }

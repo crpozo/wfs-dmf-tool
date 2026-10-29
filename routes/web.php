@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DrawFenceController;
 use App\Http\Controllers\OdooLeadSourceController;
+use App\Http\Controllers\PropertyMapController;
 use App\Http\Controllers\QuoteRequestController;
 use App\Http\Controllers\StepController;
 use App\Services\FishbowlApiService;
@@ -179,6 +180,24 @@ Route::get('/step_old/{material}/{step}', 'App\Http\Controllers\HomeController@s
 Route::get('/getDims/{dims}', 'App\Http\Controllers\HomeController@getDims');
 
 Route::get('/estimate/{json}', 'App\Http\Controllers\HomeController@estimate');
+
+// Draw on your property (Phase 2, Feature 1): the map's own routes. The materials
+// calculation is the same one the canvas uses.
+Route::prefix('property-map')->name('property-map.')->group(function () {
+    Route::post('/estimate', [PropertyMapController::class, 'estimate'])
+        ->middleware('throttle:60,1')
+        ->name('estimate');
+    Route::post('/snapshot', [PropertyMapController::class, 'snapshot'])
+        ->middleware('throttle:20,1')
+        ->name('snapshot');
+    Route::post('/projects', [PropertyMapController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('projects.store');
+    Route::get('/projects/{token}', [PropertyMapController::class, 'show'])
+        ->name('projects.show');
+    Route::get('/p/{token}', [PropertyMapController::class, 'open'])
+        ->name('open');
+});
 
 Route::post('/load', 'App\Http\Controllers\HomeController@loadFile');
 
