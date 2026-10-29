@@ -149,11 +149,13 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
 
     function updatePreview(point) {
         const last = lastVertex();
-        if (!mode.isDrawing() || store.state.closed || !last || draggingId || draggingGateId) {
+        // A drag starts the side at the press point, also for the very first side (no corner yet).
+        const dragStart = press?.dragging && !pressOnLastCorner(press) ? press.latLng : null;
+        const from = dragStart || (last ? { lat: last.lat, lng: last.lng } : null);
+        if (!mode.isDrawing() || store.state.closed || !from || draggingId || draggingGateId) {
             preview.setMap(null);
             return;
         }
-        const from = press?.dragging && !pressOnLastCorner(press) ? press.latLng : { lat: last.lat, lng: last.lng };
         preview.setPath([from, point]);
         if (!preview.getMap()) {
             preview.setMap(map);
