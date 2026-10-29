@@ -1,0 +1,51 @@
+/* Static demo page only. */
+body { margin: 0; background: var(--wfs-white); font-family: var(--wfs-font-sans); color: var(--wfs-ink); }
+
+.demo-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 14px var(--wfs-pad, 16px);
+    background: var(--wfs-ink);
+    color: var(--wfs-white);
+}
+.demo-brand { display: flex; flex-direction: column; gap: 2px; }
+.demo-brand strong { font-size: 17px; }
+.demo-brand span { font-size: 13px; color: var(--wfs-on-ink); }
+.demo-badge {
+    padding: 6px 12px;
+    border-radius: var(--wfs-radius-pill);
+    background: var(--wfs-blue-ice);
+    color: var(--wfs-ink);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.demo-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px 14px;
+    padding: 14px var(--wfs-pad, 16px) 0;
+}
+.demo-picker-title { flex-basis: 100%; margin: 0; }
+.demo-field { display: flex; flex-direction: column; gap: 4px; margin: 0; font-size: 12.5px; font-weight: 700; }
+.demo-field select { min-height: 44px; min-width: 150px; }
+.demo-fields { display: contents; }
+
+/* Steps that need the server are explained instead. */
+.pm-actions, .pm-saved, .pm-materials, .pm-switch { display: none !important; }
+.demo-next {
+    margin: 16px 0 0;
+    padding: 12px 14px;
+    border-left: 4px solid var(--wfs-blue);
+    border-radius: 6px;
+    background: var(--wfs-sea);
+    font-family: var(--wfs-font-body);
+    font-size: 13.5px;
+    line-height: 1.45;
+}

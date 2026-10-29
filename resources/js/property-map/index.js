@@ -109,7 +109,8 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
             await viewer3d.open({
                 project: store.toJSON(),
                 materials: config.materials || [],
-                fetchScene: fetchScene3d,
+                // The static demo (resources/demo) has no server and looks the house up itself.
+                fetchScene: config.fetchScene || fetchScene3d,
             });
         } catch (error) {
             console.error(error);
