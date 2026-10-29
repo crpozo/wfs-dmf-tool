@@ -1,0 +1,68 @@
+# Publishes the static demo of the property map and 3D view (resources/demo) to GitHub
+# Pages on every push to the Phase 2 branch, so the client always sees the latest work:
+#   https://crpozo.github.io/wfs-dmf-tool/
+#
+# The demo's Google Maps key comes from the repository secret GOOGLE_MAPS_DEMO_KEY, so it is
+# never committed. It must be restricted in Google Cloud to https://crpozo.github.io/wfs-dmf-tool/*.
+# The map id (not secret) comes from the repository variable GOOGLE_MAPS_MAP_ID.
+name: Demo (GitHub Pages)
+
+on:
+  push:
+    branches: [feature/property-map-drawing]
+    paths:
+      - 'resources/demo/**'
+      - 'resources/js/property-map/**'
+      - 'resources/css/property-map.css'
+      - 'public/css/wfs-brand.css'
+      - 'public/drawfence-embed/embed.css'
+      - 'vite.demo.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/demo-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: demo-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the demo
+        run: npm run build:demo
+        env:
+          GOOGLE_MAPS_DEMO_KEY: ${{ secrets.GOOGLE_MAPS_DEMO_KEY }}
+          GOOGLE_MAPS_MAP_ID: ${{ vars.GOOGLE_MAPS_MAP_ID }}
+          DEMO_OUT_DIR: ${{ github.workspace }}/dist/draw-my-fence-demo
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/draw-my-fence-demo
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

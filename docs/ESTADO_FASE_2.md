@@ -42,7 +42,7 @@ Actualizado el 30 de octubre de 2026. Documento de traspaso para seguir el traba
 | `d9b0f5f` | Demo estática para GitHub Pages |
 | `b14f340` | Preparación del repo: `.gitignore`, scripts GLPK versionados, key propia de la demo |
 
-**Demo para el cliente:** https://crpozo.github.io/wfs-design-preview/draw-my-fence-demo/ (commit `a599f7f` en el design preview).
+**Demo para el cliente:** https://crpozo.github.io/wfs-dmf-tool/ — la publica GitHub Actions (`.github/workflows/demo-pages.yml`) en cada push a `feature/property-map-drawing`. La copia antigua en `wfs-design-preview/draw-my-fence-demo` queda obsoleta.
 
 ## 3. Qué está implementado
 
@@ -87,7 +87,8 @@ Se activa solo si `GOOGLE_MAPS_BROWSER_KEY` tiene valor. Sin key, la página es 
 
 - **Fuente:** `resources/demo/` (`index.html`, `demo.js`, `footprints.js`, `demo.css`). Usa los mismos módulos del mapa y del 3D.
 - **Diferencias con la app:** selector de cerca propio, casa consultada a FEMA desde el navegador, y sin materiales, enlace ni quote (se explican con un texto).
-- **Compilar:** `npm run build:demo` (`vite.demo.config.js`) escribe en `../../wfs-design-preview/draw-my-fence-demo`. Usa **`GOOGLE_MAPS_DEMO_KEY`** y se niega a compilar con la key de la app.
+- **Publicar:** automático. En cada push a `feature/property-map-drawing`, el workflow `demo-pages.yml` compila con `npm run build:demo` usando el secreto del repo **`GOOGLE_MAPS_DEMO_KEY`** (y la variable `GOOGLE_MAPS_MAP_ID`) y despliega en Pages. La key no queda en ningún commit.
+- **Compilar en local:** `npm run build:demo` escribe en `../../wfs-design-preview/draw-my-fence-demo` con la key del `.env`; se niega a compilar con la key de la app.
 
 ## 4. Mapa de archivos
 

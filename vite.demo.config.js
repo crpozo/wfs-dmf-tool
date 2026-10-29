@@ -3,12 +3,14 @@ import { resolve } from 'node:path';
 
 /*
  * Static demo of the property map and 3D view (resources/demo) for client review on
- * GitHub Pages. Output goes to the design preview repository, next to this project:
- *   ../../wfs-design-preview/draw-my-fence-demo  (override with DEMO_OUT_DIR)
- * The demo has its own Maps key, GOOGLE_MAPS_DEMO_KEY in this project's .env, never the
- * app's key: it ends up in a public repository. Restrict it in Google Cloud to the Pages
- * URL only (https://crpozo.github.io/wfs-design-preview/*) and to Maps JavaScript,
- * Places (New) and Geocoding, with daily quotas.
+ * GitHub Pages. It is published by .github/workflows/demo-pages.yml on every push to the
+ * Phase 2 branch (https://crpozo.github.io/wfs-dmf-tool/), with DEMO_OUT_DIR set there.
+ * Locally the output defaults to ../../wfs-design-preview/draw-my-fence-demo.
+ *
+ * The demo has its own Maps key, GOOGLE_MAPS_DEMO_KEY (a repository secret in CI, or this
+ * project's .env locally), never the app's key: the built page is public. Restrict it in
+ * Google Cloud to the Pages URLs (https://crpozo.github.io/wfs-dmf-tool/*) and to Maps
+ * JavaScript, Places (New) and Geocoding, with daily quotas.
  *
  *   npm run build:demo
  */
