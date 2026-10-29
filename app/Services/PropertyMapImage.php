@@ -28,44 +28,6 @@ class PropertyMapImage
         return $url === null ? null : $this->fetch($url);
     }
 
-    /**
-     * Plain satellite image around the fence for the ground of the 3D view: no drawing on
-     * it, the fence roughly in the middle half. Returns the image with what is needed to
-     * lay it out at real scale: center, zoom and the ground size it covers, in feet.
-     */
-    public function ground(array $vertices): ?array
-    {
-        $key = config('services.google_maps.server_key');
-        if (blank($key) || count($vertices) < 2) {
-            return null;
-        }
-
-        [$center, $zoom] = $this->frame($vertices, 0.5, 17);
-        $params = [
-            'size=640x640',
-            'scale=2',
-            'maptype=satellite',
-            'format=jpg',
-            sprintf('center=%.6f,%.6f', $center['lat'], $center['lng']),
-            'zoom='.$zoom,
-            'key='.rawurlencode($key),
-        ];
-        $image = $this->fetch(self::ENDPOINT.'?'.implode('&', $params).$this->signature('/maps/api/staticmap?'.implode('&', $params)));
-        if ($image === null) {
-            return null;
-        }
-
-        // Web Mercator: 640 logical pixels at this zoom and latitude.
-        $metersPerPixel = 156543.03392 * cos(deg2rad($center['lat'])) / (2 ** $zoom);
-
-        return [
-            'image' => $image,
-            'center' => $center,
-            'zoom' => $zoom,
-            'size_ft' => round(640 * $metersPerPixel * 3.28084, 2),
-        ];
-    }
-
     private function fetch(string $url): ?string
     {
         try {
@@ -132,10 +94,10 @@ class PropertyMapImage
     }
 
     /*
-     * Center and zoom so the fence fills a share of the image (75% by default). Without them Google
+     * Center and zoom so the fence fills about 75% of the image. Without them Google
      * frames the paths loosely and a backyard fence ends up tiny.
      */
-    private function frame(array $vertices, float $fill = 0.75, int $minZoom = 15): array
+    private function frame(array $vertices): array
     {
         $lats = array_column($vertices, 'lat');
         $lngs = array_column($vertices, 'lng');
@@ -152,9 +114,9 @@ class PropertyMapImage
         );
 
         // Web Mercator: meters per pixel at zoom z is 156543.03392 * cos(lat) / 2^z (640 px wide).
-        $zoom = (int) floor(log((156543.03392 * $cosLat * 640 * $fill) / $spanMeters, 2));
+        $zoom = (int) floor(log((156543.03392 * $cosLat * 640 * 0.75) / $spanMeters, 2));
 
-        return [$center, max($minZoom, min(20, $zoom))];
+        return [$center, max(15, min(20, $zoom))];
     }
 
     // https://developers.google.com/maps/documentation/maps-static/digital-signature

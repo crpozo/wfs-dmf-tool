@@ -107,10 +107,10 @@ class PropertyMapController extends Controller
     }
 
     /**
-     * What the 3D view needs besides the drawing: the satellite image for the ground
-     * (laid out at real scale) and the outline of the house, when one is found.
+     * What the 3D view needs besides the drawing: the outline of the house, when one is
+     * found, to size and place the house next to the fence.
      */
-    public function scene(Request $request, PropertyMapImage $image, BuildingFootprints $footprints): JsonResponse
+    public function scene(Request $request, BuildingFootprints $footprints): JsonResponse
     {
         $project = $request->validate($this->projectRules())['project'];
         $vertices = $project['vertices'];
@@ -123,7 +123,6 @@ class PropertyMapController extends Controller
         $closed = collect($runs)->contains(fn ($run) => ($run['from'] ?? null) === $last && ($run['to'] ?? null) === 0);
 
         return response()->json([
-            'ground' => $image->ground($vertices),
             'house' => $footprints->houseFor($vertices, $closed),
         ]);
     }

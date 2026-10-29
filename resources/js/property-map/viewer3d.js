@@ -1,28 +1,34 @@
 /*
- * 3D view of the customer's own property (Phase 2): the satellite image of the lot as
- * the ground, the house raised from its real outline (FEMA USA Structures) with its own
- * roof from the satellite image, and the chosen fence built along the drawn sides with
- * its gates. Loaded on demand (dynamic import) the first time "View in 3D" is pressed.
+ * 3D view of the customer's property (Phase 2): a home in the style of the website's
+ * viewer, sized, turned and placed like the customer's real house (footprint from FEMA
+ * USA Structures), on a lawn with sky and tree line, and the chosen fence built along the
+ * drawn sides with its gates. Loaded on demand the first time "View in 3D" is pressed.
  *
- * Units are feet. World axes: x east, z south, y up; the origin is the center of the
- * satellite ground image. The fence geometry comes from fence3d/cerca.js, the same
- * builder as the website's 3D viewer, so every material, style and color looks the same.
- * Lighting, sky and camera controls follow that viewer (wfs-design-preview/src-3d/escena.js).
+ * The satellite photo is not used here: laid flat and seen at an angle it looks smeared.
+ *
+ * Units are feet. World axes: x east, z south, y up; the origin is the middle of the
+ * drawing. The fence geometry comes from fence3d/cerca.js, the same builder as the
+ * website's 3D viewer, so every material, style and color looks the same. Lighting, sky
+ * and camera controls follow that viewer (wfs-design-preview/src-3d/escena.js).
  */
 import {
     Scene, PerspectiveCamera, WebGLRenderer, Group, Color, Fog, HemisphereLight, DirectionalLight,
-    AmbientLight, Mesh, SphereGeometry, PlaneGeometry, ShapeGeometry, ExtrudeGeometry, Shape,
-    MeshBasicMaterial, MeshStandardMaterial, BackSide, CanvasTexture, TextureLoader, PCFSoftShadowMap,
+    AmbientLight, Mesh, SphereGeometry, PlaneGeometry,
+    MeshBasicMaterial, MeshStandardMaterial, BackSide, CanvasTexture, PCFSoftShadowMap,
     ACESFilmicToneMapping, SRGBColorSpace, Vector3, PMREMGenerator, BoxGeometry,
 } from 'three';
 import * as Cerca from './fence3d/cerca.js';
 import * as T from './fence3d/texturas.js';
+import * as Person from './fence3d/persona.js';
+import { buildHouse, buildSurroundings } from './house3d.js';
 import { COLOR_CHOICES, COLOR_LABELS, SWATCHES, fenceOptions } from './fence-catalog.js';
 
 const FEET_PER_METER = 3.28084;
 const METERS_PER_DEGREE_LAT = 110574;
 const METERS_PER_DEGREE_LNG = 111320;
 const WALL_THICKNESS_FT = 0.7;
+// The website viewer's standard home, used when the real footprint is not found.
+const STANDARD_HOUSE = { width: 48, depth: 34, height: 10 };
 
 /* ── coordinates ─────────────────────────────────────────────────────────── */
 
@@ -149,104 +155,126 @@ function sky() {
     return new Mesh(new SphereGeometry(900, 32, 20), new MeshBasicMaterial({ map: texture, side: BackSide, fog: false }));
 }
 
-// Ground: the satellite image at real scale, on a wide apron that fades into the fog. The
-// apron takes the average color of the image border so the edge of the photo doesn't show.
-function ground(groundInfo, satellite) {
-    const group = new Group();
-    const apronColor = satellite ? borderColor(satellite.image) : new Color('#8fa266');
-    const apron = new Mesh(new PlaneGeometry(3000, 3000), new MeshStandardMaterial({ color: apronColor, roughness: 1 }));
-    apron.rotation.x = -Math.PI / 2;
-    apron.position.y = -0.05;
-    apron.receiveShadow = true;
-    group.add(apron);
+/* ── house placement ─────────────────────────────────────────────────────── */
 
-    if (satellite) {
-        const size = groundInfo.size_ft;
-        const plane = new Mesh(new PlaneGeometry(size, size), new MeshStandardMaterial({ map: satellite, roughness: 0.95 }));
-        plane.rotation.x = -Math.PI / 2;
-        plane.receiveShadow = true;
-        group.add(plane);
+// Convex hull (monotone chain) of [x, z] points.
+function hull(points) {
+    const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lower = [];
+    for (const p of sorted) {
+        while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+        lower.push(p);
     }
-    return group;
-}
-
-function borderColor(image) {
-    const size = 32;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0, size, size);
-    const { data } = context.getImageData(0, 0, size, size);
-    let r = 0;
-    let g = 0;
-    let b = 0;
-    let count = 0;
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            if (x > 1 && x < size - 2 && y > 1 && y < size - 2) {
-                continue;
-            }
-            const i = (y * size + x) * 4;
-            r += data[i];
-            g += data[i + 1];
-            b += data[i + 2];
-            count++;
-        }
+    const upper = [];
+    for (const p of [...sorted].reverse()) {
+        while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+        upper.push(p);
     }
-    return new Color(`rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`); // three converts CSS colors from sRGB
+    return lower.slice(0, -1).concat(upper.slice(0, -1));
 }
 
 /*
- * The house: walls raised from the footprint, and the roof as the footprint itself at
- * the top, textured with the same satellite image so the customer sees their own roof.
+ * Smallest rectangle around the footprint (one side always lies on a hull edge):
+ * center, long side (width), short side (depth) and the long side direction.
  */
-function house(houseInfo, toXZ, satellite, groundSize) {
-    const outline = houseInfo.outline.map(([lat, lng]) => toXZ(lat, lng));
-    if (outline.length > 1) {
-        const first = outline[0];
-        const last = outline[outline.length - 1];
-        if (Math.hypot(first[0] - last[0], first[1] - last[1]) < 0.01) {
-            outline.pop();
+function orientedRectangle(points) {
+    const shape = hull(points);
+    let best = null;
+    for (let i = 0; i < shape.length; i++) {
+        const p = shape[i];
+        const q = shape[(i + 1) % shape.length];
+        const length = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        if (length < 0.01) continue;
+        const ux = (q[0] - p[0]) / length;
+        const uz = (q[1] - p[1]) / length;
+        let minU = Infinity;
+        let maxU = -Infinity;
+        let minV = Infinity;
+        let maxV = -Infinity;
+        for (const [x, z] of shape) {
+            const u = x * ux + z * uz;
+            const v = -x * uz + z * ux;
+            minU = Math.min(minU, u);
+            maxU = Math.max(maxU, u);
+            minV = Math.min(minV, v);
+            maxV = Math.max(maxV, v);
+        }
+        const area = (maxU - minU) * (maxV - minV);
+        if (!best || area < best.area) {
+            const cu = (minU + maxU) / 2;
+            const cv = (minV + maxV) / 2;
+            best = { area, ux, uz, lengthU: maxU - minU, lengthV: maxV - minV, center: [cu * ux - cv * uz, cu * uz + cv * ux] };
         }
     }
-    const height = houseInfo.height_ft || 11;
+    if (!best) return null;
+    return best.lengthU >= best.lengthV
+        ? { center: best.center, width: best.lengthU, depth: best.lengthV, axis: [best.ux, best.uz] }
+        : { center: best.center, width: best.lengthV, depth: best.lengthU, axis: [-best.uz, best.ux] };
+}
 
-    // Shape in the XY plane with y = -z; rotating -90° around X stands it on the ground.
-    const shape = new Shape(outline.map(([x, z]) => ({ x, y: -z })));
-    const walls = new Mesh(
-        new ExtrudeGeometry(shape, { depth: height, bevelEnabled: false }),
-        new MeshStandardMaterial({ map: T.estuco('#efe7da'), roughness: 0.9 })
-    );
-    walls.rotation.x = -Math.PI / 2;
-    walls.castShadow = true;
-    walls.receiveShadow = true;
-
-    const roofGeometry = new ShapeGeometry(shape);
-    if (satellite) {
-        // UVs from world position, the same mapping as the ground plane.
-        const position = roofGeometry.attributes.position;
-        const uv = roofGeometry.attributes.uv;
-        for (let i = 0; i < position.count; i++) {
-            const x = position.getX(i);
-            const z = -position.getY(i);
-            uv.setXY(i, 0.5 + x / groundSize, 0.5 - z / groundSize);
-        }
-        uv.needsUpdate = true;
+/*
+ * Places the styled house. buildHouse() faces +z locally; it is turned so its long side
+ * follows the real house and its front faces frontHint (the widest gate, usually the
+ * driveway, or else the south side of the drawing).
+ */
+function placeHouse(rect, height, frontHint) {
+    let rotation = Math.atan2(-rect.axis[1], rect.axis[0]);
+    // Local +z after the turn points to (sin r, cos r).
+    const front = [Math.sin(rotation), Math.cos(rotation)];
+    if ((frontHint[0] - rect.center[0]) * front[0] + (frontHint[1] - rect.center[1]) * front[1] < 0) {
+        rotation += Math.PI;
     }
-    const roof = new Mesh(
-        roofGeometry,
-        satellite
-            ? new MeshStandardMaterial({ map: satellite, roughness: 0.85 })
-            : new MeshStandardMaterial({ color: new Color('#8a7f74'), roughness: 0.85 })
-    );
-    roof.rotation.x = -Math.PI / 2;
-    roof.position.y = height + 0.03;
-    roof.receiveShadow = true;
+    const group = buildHouse({ width: rect.width, depth: rect.depth, height });
+    group.rotation.y = rotation;
+    group.position.set(rect.center[0], 0, rect.center[1]);
+    return { group, center: rect.center, front: [Math.sin(rotation), Math.cos(rotation)] };
+}
 
-    const group = new Group();
-    group.add(walls, roof);
-    return { group, outline };
+function pointInPolygon(point, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const [xi, zi] = polygon[i];
+        const [xj, zj] = polygon[j];
+        if ((zi > point[1]) !== (zj > point[1]) && point[0] < ((xj - xi) * (point[1] - zi)) / (zj - zi) + xi) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+/*
+ * Without a footprint, the standard home goes in the middle of a closed fence, turned
+ * like its longest side and made smaller if needed so it stays clear of the fence.
+ * Open fences (one side, an L) get no house: there is no telling where it would stand.
+ */
+function standardHouseRect(points, closed) {
+    if (!closed || points.length < 3) return null;
+    const middle = [points.reduce((s, p) => s + p[0], 0) / points.length, points.reduce((s, p) => s + p[1], 0) / points.length];
+    let longest = null;
+    for (let i = 0; i < points.length; i++) {
+        const p = points[i];
+        const q = points[(i + 1) % points.length];
+        const length = Math.hypot(q[0] - p[0], q[1] - p[1]);
+        if (length > 0 && (!longest || length > longest.length)) {
+            longest = { length, axis: [(q[0] - p[0]) / length, (q[1] - p[1]) / length] };
+        }
+    }
+    if (!longest) return null;
+    const [ux, uz] = longest.axis;
+    const margin = 8;
+    for (const scale of [1, 0.8, 0.65, 0.5]) {
+        const width = STANDARD_HOUSE.width * scale;
+        const depth = STANDARD_HOUSE.depth * scale;
+        const corners = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([su, sv]) => [
+            middle[0] + ux * su * (width / 2 + margin) - uz * sv * (depth / 2 + margin),
+            middle[1] + uz * su * (width / 2 + margin) + ux * sv * (depth / 2 + margin),
+        ]);
+        if (corners.every((corner) => pointInPolygon(corner, points))) {
+            return { center: middle, width, depth, axis: longest.axis };
+        }
+    }
+    return null;
 }
 
 function existingWalls(walls, height) {
@@ -495,25 +523,11 @@ function close() {
     current = null;
 }
 
-function loadTexture(dataUrl) {
-    return new Promise((resolve) => {
-        if (!dataUrl) {
-            resolve(null);
-            return;
-        }
-        new TextureLoader().load(dataUrl, (texture) => {
-            texture.colorSpace = SRGBColorSpace;
-            texture.anisotropy = 8;
-            resolve(texture);
-        }, undefined, () => resolve(null));
-    });
-}
-
 /**
  * Opens the 3D view.
  * @param project   the map project (store.toJSON())
  * @param materials the fence configuration slots ({ slot, code, label, fields })
- * @param fetchScene async (project) => { ground, house } from POST /property-map/scene
+ * @param fetchScene async (project) => { house } from POST /property-map/scene
  */
 export async function open({ project, materials, fetchScene }) {
     close();
@@ -538,36 +552,44 @@ export async function open({ project, materials, fetchScene }) {
         scene = await fetchScene(project);
     } catch (error) {
         console.error(error);
-        scene = { ground: null, house: null };
+        scene = { house: null };
     }
     if (current !== session) {
         return; // closed while loading
     }
 
-    const origin = scene.ground?.center || boundsCenter(project.vertices);
-    const toXZ = projector(origin);
-    const satellite = await loadTexture(scene.ground?.image);
-    const groundSize = scene.ground?.size_ft || 0;
+    const toXZ = projector(boundsCenter(project.vertices));
+    const points = project.vertices.map((v) => toXZ(v.lat, v.lng));
+    const xs = points.map((p) => p[0]);
+    const zs = points.map((p) => p[1]);
+    const middle = [(Math.max(...xs) + Math.min(...xs)) / 2, (Math.max(...zs) + Math.min(...zs)) / 2];
+    const last = points.length - 1;
+    const closed = project.runs.some((run) => run.from === last && run.to === 0);
 
-    let houseInfo = null;
-    const parts = [];
-    if (scene.house?.outline?.length >= 3) {
-        houseInfo = house(scene.house, toXZ, satellite, groundSize);
-        parts.push(houseInfo.group);
+    // Front of the house: toward the widest gate (usually the driveway), else south of the drawing.
+    let frontHint = [middle[0], middle[1] + 1000];
+    let widest = 0;
+    for (const run of project.runs) {
+        for (const gate of run.gates || []) {
+            if (gate.width_ft > widest) {
+                widest = gate.width_ft;
+                const a = points[run.from];
+                const b = points[run.to];
+                frontHint = [a[0] + (b[0] - a[0]) * gate.t, a[1] + (b[1] - a[1]) * gate.t];
+            }
+        }
     }
 
-    const points = project.vertices.map((v) => toXZ(v.lat, v.lng));
-    const spanX = Math.max(...points.map((p) => p[0])) - Math.min(...points.map((p) => p[0]));
-    const spanZ = Math.max(...points.map((p) => p[1])) - Math.min(...points.map((p) => p[1]));
-    const span = Math.max(spanX, spanZ, 30);
-    const middle = [
-        (Math.max(...points.map((p) => p[0])) + Math.min(...points.map((p) => p[0]))) / 2,
-        (Math.max(...points.map((p) => p[1])) + Math.min(...points.map((p) => p[1]))) / 2,
-    ];
-    const inside = houseInfo
-        ? [houseInfo.outline.reduce((s, p) => s + p[0], 0) / houseInfo.outline.length, houseInfo.outline.reduce((s, p) => s + p[1], 0) / houseInfo.outline.length]
-        : middle;
-    const fenceLayout = layout(project, toXZ, inside);
+    const outline = scene.house?.outline?.length >= 3 ? scene.house.outline.map(([lat, lng]) => toXZ(lat, lng)) : null;
+    const footprint = outline ? orientedRectangle(outline) : null;
+    const houseRect = footprint || standardHouseRect(points, closed);
+    const housePlaced = houseRect
+        ? placeHouse(houseRect, footprint ? Math.min(12, scene.house.height_ft || 10) : STANDARD_HOUSE.height, frontHint)
+        : null;
+
+    const reach = houseRect ? Math.max(houseRect.width, houseRect.depth) : 0;
+    const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs), reach, 30);
+    const fenceLayout = layout(project, toXZ, housePlaced ? housePlaced.center : middle);
 
     let viewer;
     try {
@@ -579,8 +601,10 @@ export async function open({ project, materials, fetchScene }) {
     }
     session.viewer = viewer;
 
-    viewer.world.add(ground(scene.ground, satellite));
-    parts.forEach((part) => viewer.world.add(part));
+    viewer.world.add(buildSurroundings(middle, span));
+    if (housePlaced) {
+        viewer.world.add(housePlaced.group);
+    }
 
     const configs = new Map(materials.map((material) => [material.slot, material]));
     const tallest = Math.max(...materials.map((material) => fenceOptions(material).alto), 6);
@@ -633,17 +657,33 @@ export async function open({ project, materials, fetchScene }) {
         buildFence();
     });
 
-    // Camera presets.
+    // A person just outside the first gate, as on the website: the height reference that
+    // tells a 4 ft fence from a 6 ft one. The good face of a gate looks outward (-dz, dx).
     const firstGate = [...fenceLayout.bySlot.values()].flatMap((part) => part.huecos)[0];
+    if (firstGate) {
+        const dx = firstGate.b[0] - firstGate.a[0];
+        const dz = firstGate.b[1] - firstGate.a[1];
+        const length = Math.hypot(dx, dz) || 1;
+        const out = [-dz / length, dx / length];
+        const spot = [(firstGate.a[0] + firstGate.b[0]) / 2 + out[0] * 4 + (dx / length) * (length / 2 + 2.5),
+            (firstGate.a[1] + firstGate.b[1]) / 2 + out[1] * 4 + (dz / length) * (length / 2 + 2.5)];
+        viewer.world.add(Person.crear(spot[0], spot[1], Math.atan2(-out[0], -out[1]), '#ff7133'));
+    }
+
+    // Camera presets. "Outside" looks at the front of the house, three-quarters on.
+    const facing = housePlaced ? Math.atan2(housePlaced.front[0], housePlaced.front[1]) : 0;
     const closeTarget = firstGate
         ? [(firstGate.a[0] + firstGate.b[0]) / 2, 3, (firstGate.a[1] + firstGate.b[1]) / 2]
         : [points[0][0], 3, points[0][1]];
+    const closeFacing = firstGate
+        ? Math.atan2(-(firstGate.b[1] - firstGate.a[1]), firstGate.b[0] - firstGate.a[0])
+        : facing;
     const views = {
-        outside: { target: [middle[0], 4, middle[1]], distance: Math.min(380, Math.max(45, span * 1.45)), azimuth: 0.42, polar: 1.12 },
-        top: { target: [middle[0], 0, middle[1]], distance: Math.min(380, Math.max(60, span * 1.7)), azimuth: 0, polar: 0.12 },
-        close: { target: closeTarget, distance: 18, azimuth: 0.6, polar: 1.32 },
+        outside: { target: [middle[0], 4, middle[1]], distance: Math.min(380, Math.max(45, span * 1.45)), azimuth: facing + 0.42, polar: 1.12 },
+        top: { target: [middle[0], 0, middle[1]], distance: Math.min(380, Math.max(60, span * 1.7)), azimuth: facing, polar: 0.12 },
+        close: { target: closeTarget, distance: 18, azimuth: closeFacing + 0.4, polar: 1.32 },
     };
-    Object.assign(viewer, { azimuth: 0.42, polar: 1.12, distance: views.outside.distance });
+    Object.assign(viewer, { azimuth: views.outside.azimuth, polar: 1.12, distance: views.outside.distance });
     viewer.target.set(...views.outside.target);
     viewer.place();
     overlay.querySelectorAll('[data-view]').forEach((button) => {
@@ -663,12 +703,13 @@ export async function open({ project, materials, fetchScene }) {
     session.observer.observe(stage);
 
     const notes = [];
-    if (!satellite) {
-        notes.push('Satellite image not available.');
+    if (footprint) {
+        notes.push('House size and position from public building records; its look is illustrative.');
+    } else if (housePlaced) {
+        notes.push('We could not find your house in public records, so a standard home is shown.');
+    } else {
+        notes.push('We could not find your house in public records, so only the fence is shown.');
     }
-    notes.push(houseInfo
-        ? 'House shape from public building records.'
-        : 'We could not find the outline of the house, so only the fence is shown.');
     notes.push('Colors are a preview; your order keeps the color you chose.');
     note.textContent = notes.join(' ');
 
