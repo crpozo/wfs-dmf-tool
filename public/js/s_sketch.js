@@ -23,11 +23,22 @@ let _W = 1200;
 let _H = 800;
 let buffer;
 
-let zoomLevel = 3;
-let zoomLevels = [50, 75, 100, 200, 300, 400, 500];
-let zoomMin = 0;
-let zoomMax = 6;
-let gridSpacing = 1; //(_W-toolbarWidth)/zoomLevels[zoomLevel];
+// Zoom & pan. gridSpacing is the zoom scale (pixels per model unit, 1 = 100%)
+// and panX/panY the viewport offset in pixels; both feed pixelsToFt/ftToPixels.
+let gridSpacing = 1;
+let panX = 0;
+let panY = 0;
+let zoomMin = 0.25;
+let zoomMax = 5;
+let zoomStep = 1.25;      // factor applied by the +/- buttons and keys
+let zoomWheelStep = 1.1;  // factor applied per mouse-wheel notch
+let zoomFitPadding = 40;  // pixels kept around the sketch by "Fit"
+let panning = false;      // dragging the view (Space + drag or middle button)
+let spaceDown = false;
+let panLastX = 0;         // last pointer position used by the pan drag
+let panLastY = 0;
+let pinch = null;         // two-finger touch gesture in progress
+let zoomControls = null;  // HTML overlay built by createZoomControls()
 
 // ****
 var graph;
@@ -36,7 +47,6 @@ let wDoor = 4;
 let wSDoor = 4;
 let wDDoor = 8;
 
-var btnZoomIn, btnZoomOut;
 var modal = false;
 let inputRow = "<tr id='%%%ROW_ID%%%' class='rowDim'><td><div id='formDimsRight'><div class='input-group'><span id='%%%ID%%%' class='input-group-text'>%%%D%%%</span><input id='%%%ID_TXT%%%' name='%%%NAME%%%' type='text' class='form-control' placeholder='Enter length' aria-label='Enter length' aria-describedby='basic-addon2'><span class='input-group-text' id='basic-addon2'>ft</span></div></div></td></tr>";
 var redrawing = false;
@@ -76,6 +86,7 @@ let doorType = doorTypes.SLIDING_GATE;
 function clearSc(){
   actual = null;
   graph.clear();
+  zoomReset();
   $('#dynamic_field').html("");
   dimensions.clear();
   $('#submitDims').css('display','none');
@@ -128,32 +139,280 @@ function confirmClearSc(){
   });
 }
 
-function zoomOut(){
-  if(zoomLevel < zoomMax){
-    zoomLevel++;
-    gridSpacing = (_W-toolbarWidth)/zoomLevels[zoomLevel];
-  }
-  gridlines();
-  //console.log(zoomLevel);
+// ---------- Zoom & pan ----------
+
+function zoomViewCenter(){
+  return new Pt(toolbarWidth + (_W - toolbarWidth) / 2, _H / 2);
 }
 
-function zoomIn(){
-  if(zoomLevel > zoomMin){
-    zoomLevel--;
-    gridSpacing = (_W-toolbarWidth)/zoomLevels[zoomLevel];
+// Set the zoom scale keeping the model point under (cx, cy) fixed on screen.
+function setZoom(scale, cx, cy){
+  scale = constrain(scale, zoomMin, zoomMax);
+  if (cx == null || cy == null) {
+    var c = zoomViewCenter();
+    cx = c.x;
+    cy = c.y;
   }
-  gridlines();
-  //console.log(zoomLevel);
+  var ratio = scale / gridSpacing;
+  panX = (cx - toolbarWidth) - ((cx - toolbarWidth) - panX) * ratio;
+  panY = cy - (cy - panY) * ratio;
+  gridSpacing = scale;
+  afterViewChange();
+}
+
+function panBy(dx, dy){
+  panX += dx;
+  panY += dy;
+  afterViewChange();
+}
+
+function zoomIn(cx, cy){
+  setZoom(gridSpacing * zoomStep, cx, cy);
+}
+
+function zoomOut(cx, cy){
+  setZoom(gridSpacing / zoomStep, cx, cy);
+}
+
+function zoomReset(){
+  gridSpacing = 1;
+  panX = 0;
+  panY = 0;
+  afterViewChange();
+}
+
+// Fit the whole sketch in the drawing area (or reset when it is empty).
+function zoomToFit(){
+  if (!graph || graph.vertices.length == 0) {
+    zoomReset();
+    return;
+  }
+  var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (var i = 0; i < graph.vertices.length; i++) {
+    var v = graph.vertices[i];
+    minX = min(minX, v.x); maxX = max(maxX, v.x);
+    minY = min(minY, v.y); maxY = max(maxY, v.y);
+  }
+  var areaW = max(1, _W - toolbarWidth - 2 * zoomFitPadding);
+  var areaH = max(1, _H - 2 * zoomFitPadding);
+  var w = max(maxX - minX, 1);
+  var h = max(maxY - minY, 1);
+  gridSpacing = constrain(min(areaW / w, areaH / h), zoomMin, zoomMax);
+  panX = (_W - toolbarWidth - w * gridSpacing) / 2 - minX * gridSpacing;
+  panY = (_H - h * gridSpacing) / 2 - minY * gridSpacing;
+  afterViewChange();
+}
+
+// Keep the in-progress line start in sync with the view and repaint.
+function afterViewChange(){
+  if (actual) {
+    var po = ftToPixels(actual.x, actual.y);
+    xo = po.x;
+    yo = po.y;
+  }
+  redrawing = true;
+  updateZoomControls();
+}
+
+function isOverDrawingArea(x, y){
+  return x >= toolbarWidth && x <= _W && y >= 0 && y <= _H;
+}
+
+function isTypingInField(){
+  var el = document.activeElement;
+  return !!el && (el.tagName == 'INPUT' || el.tagName == 'TEXTAREA' || el.tagName == 'SELECT' || el.isContentEditable);
+}
+
+function startPan(){
+  panning = true;
+  panLastX = mouseX;
+  panLastY = mouseY;
+  drawable = false;
+  cursor('grabbing');
+}
+
+function endPan(){
+  if (panning) {
+    panning = false;
+    cursor(cursorActual);
+  }
+}
+
+// HTML overlay (not painted on the canvas, so it never ends up in the exported
+// sketch image). Lives in the canvas' parent element.
+function createZoomControls(){
+  if (zoomControls) {
+    return;
+  }
+  var style = document.createElement('style');
+  style.textContent =
+    '.wfs-zoom-controls{position:absolute;right:12px;bottom:12px;z-index:5;display:flex;align-items:center;gap:2px;padding:3px;' +
+      'border-radius:10px;background:var(--wfs-white,#fff);border:1px solid rgba(38,49,102,.25);box-shadow:0 2px 8px rgba(38,49,102,.15);' +
+      'font-family:var(--wfs-font-sans,system-ui,sans-serif);user-select:none;-webkit-user-select:none;touch-action:manipulation}' +
+    '.wfs-zoom-controls button{appearance:none;border:0;background:transparent;color:var(--wfs-ink,#263166);height:32px;min-width:32px;' +
+      'padding:0 6px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:14px;line-height:1}' +
+    '.wfs-zoom-controls button:hover{background:#e8edfa}' +
+    '.wfs-zoom-controls button:focus-visible{outline:2px solid #2e59c1;outline-offset:-2px}' +
+    '.wfs-zoom-controls button svg{width:16px;height:16px;display:block}' +
+    '.wfs-zoom-controls .wfs-zoom-level{min-width:52px;font-variant-numeric:tabular-nums;font-weight:600;font-size:13px}' +
+    '.wfs-zoom-controls .wfs-zoom-sep{width:1px;height:20px;background:rgba(38,49,102,.2);margin:0 2px}' +
+    '@media (max-width:600px){.wfs-zoom-controls{right:8px;bottom:8px}.wfs-zoom-controls button{height:36px;min-width:36px}}';
+  document.head.appendChild(style);
+
+  var svgMinus = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h10"/></svg>';
+  var svgPlus = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>';
+  var svgFit = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/><rect x="5.5" y="5.5" width="5" height="5" rx="1"/></svg>';
+
+  var box = document.createElement('div');
+  box.className = 'wfs-zoom-controls';
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', 'Zoom');
+  box.innerHTML =
+    '<button type="button" data-zoom="out" title="Zoom out (-)" aria-label="Zoom out">' + svgMinus + '</button>' +
+    '<button type="button" data-zoom="reset" class="wfs-zoom-level" title="Reset to 100% (0)" aria-label="Reset zoom">100%</button>' +
+    '<button type="button" data-zoom="in" title="Zoom in (+)" aria-label="Zoom in">' + svgPlus + '</button>' +
+    '<span class="wfs-zoom-sep" aria-hidden="true"></span>' +
+    '<button type="button" data-zoom="fit" title="Fit sketch to view (F)" aria-label="Fit sketch to view">' + svgFit + '</button>';
+
+  // Keep the canvas from reacting to clicks on the overlay (p5 listens on window).
+  box.addEventListener('pointerdown', function (event) {
+    suppressCanvasPointerInteraction(event, false);
+  });
+  box.addEventListener('pointerup', function () {
+    releaseCanvasPointerInteraction();
+  });
+  box.addEventListener('wheel', function (event) {
+    event.stopPropagation();
+  });
+  box.addEventListener('click', function (event) {
+    var btn = event.target.closest('button[data-zoom]');
+    if (!btn) {
+      return;
+    }
+    event.preventDefault();
+    switch (btn.getAttribute('data-zoom')) {
+      case 'in': zoomIn(); break;
+      case 'out': zoomOut(); break;
+      case 'reset': zoomReset(); break;
+      case 'fit': zoomToFit(); break;
+    }
+    btn.blur();
+  });
+
+  zoomControls = box;
+  mountZoomControls();
+  updateZoomControls();
+}
+
+// The layout adapter may move the canvas to another host after setup, so the
+// overlay follows the canvas' current parent.
+function mountZoomControls(){
+  if (!zoomControls) {
+    return;
+  }
+  var canvasEl = document.querySelector('canvas');
+  var host = canvasEl ? canvasEl.parentElement : null;
+  if (!host || host === document.body || zoomControls.parentElement === host) {
+    return;
+  }
+  if (getComputedStyle(host).position == 'static') {
+    host.style.position = 'relative';
+  }
+  host.appendChild(zoomControls);
+}
+
+function updateZoomControls(){
+  if (!zoomControls) {
+    return;
+  }
+  var label = zoomControls.querySelector('.wfs-zoom-level');
+  if (label) {
+    label.textContent = round(gridSpacing * 100) + '%';
+  }
+  var outBtn = zoomControls.querySelector('[data-zoom="out"]');
+  var inBtn = zoomControls.querySelector('[data-zoom="in"]');
+  if (outBtn) { outBtn.disabled = gridSpacing <= zoomMin + 0.0001; }
+  if (inBtn) { inBtn.disabled = gridSpacing >= zoomMax - 0.0001; }
+}
+
+// Mouse wheel over the drawing area zooms around the pointer.
+function mouseWheel(event){
+  if (!canvasEnabled || modal || !isOverDrawingArea(mouseX, mouseY)) {
+    return;
+  }
+  var canvasEl = document.querySelector('canvas');
+  if (canvasEl && event.target && event.target !== canvasEl) {
+    return;
+  }
+  var factor = event.delta > 0 ? 1 / zoomWheelStep : zoomWheelStep;
+  setZoom(gridSpacing * factor, mouseX, mouseY);
+  return false;
+}
+
+function mouseDragged(){
+  if (panning) {
+    // pmouseX/pmouseY only refresh once per frame, so track the drag ourselves.
+    panBy(mouseX - panLastX, mouseY - panLastY);
+    panLastX = mouseX;
+    panLastY = mouseY;
+    return false;
+  }
+}
+
+// Two-finger touch: pinch to zoom, move both fingers to pan.
+function touchStarted(){
+  if (touches.length >= 2) {
+    if (!pinch) {
+      // The first finger may have just dropped a lone vertex: discard it.
+      if (actual && graph.countEdgesVert(actual.id) == 0) {
+        graph.removeVertex(actual);
+        actual = null;
+      }
+      var a = touches[0], b = touches[1];
+      pinch = {
+        dist: max(1, dist(a.x, a.y, b.x, b.y)),
+        cx: (a.x + b.x) / 2,
+        cy: (a.y + b.y) / 2,
+        scale: gridSpacing
+      };
+      drawable = false;
+    }
+    return false;
+  }
+  mousePressed();
+}
+
+function touchMoved(){
+  if (pinch && touches.length >= 2) {
+    var a = touches[0], b = touches[1];
+    var d = max(1, dist(a.x, a.y, b.x, b.y));
+    var cx = (a.x + b.x) / 2;
+    var cy = (a.y + b.y) / 2;
+    setZoom(pinch.scale * d / pinch.dist, pinch.cx, pinch.cy);
+    panBy(cx - pinch.cx, cy - pinch.cy);
+    pinch.cx = cx;
+    pinch.cy = cy;
+    return false;
+  }
+  if (pinch) {
+    return false;
+  }
+  mouseDragged();
+}
+
+function touchEnded(){
+  if (pinch) {
+    if (touches.length == 0) {
+      pinch = null;
+      drawable = true;
+    }
+    return false;
+  }
+  mouseReleased();
 }
 
 function toolbar(){
-  btnZoomIn = createImg('img/plus.png','plus');
-  btnZoomIn.position(5, 0);
-  btnZoomIn.mousePressed(function(){ zoomIn(); });
-  btnZoomOut = createImg('img/minus.png','minus');
-  btnZoomOut.position(30, 0);
-  btnZoomOut.mousePressed(function(){ zoomOut(); });
-
   //btnFence.mousePressed(toolClick(1));
   var posX = 5
   //let btnFence = createImg('img/fence2.png','Fence');
@@ -206,8 +465,8 @@ function setup(){
 
   createCanvas(_W, _H);
   buffer = createGraphics(_W - toolbarWidth, _H);
-  gridSpacing = 1; // (_W-toolbarWidth)/zoomLevels[zoomLevel];
   gridlines();
+  createZoomControls();
 
   textSize(fontsize);
   textAlign(RIGHT, TOP);
@@ -275,7 +534,8 @@ function draw() {
 
                 // Al colocar puerta no debe contemplarse edición de dimensiones
                 //if (toolActual == tools.GATE || toolActual == tools.DOUBLE || toolActual == tools.ERASER) {
-                if (toolActualGroup[2] == tools.GATE || toolActualGroup[2] == tools.DOUBLE || toolActualGroup[1] == tools.ERASER) {
+                mountZoomControls();
+                if (panning || spaceDown || pinch || toolActualGroup[2] == tools.GATE || toolActualGroup[2] == tools.DOUBLE || toolActualGroup[1] == tools.ERASER) {
                     dimOver = null;
                 } else {
                     dimOver = graph.over();
@@ -304,9 +564,11 @@ function draw() {
                     tb.over();
                     tb.show();
 
-                    pixelsToFt(x, y);
                     if (x < toolbarWidth) {
                         cursor(ARROW);
+                    } else if (panning || spaceDown || pinch) {
+                        // View is being moved: no drawing, just the pan cursor.
+                        cursor(panning ? 'grabbing' : 'grab');
                     } else {
                         //  if (toolActual == tools.FENCE || toolActual == tools.WALL) {
                         //if (toolActual == tools.LINE) {
@@ -489,12 +751,22 @@ function draw() {
 }
 
 function mousePressed() {
-  if (canvasEnabled && !isToolTooltipPointerActive()) {
-    tb.clicked();
+  if (!canvasEnabled || isToolTooltipPointerActive()) {
+    return;
   }
+  if (mouseButton === RIGHT) {
+    return;
+  }
+  // Middle button, or Space held, drags the view instead of drawing.
+  if ((mouseButton === CENTER || spaceDown) && isOverDrawingArea(mouseX, mouseY)) {
+    startPan();
+    return false;
+  }
+  tb.clicked();
 }
 
 function mouseReleased(){
+  endPan();
   if (!canvasEnabled) {
     return;
   }
@@ -507,6 +779,24 @@ function mouseReleased(){
 
 function keyPressed() {
   //console.log(keyCode);
+
+  if (isTypingInField()) {
+    return;
+  }
+  if (keyCode == 32) {
+    // Space: hold to pan with the mouse
+    if (canvasEnabled && !modal) {
+      spaceDown = true;
+      return false;
+    }
+    return;
+  }
+  if (canvasEnabled && !modal) {
+    if (key == '+' || key == '=') { zoomIn(); return false; }
+    if (key == '-' || key == '_') { zoomOut(); return false; }
+    if (key == '0') { zoomReset(); return false; }
+    if (key == 'f' || key == 'F') { zoomToFit(); return false; }
+  }
 
   shift = (keyCode == 16);
   /*
@@ -530,6 +820,10 @@ function keyPressed() {
 }
 
 function keyReleased(){
+  if (keyCode == 32) {
+    spaceDown = false;
+    endPan();
+  }
   if(shift){
     shift = false;
     ortoShift = false;

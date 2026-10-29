@@ -93,7 +93,7 @@ function dimension(xo,yo,x,y){
     x1 = x1 + ang/90 * (sep + w/4) * signX;
     y1 = y1 + ang/90 * (sep) * signY;
 
-    let dim = new Dim(x1, y1, d, xA, yA, fontsize);
+    let dim = new Dim(x1, y1, d, xA, yA, fontsize, xp, yp);
     dim.paint();
     return dim;
 }
@@ -138,7 +138,7 @@ function dimension(xo,yo,x,y,d,gap){
     x1 = x1 + ang/90 * (gap + w/4) * signX;
     y1 = y1 + ang/90 * (gap) * signY;
 
-    let dim = new Dim(x1, y1, d, xA, yA, fontsize);
+    let dim = new Dim(x1, y1, d, xA, yA, fontsize, xp, yp);
     dim.paint();
     return dim;
 }
@@ -154,27 +154,19 @@ function dimension(xo,yo,x,y,d,gap) {
 }
  */
 
+// Screen <-> model conversion. Model units ("ft" in the code) are the sketch
+// coordinates stored on vertices; gridSpacing is the zoom scale (pixels per model
+// unit) and panX/panY is the viewport offset in pixels. See zoom/pan in s_sketch.js.
 function pixelsToFt(x,y){
-  //xft = round((x - toolbarWidth) / gridSpacing);
-    xft = (x - toolbarWidth) / gridSpacing;
-  //yft = round(y / gridSpacing);
-    yft = y / gridSpacing;
-  return new Pt(xft, yft);
+    var xft = (x - toolbarWidth - panX) / gridSpacing;
+    var yft = (y - panY) / gridSpacing;
+    return new Pt(xft, yft);
 }
 
 function ftToPixels(xft, yft){
-  xp = toolbarWidth + xft * gridSpacing;
-  yp = yft * gridSpacing;
-  return new Pt(xp, yp);
-}
-
-function convertZoomLevel(x,y,fromZoomLevel,toZoomLevel){
-  fromGridSpacing = (_W-toolbarWidth)/zoomLevels[fromZoomLevel];
-  toGridSpacing = (_W-toolbarWidth)/zoomLevels[toZoomLevel];
-  var xc = (x-toolbarWidth) * toGridSpacing/fromGridSpacing + toolbarWidth;
-  var yc = y * toGridSpacing/fromGridSpacing;
-  var p = new Pt(xc, yc);
-  return p;
+    var xp = toolbarWidth + panX + xft * gridSpacing;
+    var yp = panY + yft * gridSpacing;
+    return new Pt(xp, yp);
 }
 
 function setActual(vert){
