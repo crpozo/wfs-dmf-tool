@@ -3,6 +3,8 @@
  * shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z) and the contextual hint under the toolbar.
  */
 
+import { hasFinePointer } from './mode.js';
+
 export function mountToolbar({ root, store, mode, onBeforeChange }) {
     const button = (action) => root.querySelector(`[data-pm-action="${action}"]`);
     const drawButton = button('mode-draw');
@@ -85,16 +87,27 @@ export function mountToolbar({ root, store, mode, onBeforeChange }) {
             view3dButton.disabled = !store.runs().some((run) => !run.is_existing_wall);
         }
 
+        const mouse = hasFinePointer();
         if (!drawing) {
-            hint.textContent = 'Navigate: drag and pinch to move the map. Switch to Draw to add corners.';
+            hint.textContent = mouse
+                ? 'Navigate: drag to move the map, scroll to zoom. Switch to Draw to add corners.'
+                : 'Navigate: drag and pinch to move the map. Switch to Draw to add corners.';
         } else if (store.state.closed) {
-            hint.textContent = 'Shape closed. Drag a corner to adjust it, or tap it to delete it.';
+            hint.textContent = mouse
+                ? 'Shape closed. Drag a corner to adjust it, or click it to delete it.'
+                : 'Shape closed. Drag a corner to adjust it, or tap it to delete it.';
         } else if (store.state.vertices.length === 0) {
-            hint.textContent = 'Tap the map where your fence starts.';
+            hint.textContent = mouse
+                ? 'Click where your fence starts, or press and drag to draw the first side.'
+                : 'Tap the map where your fence starts.';
         } else if (store.canClose()) {
-            hint.textContent = 'Tap the next corner, or tap the first corner to close the shape.';
+            hint.textContent = mouse
+                ? 'Click or drag to the next corner. Drag or click onto the first corner to close the shape.'
+                : 'Tap the next corner, or tap the first corner to close the shape.';
         } else {
-            hint.textContent = 'Tap the next corner of your fence.';
+            hint.textContent = mouse
+                ? 'Click the next corner, or press and drag to draw the next side.'
+                : 'Tap the next corner of your fence.';
         }
     }
 

@@ -3,6 +3,11 @@
  * (DrawingManager was retired and never allowed fine vertex editing).
  *
  * - Draw mode: each click or tap adds a corner; tapping the first corner closes the shape.
+ *   With a mouse, pressing and dragging on the map draws a whole side too: the press point
+ *   becomes a corner (unless it is the last one) and the release point the next one, so a
+ *   customer who drags like in a paint program gets a fence instead of a panned map. Map
+ *   panning is off while that applies; Navigate mode pans.
+ * - A dotted preview line follows the pointer from the last corner while drawing.
  * - Corners can be dragged; tapping one opens a menu to delete it.
  * - Each run gets a polyline and a length label at its midpoint.
  * Everything is re-rendered from the project store, so undo/redo and loading a saved
@@ -10,6 +15,11 @@
  */
 
 import { gateLabel } from './gates.js';
+import { hasFinePointer } from './mode.js';
+
+// Pointer travel that turns a press into a drag, and the snap radius to an existing corner.
+const DRAG_PX = 6;
+const SNAP_PX = 14;
 
 // Pencil cursor with its tip (the hotspot) at the bottom-left corner: 3,29 of 32x32.
 const PENCIL_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -36,18 +46,119 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
     const runLabels = new Map();
     const gateViews = new Map();
     const menu = new InfoWindow({ headerDisabled: true });
+    const preview = new Polyline({ map: null, clickable: false, zIndex: 5, ...previewStyle() });
     let draggingId = null;
     let draggingGateId = null;
+    // Mouse press on the map in Draw mode (drag-to-draw): where it started and the last
+    // pointer position seen, in case the release lands on a marker or outside the map.
+    let press = null;
+    // Maps fires 'click' shortly after the mouseup that ended a drag-to-draw; ignore that one.
+    let swallowClicksUntil = 0;
+
+    const dragToDraw = () => mode.isDrawing() && hasFinePointer();
+    const lastVertex = () => store.state.vertices[store.state.vertices.length - 1] || null;
 
     map.addListener('click', (event) => {
         menu.close();
+        if (Date.now() < swallowClicksUntil) {
+            return;
+        }
         if (!mode.isDrawing()) {
             return;
         }
-        if (!store.addVertex(event.latLng.toJSON())) {
+        addCorner(event.latLng.toJSON());
+    });
+
+    function addCorner(latLng) {
+        if (!store.addVertex(latLng)) {
             notify('The shape is closed. Drag a corner to adjust it, or delete a corner to reopen it.');
+            return false;
+        }
+        return true;
+    }
+
+    map.addListener('mousedown', (event) => {
+        if (!dragToDraw() || !event.domEvent || event.domEvent.button !== 0) {
+            return;
+        }
+        menu.close();
+        const { clientX, clientY } = event.domEvent;
+        press = { latLng: event.latLng.toJSON(), clientX, clientY, current: event.latLng.toJSON(), dragging: false };
+    });
+
+    map.addListener('mousemove', (event) => {
+        const point = event.latLng.toJSON();
+        if (press) {
+            press.current = point;
+            if (!press.dragging && event.domEvent
+                && Math.hypot(event.domEvent.clientX - press.clientX, event.domEvent.clientY - press.clientY) >= DRAG_PX) {
+                press.dragging = true;
+            }
+        }
+        updatePreview(point);
+    });
+
+    map.addListener('mouseout', () => {
+        if (!press) {
+            preview.setMap(null);
         }
     });
+
+    map.addListener('mouseup', (event) => finishPress(event.domEvent));
+    // The release may land on a corner, a label or outside the map, where the map gets no mouseup.
+    document.addEventListener('mouseup', (event) => finishPress(event), true);
+
+    function finishPress(domEvent) {
+        if (!press) {
+            return;
+        }
+        const { latLng: start, current, dragging } = press;
+        const startsAtLastCorner = pressOnLastCorner(press);
+        press = null;
+        if (!dragging || !store.canAddVertex()) {
+            return; // a plain click: the click listener adds the corner
+        }
+        swallowClicksUntil = Date.now() + 400;
+
+        if (!startsAtLastCorner) {
+            addCorner(start);
+        }
+        const first = store.state.vertices[0];
+        if (first && store.canClose() && domEvent && nearMarker(domEvent.clientX, domEvent.clientY, vertexMarkers.get(first.id))) {
+            store.closeShape();
+        } else {
+            addCorner(current);
+        }
+        updatePreview(current);
+    }
+
+    // The map does not pan while a press is held, so the marker boxes measured now match the press.
+    function pressOnLastCorner(pressed) {
+        const last = lastVertex();
+        return Boolean(last) && nearMarker(pressed.clientX, pressed.clientY, vertexMarkers.get(last.id));
+    }
+
+    // Is the screen point within SNAP_PX of a corner marker? Uses the marker's box, so no projection is needed.
+    function nearMarker(x, y, marker) {
+        const box = marker?.content?.getBoundingClientRect();
+        if (!box || !Number.isFinite(x) || !Number.isFinite(y)) {
+            return false;
+        }
+        return Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2)) <= box.width / 2 + SNAP_PX;
+    }
+
+    function updatePreview(point) {
+        const last = lastVertex();
+        if (!mode.isDrawing() || store.state.closed || !last || draggingId || draggingGateId) {
+            preview.setMap(null);
+            return;
+        }
+        const from = press?.dragging && !pressOnLastCorner(press) ? press.latLng : { lat: last.lat, lng: last.lng };
+        preview.setPath([from, point]);
+        if (!preview.getMap()) {
+            preview.setMap(map);
+        }
+    }
 
     function createVertexMarker(id) {
         const content = document.createElement('div');
@@ -206,6 +317,17 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         }
     }
 
+    function previewStyle() {
+        return {
+            strokeOpacity: 0,
+            icons: [{
+                icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.9, strokeWeight: 3, strokeColor: COLORS.fence, scale: 2 },
+                offset: '0',
+                repeat: '10px',
+            }],
+        };
+    }
+
     function lineStyle(run, isSelected) {
         if (run.is_existing_wall) {
             // Dashed line: invisible stroke with a repeated dash symbol.
@@ -298,18 +420,37 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         }
     }
 
-    // Draw mode shows a pencil over the map instead of the open hand; panning still shows the grabbing hand.
-    function applyCursor() {
-        map.setOptions({ draggableCursor: mode.isDrawing() ? PENCIL_CURSOR : null });
+    // Draw mode shows a pencil over the map instead of the open hand. With a mouse the map
+    // stops panning in Draw mode so that a press and drag draws a side (see the header).
+    function applyInteraction() {
+        const drawing = mode.isDrawing();
+        const draggable = !dragToDraw();
+        map.setOptions({
+            draggable,
+            draggableCursor: drawing ? PENCIL_CURSOR : null,
+            draggingCursor: drawing && !draggable ? PENCIL_CURSOR : null,
+        });
+        const element = map.getDiv();
+        element.classList.toggle('is-drawing', drawing);
+        element.style.setProperty('--pm-pencil-cursor', PENCIL_CURSOR);
+        if (!drawing) {
+            press = null;
+            preview.setMap(null);
+        }
     }
 
-    store.subscribe(render);
+    store.subscribe(() => {
+        render();
+        if (store.state.closed || !lastVertex()) {
+            preview.setMap(null);
+        }
+    });
     mode.subscribe(() => {
         menu.close();
-        applyCursor();
+        applyInteraction();
         render();
     });
-    applyCursor();
+    applyInteraction();
     render();
 
     return { revealRun, closeMenu: () => menu.close() };

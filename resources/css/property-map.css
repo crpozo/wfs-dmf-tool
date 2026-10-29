@@ -125,6 +125,11 @@ body.drawing.pm-map-active { height: auto; min-height: 100%; overflow-y: auto; }
 }
 
 /* Markers on the map. Advanced markers anchor at bottom center; shift them down to center on the point. */
+/* Draw mode with a mouse: the map does not pan, so Maps shows its default arrow; keep the pencil. */
+[data-pm-map].is-drawing .gm-style > div:first-child {
+    cursor: var(--pm-pencil-cursor, crosshair) !important;
+}
+
 .pm-vertex {
     width: 32px;
     height: 32px;

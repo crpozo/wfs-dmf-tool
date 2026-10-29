@@ -28,3 +28,9 @@ export function createModeState(initial) {
 export function initialMode() {
     return 'navigate';
 }
+
+// A mouse or trackpad is the primary pointer (desktop and laptop). On these devices Draw
+// mode also draws by pressing and dragging; on phones a finger drag keeps panning the map.
+export function hasFinePointer() {
+    return Boolean(window.matchMedia?.('(pointer: fine)').matches);
+}
