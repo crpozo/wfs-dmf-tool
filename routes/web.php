@@ -190,6 +190,9 @@ Route::prefix('property-map')->name('property-map.')->group(function () {
     Route::post('/snapshot', [PropertyMapController::class, 'snapshot'])
         ->middleware('throttle:20,1')
         ->name('snapshot');
+    Route::post('/scene', [PropertyMapController::class, 'scene'])
+        ->middleware('throttle:30,1')
+        ->name('scene');
     Route::post('/projects', [PropertyMapController::class, 'store'])
         ->middleware('throttle:20,1')
         ->name('projects.store');

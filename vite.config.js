@@ -14,4 +14,8 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        // The 3D view chunk (three.js) is ~530 kB, loaded only when "View in 3D" is pressed.
+        chunkSizeWarningLimit: 600,
+    },
 });

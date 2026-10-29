@@ -100,6 +100,25 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
         notify,
     });
 
+    // 3D view: three.js and the scene builder are downloaded on the first click only.
+    root.querySelector('[data-pm-action="view3d"]')?.addEventListener('click', async (event) => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+            const viewer3d = await import('./viewer3d.js');
+            await viewer3d.open({
+                project: store.toJSON(),
+                materials: config.materials || [],
+                fetchScene: fetchScene3d,
+            });
+        } catch (error) {
+            console.error(error);
+            notify('The 3D view could not be opened. Please try again.');
+        } finally {
+            button.disabled = false;
+        }
+    });
+
     view.showMap();
 
     const loadProject = (project) => {
@@ -140,4 +159,20 @@ function createNotifier(element) {
             element.hidden = true;
         }, 6000);
     };
+}
+
+async function fetchScene3d(project) {
+    const response = await fetch('/property-map/scene', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        },
+        body: JSON.stringify({ project }),
+    });
+    if (!response.ok) {
+        throw new Error(`Scene request failed with ${response.status}`);
+    }
+    return response.json();
 }

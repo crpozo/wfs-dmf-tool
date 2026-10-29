@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SavedProject;
+use App\Services\BuildingFootprints;
 use App\Services\PropertyMapImage;
 use App\Services\PropertyMapQuote;
 use Illuminate\Http\JsonResponse;
@@ -82,22 +83,7 @@ class PropertyMapController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        // Every top-level field is listed: validated() keeps only the keys that have rules.
-        $validated = $request->validate([
-            'project' => ['required', 'array'],
-            'project.source' => ['nullable', 'string', 'max:20'],
-            'project.address' => ['nullable', 'string', 'max:255'],
-            'project.place_id' => ['nullable', 'string', 'max:255'],
-            'project.center' => ['nullable', 'array'],
-            'project.center.lat' => ['required_with:project.center', 'numeric', 'between:-90,90'],
-            'project.center.lng' => ['required_with:project.center', 'numeric', 'between:-180,180'],
-            'project.zoom' => ['nullable', 'numeric', 'between:0,22'],
-            'project.vertices' => ['present', 'array', 'max:500'],
-            'project.vertices.*.lat' => ['required', 'numeric', 'between:-90,90'],
-            'project.vertices.*.lng' => ['required', 'numeric', 'between:-180,180'],
-            'project.runs' => ['present', 'array', 'max:500'],
-            'project.runs.*' => ['array'],
-        ]);
+        $validated = $request->validate($this->projectRules());
 
         $materials = session('materials');
         if (! is_array($materials) || empty($materials)) {
@@ -118,6 +104,28 @@ class PropertyMapController extends Controller
             'url' => route('property-map.open', $saved),
             'expires_at' => $saved->expires_at->toIso8601String(),
         ], 201);
+    }
+
+    /**
+     * What the 3D view needs besides the drawing: the satellite image for the ground
+     * (laid out at real scale) and the outline of the house, when one is found.
+     */
+    public function scene(Request $request, PropertyMapImage $image, BuildingFootprints $footprints): JsonResponse
+    {
+        $project = $request->validate($this->projectRules())['project'];
+        $vertices = $project['vertices'];
+        if (count($vertices) < 2) {
+            return response()->json(['message' => 'Draw your fence first.'], 422);
+        }
+
+        $runs = $project['runs'];
+        $last = count($vertices) - 1;
+        $closed = collect($runs)->contains(fn ($run) => ($run['from'] ?? null) === $last && ($run['to'] ?? null) === 0);
+
+        return response()->json([
+            'ground' => $image->ground($vertices),
+            'house' => $footprints->houseFor($vertices, $closed),
+        ]);
     }
 
     public function show(string $token): JsonResponse
@@ -166,6 +174,8 @@ class PropertyMapController extends Controller
                     $material['style'] ?? null,
                     $material['color'] ?? null,
                 ])),
+                // The chosen answers (style, color, height...), for the 3D view.
+                'fields' => array_filter((array) $material, fn ($value, $key) => is_string($value) && $key !== 'code', ARRAY_FILTER_USE_BOTH),
             ];
         }
 
@@ -173,6 +183,26 @@ class PropertyMapController extends Controller
             'browserKey' => config('services.google_maps.browser_key'),
             'mapId' => config('services.google_maps.map_id'),
             'materials' => $materials,
+        ];
+    }
+
+    // Every top-level field is listed: validated() keeps only the keys that have rules.
+    private function projectRules(): array
+    {
+        return [
+            'project' => ['required', 'array'],
+            'project.source' => ['nullable', 'string', 'max:20'],
+            'project.address' => ['nullable', 'string', 'max:255'],
+            'project.place_id' => ['nullable', 'string', 'max:255'],
+            'project.center' => ['nullable', 'array'],
+            'project.center.lat' => ['required_with:project.center', 'numeric', 'between:-90,90'],
+            'project.center.lng' => ['required_with:project.center', 'numeric', 'between:-180,180'],
+            'project.zoom' => ['nullable', 'numeric', 'between:0,22'],
+            'project.vertices' => ['present', 'array', 'max:500'],
+            'project.vertices.*.lat' => ['required', 'numeric', 'between:-90,90'],
+            'project.vertices.*.lng' => ['required', 'numeric', 'between:-180,180'],
+            'project.runs' => ['present', 'array', 'max:500'],
+            'project.runs.*' => ['array'],
         ];
     }
 

@@ -80,6 +80,10 @@ export function mountToolbar({ root, store, mode, onBeforeChange }) {
         redoButton.disabled = !store.canRedo();
         closeButton.disabled = !store.canClose();
         clearButton.disabled = store.isEmpty();
+        const view3dButton = button('view3d');
+        if (view3dButton) {
+            view3dButton.disabled = !store.runs().some((run) => !run.is_existing_wall);
+        }
 
         if (!drawing) {
             hint.textContent = 'Navigate: drag and pinch to move the map. Switch to Draw to add corners.';
