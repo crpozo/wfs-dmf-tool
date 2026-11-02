@@ -10,15 +10,18 @@
  *                rectangle gets a garage pushed slightly forward at one end. Also places the
  *                entry door, porch and planting beds, which the site needs for its paths.
  *                Commercial buildings and large footprints get a flat roof instead.
- *   buildHouse() builds the geometry from that plan.
+ *   buildHouse() builds the geometry from that plan. With a real footprint, the walls are
+ *                the footprint's own polygon extruded, with windows and doors on its
+ *                real edges; the hip roofs stay on the rectangles of the plan, whose
+ *                eaves cover the outline.
  *
  * Small boxes (windows, trims, fascias) are merged per material, so a whole house costs a
  * dozen draw calls instead of a few hundred.
  */
 import {
     Group, Mesh, BoxGeometry, CylinderGeometry, SphereGeometry, BufferGeometry, Float32BufferAttribute,
-    InstancedMesh, Object3D, MeshStandardMaterial, Color, Vector3, Matrix4, Quaternion, CanvasTexture, SRGBColorSpace,
-    RepeatWrapping,
+    InstancedMesh, Object3D, MeshStandardMaterial, Color, Vector2, Vector3, Matrix4, Quaternion, CanvasTexture,
+    SRGBColorSpace, RepeatWrapping, Shape, Path, ExtrudeGeometry,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as T from './fence3d/texturas.js';
@@ -87,6 +90,44 @@ export function pointInPolygon(point, polygon) {
         }
     }
     return inside;
+}
+
+// Footprint ring without the closing duplicate, near-duplicate corners or straight-through corners.
+function cleanRing(points) {
+    let ring = points.filter((p, i) => {
+        const q = points[(i + 1) % points.length];
+        return Math.hypot(q[0] - p[0], q[1] - p[1]) > 0.3;
+    });
+    ring = ring.filter((p, i) => {
+        const a = ring[(i + ring.length - 1) % ring.length];
+        const b = ring[(i + 1) % ring.length];
+        const cross = (p[0] - a[0]) * (b[1] - p[1]) - (p[1] - a[1]) * (b[0] - p[0]);
+        return Math.abs(cross) > 0.05 * Math.hypot(p[0] - a[0], p[1] - a[1]) * Math.hypot(b[0] - p[0], b[1] - p[1]);
+    });
+    return ring.length >= 3 ? ring : null;
+}
+
+// Outward unit normal of each edge (edge i runs from ring[i] to ring[i + 1]).
+function edgeNormals(ring) {
+    return ring.map((a, i) => {
+        const b = ring[(i + 1) % ring.length];
+        const length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+        const normal = [(b[1] - a[1]) / length, -(b[0] - a[0]) / length];
+        const probe = [(a[0] + b[0]) / 2 + normal[0] * 0.3, (a[1] + b[1]) / 2 + normal[1] * 0.3];
+        return pointInPolygon(probe, ring) ? [-normal[0], -normal[1]] : normal;
+    });
+}
+
+// The ring with every edge moved outward by d (inward when negative), mitered corners.
+function offsetRing(ring, d) {
+    const normals = edgeNormals(ring);
+    return ring.map((p, i) => {
+        const n1 = normals[(i + ring.length - 1) % ring.length];
+        const n2 = normals[i];
+        const k = 1 + n1[0] * n2[0] + n1[1] * n2[1];
+        if (k < 0.2) return [p[0] + n2[0] * d, p[1] + n2[1] * d];
+        return [p[0] + ((n1[0] + n2[0]) * d) / k, p[1] + ((n1[1] + n2[1]) * d) / k];
+    });
 }
 
 /*
@@ -195,8 +236,9 @@ function freeIntervals(from, to, blocked) {
  * @param seed       picks the palette
  * @param garageSide +1 or -1: the end of the facade that gets the garage (the driveway side)
  * @param occupancy  FEMA OCC_CLS (Residential, Commercial, ...) or null
+ * @param roof       'flat' or 'pitched' when measured (3D scan); overrides the guesses below
  */
-export function planHouse({ width, depth, outline = null, height = 11, seed = 1, garageSide = 1, occupancy = null }) {
+export function planHouse({ width, depth, outline = null, height = 11, seed = 1, garageSide = 1, occupancy = null, roof = null }) {
     width = Math.max(16, width);
     depth = Math.max(14, depth);
     const stories = height > 18 ? 2 : 1;
@@ -209,16 +251,19 @@ export function planHouse({ width, depth, outline = null, height = 11, seed = 1,
     // roof unless it is over 55 ft deep), gets a flat roof with a parapet.
     const area = outline ? polygonArea(outline) : width * depth;
     const residential = /residential/i.test(occupancy || '');
-    if (FLAT_OCCUPANCY.test(occupancy || '') || Math.min(width, depth) > 55 || (!residential && area > 5000)) {
-        return planFlat({ full, split, height, style });
+    const guessedFlat = FLAT_OCCUPANCY.test(occupancy || '') || Math.min(width, depth) > 55 || (!residential && area > 5000);
+    if (roof === 'flat' || (roof === null && guessedFlat)) {
+        return planFlat({ full, split, height, style, ring: outline ? cleanRing(outline) : null });
     }
 
+    const ring = outline ? cleanRing(outline) : null;
     const main = { ...(split ? split[0] : full), stories, role: 'main' };
     const parts = [main];
     let garage = null;
 
     if (split) {
-        const wing = { ...split[1], stories: 1, role: 'wing' };
+        // With the real outline, the extruded walls are one height: so are the volumes.
+        const wing = { ...split[1], stories: ring ? stories : 1, role: 'wing' };
         const wingWidth = wing.x1 - wing.x0;
         // A wing that juts out toward the street and is one or two cars wide reads as the garage.
         if (wing.z1 > main.z1 + 3 && wingWidth >= 11 && wingWidth <= 32) {
@@ -226,17 +271,19 @@ export function planHouse({ width, depth, outline = null, height = 11, seed = 1,
         }
         parts.push(wing);
     } else if (width >= 34 && depth >= 24) {
-        // Plain rectangle: a garage at one end, pushed a few feet toward the street.
+        // Plain rectangle: a garage at one end, pushed a few feet toward the street (kept
+        // within a real footprint).
         const garageWidth = width >= 46 ? 22 : 12;
         const x0 = garageSide > 0 ? main.x1 - garageWidth : main.x0;
-        parts.push({ x0, x1: x0 + garageWidth, z0: main.z1 - Math.min(22, depth - 2), z1: main.z1 + 3, stories: 1, role: 'garage' });
+        parts.push({ x0, x1: x0 + garageWidth, z0: main.z1 - Math.min(22, depth - 2), z1: main.z1 + (ring ? 0 : 3), stories: 1, role: 'garage' });
     }
     const garagePart = parts.find((part) => part.role === 'garage');
     if (garagePart) {
         const partWidth = garagePart.x1 - garagePart.x0;
+        const garageX = (garagePart.x0 + garagePart.x1) / 2;
         garage = {
-            x: (garagePart.x0 + garagePart.x1) / 2,
-            z: garagePart.z1,
+            x: garageX,
+            z: ring ? frontWallAt(ring, garageX, garagePart.z1) : garagePart.z1,
             doorWidth: partWidth >= 19 ? 16 : Math.min(9, partWidth - 2.5),
             width: partWidth,
         };
@@ -255,7 +302,8 @@ export function planHouse({ width, depth, outline = null, height = 11, seed = 1,
     }
     const porchWidth = 10;
     const porchDepth = 6.5;
-    const porch = { x0: doorX - porchWidth / 2, x1: doorX + porchWidth / 2, z0: main.z1, z1: main.z1 + porchDepth };
+    const doorZ = ring ? frontWallAt(ring, doorX, main.z1) : main.z1;
+    const porch = { x0: doorX - porchWidth / 2, x1: doorX + porchWidth / 2, z0: doorZ, z1: doorZ + porchDepth };
 
     // Planting beds along the front walls not taken by the porch or a garage.
     const beds = [];
@@ -281,7 +329,19 @@ export function planHouse({ width, depth, outline = null, height = 11, seed = 1,
     // The A/C unit stands on the side wall away from the garage.
     const acUnit = [garage && garage.x > 0 ? main.x0 - 1.9 : main.x1 + 1.9, main.z0 + (main.z1 - main.z0) * 0.3];
 
-    return { kind: 'house', parts, main, garage, door: { x: doorX, z: main.z1 }, porch, beds, shrubs, acUnit, stories, style, bounds };
+    return { kind: 'house', parts, main, garage, door: { x: doorX, z: doorZ }, porch, beds, shrubs, acUnit, stories, style, bounds, ring };
+}
+
+// z of the front-most wall of the ring at x (where a door on the front goes), or fallback.
+function frontWallAt(ring, x, fallback) {
+    let best = null;
+    ring.forEach((a, i) => {
+        const b = ring[(i + 1) % ring.length];
+        if (Math.abs(b[0] - a[0]) < 0.5 || x < Math.min(a[0], b[0]) || x > Math.max(a[0], b[0])) return;
+        const z = a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
+        if (best === null || z > best) best = z;
+    });
+    return best === null ? fallback : best;
 }
 
 function boundsOf(rects) {
@@ -291,7 +351,7 @@ function boundsOf(rects) {
 }
 
 /* A flat-roofed commercial building: storefront on the front, entry stoop, rooftop HVAC. */
-function planFlat({ full, split, height, style }) {
+function planFlat({ full, split, height, style, ring }) {
     const wallHeight = Math.max(COMMERCIAL_STORY_FT, Math.min(48, height));
     const stories = Math.max(1, Math.round(wallHeight / COMMERCIAL_STORY_FT));
     const main = { ...(split ? split[0] : full), stories, role: 'main' };
@@ -300,17 +360,18 @@ function planFlat({ full, split, height, style }) {
         parts.push({ ...split[1], stories, role: 'wing' });
     }
     const doorX = (main.x0 + main.x1) / 2;
-    const porch = { x0: doorX - 7, x1: doorX + 7, z0: main.z1, z1: main.z1 + 5 };
+    const doorZ = ring ? frontWallAt(ring, doorX, main.z1) : main.z1;
+    const porch = { x0: doorX - 7, x1: doorX + 7, z0: doorZ, z1: doorZ + 5 };
     const width = main.x1 - main.x0;
     const depth = main.z1 - main.z0;
     const count = width * depth > 6000 ? 3 : 2;
     const hvac = Array.from({ length: count }, (_, i) => [
         main.x0 + (width * (i + 1)) / (count + 1),
         main.z0 + depth * (i % 2 ? 0.35 : 0.6),
-    ]);
+    ]).filter((point) => !ring || pointInPolygon(point, offsetRing(ring, -5)));
     return {
-        kind: 'flat', parts, main, garage: null, door: { x: doorX, z: main.z1 }, porch, beds: [], shrubs: [], acUnit: null,
-        stories, wallHeight, hvac, style, bounds: boundsOf(parts.concat([porch])),
+        kind: 'flat', parts, main, garage: null, door: { x: doorX, z: doorZ }, porch, beds: [], shrubs: [], acUnit: null,
+        stories, wallHeight, hvac, style, bounds: boundsOf(parts.concat([porch])), ring,
     };
 }
 
@@ -566,6 +627,59 @@ function faces(rect) {
     ];
 }
 
+/*
+ * The edges of a footprint ring as faces (same shape as faces()): each starts where boxes
+ * placed on it run left to right seen from outside. 'front', 'back' or 'side' by where
+ * the edge looks.
+ */
+function ringFaces(ring) {
+    const normals = edgeNormals(ring);
+    return ring.map((a, i) => {
+        const b = ring[(i + 1) % ring.length];
+        const n = normals[i];
+        const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        // A box's +x runs along (n.z, -n.x): start from whichever end makes that the direction.
+        const t = [n[1], -n[0]];
+        const forward = (b[0] - a[0]) * t[0] + (b[1] - a[1]) * t[1] > 0;
+        const side = n[1] > 0.7 ? 'front' : n[1] < -0.7 ? 'back' : 'side';
+        return { side, a: forward ? a : b, t, n, rotY: Math.atan2(n[0], n[1]), length };
+    }).filter((face) => face.length >= 1);
+}
+
+// The face (of the given side, if any) closest to a point, and where along it the point falls.
+function nearestFace(list, point, side = null) {
+    let best = null;
+    for (const face of list) {
+        if (side && face.side !== side) continue;
+        const s = Math.max(0, Math.min(face.length, (point[0] - face.a[0]) * face.t[0] + (point[1] - face.a[1]) * face.t[1]));
+        const distance = Math.hypot(face.a[0] + face.t[0] * s - point[0], face.a[1] + face.t[1] * s - point[1]);
+        if (!best || distance < best.distance) best = { face, s, distance };
+    }
+    return best;
+}
+
+/*
+ * A ring extruded from y0 up by height (with an optional hole ring), as one mesh. Wall
+ * texture coordinates come out in feet; uvScale brings them to the texture's size.
+ */
+function prism(ring, y0, height, material, { hole = null, uvScale = 1 / 36 } = {}) {
+    const shape = new Shape(ring.map(([x, z]) => new Vector2(x, -z)));
+    if (hole) {
+        shape.holes.push(new Path(hole.map(([x, z]) => new Vector2(x, -z))));
+    }
+    const geometry = new ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(0, y0, 0);
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, uv.getX(i) * uvScale, uv.getY(i) * uvScale);
+    }
+    const mesh = new Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
+}
+
 // Box on a face: u along the wall from s, y up, o out of the wall.
 function onFace(kit, face, key, w, h, d, s, y, o) {
     kit.box(key, w, h, d, face.a[0] + face.t[0] * s + face.n[0] * o, y, face.a[1] + face.t[1] * s + face.n[1] * o, face.rotY);
@@ -611,6 +725,20 @@ function materials(style) {
 
 /* ── house ───────────────────────────────────────────────────────────────── */
 
+// Sectional garage door with trim and coach lights at s along a face.
+function garageDoorOn(kit, mats, face, s, garage, style) {
+    const h = 7.6;
+    const columns = garage.doorWidth > 12 ? 8 : 4;
+    mats[`garage${columns}`] = new MeshStandardMaterial({ map: garageDoor(columns, style.garage), roughness: 0.5, metalness: 0.1 });
+    onFace(kit, face, `garage${columns}`, garage.doorWidth, h, 0.2, s, h / 2 + 0.05, -0.05);
+    onFace(kit, face, 'trim', garage.doorWidth + 1, 0.45, 0.4, s, h + 0.27, 0.1);
+    onFace(kit, face, 'trim', 0.45, h, 0.4, s - garage.doorWidth / 2 - 0.22, h / 2, 0.1);
+    onFace(kit, face, 'trim', 0.45, h, 0.4, s + garage.doorWidth / 2 + 0.22, h / 2, 0.1);
+    for (const side of [-1, 1]) {
+        onFace(kit, face, 'dark', 0.5, 0.9, 0.4, s + side * (garage.doorWidth / 2 + 1.4), 6.4, 0.25);
+    }
+}
+
 /** Builds the house of a plan from planHouse(). */
 export function buildHouse(plan) {
     if (plan.kind === 'flat') {
@@ -619,9 +747,19 @@ export function buildHouse(plan) {
     const g = new Group();
     const mats = materials(plan.style);
     const kit = new Kit(mats);
-    const { parts, main, porch, door, garage } = plan;
+    const { parts, main, porch, door, garage, ring } = plan;
 
     const inside = (part, x, z) => x > part.x0 + 0.1 && x < part.x1 - 0.1 && z > part.z0 + 0.1 && z < part.z1 - 0.1;
+    if (ring) {
+        // The real footprint's walls, with base, frieze and floor bands following its outline.
+        const wallHeight = main.stories * STORY_FT;
+        g.add(prism(ring, 0, wallHeight, mats.wall));
+        g.add(prism(offsetRing(ring, 0.25), 0, 1.3, mats.base));
+        g.add(prism(offsetRing(ring, 0.09), wallHeight - 1.85, 0.5, mats.band));
+        if (main.stories > 1) {
+            g.add(prism(offsetRing(ring, 0.15), STORY_FT - 0.12, 0.45, mats.band));
+        }
+    }
     // A point just outside a wall that falls inside another volume means that wall is hidden;
     // one just inside it that falls in the garage means that stretch of wall is the garage's.
     const hidden = (face, s, self) => parts.some((part) => part !== self && (
@@ -635,11 +773,13 @@ export function buildHouse(plan) {
         const cx = (part.x0 + part.x1) / 2;
         const cz = (part.z0 + part.z1) / 2;
         const wallHeight = part.stories * STORY_FT;
-        kit.box('wall', width, wallHeight, depth, cx, wallHeight / 2, cz);
-        kit.box('base', width + 0.5, 1.3, depth + 0.5, cx, 0.65, cz);
-        kit.box('band', width + 0.18, 0.5, depth + 0.18, cx, wallHeight - 1.6, cz);
-        if (part.stories > 1) {
-            kit.box('band', width + 0.3, 0.45, depth + 0.3, cx, STORY_FT + 0.1, cz);
+        if (!ring) {
+            kit.box('wall', width, wallHeight, depth, cx, wallHeight / 2, cz);
+            kit.box('base', width + 0.5, 1.3, depth + 0.5, cx, 0.65, cz);
+            kit.box('band', width + 0.18, 0.5, depth + 0.18, cx, wallHeight - 1.6, cz);
+            if (part.stories > 1) {
+                kit.box('band', width + 0.3, 0.45, depth + 0.3, cx, STORY_FT + 0.1, cz);
+            }
         }
 
         // Roof. A wing reaches into the main body so the two hip roofs intersect cleanly.
@@ -658,8 +798,8 @@ export function buildHouse(plan) {
         g.add(roof.mesh);
         roofTrim(kit, roof, wallHeight);
 
-        // Openings on each visible wall.
-        for (const face of faces(part)) {
+        // Openings on each visible wall (on the real outline's edges instead, below).
+        for (const face of ring ? [] : faces(part)) {
             const isFront = face.side === 'front';
             const blocked = [];
             let garageDoorAt = null;
@@ -685,25 +825,42 @@ export function buildHouse(plan) {
                 }
             }
             if (garageDoorAt !== null) {
-                const h = 7.6;
-                const columns = garage.doorWidth > 12 ? 8 : 4;
-                const doorMat = new MeshStandardMaterial({ map: garageDoor(columns, plan.style.garage), roughness: 0.5, metalness: 0.1 });
-                mats[`garage${columns}`] = doorMat;
-                onFace(kit, face, `garage${columns}`, garage.doorWidth, h, 0.2, garageDoorAt, h / 2 + 0.05, -0.05);
-                onFace(kit, face, 'trim', garage.doorWidth + 1, 0.45, 0.4, garageDoorAt, h + 0.27, 0.1);
-                onFace(kit, face, 'trim', 0.45, h, 0.4, garageDoorAt - garage.doorWidth / 2 - 0.22, h / 2, 0.1);
-                onFace(kit, face, 'trim', 0.45, h, 0.4, garageDoorAt + garage.doorWidth / 2 + 0.22, h / 2, 0.1);
-                // Coach lights on both sides.
-                for (const side of [-1, 1]) {
-                    onFace(kit, face, 'dark', 0.5, 0.9, 0.4, garageDoorAt + side * (garage.doorWidth / 2 + 1.4), 6.4, 0.25);
+                garageDoorOn(kit, mats, face, garageDoorAt, garage, plan.style);
+            }
+        }
+    }
+
+    if (ring) {
+        // Windows along the real outline: not in the doorway, not on the garage's walls.
+        const edges = ringFaces(ring);
+        const garagePart = parts.find((part) => part.role === 'garage');
+        for (const face of edges) {
+            const isFront = face.side === 'front';
+            const count = Math.max(1, Math.floor(face.length / (isFront ? 11 : 13)));
+            const step = face.length / count;
+            for (let story = 0; story < main.stories; story++) {
+                for (let i = 0; i < count; i++) {
+                    const s = step * (i + 0.5);
+                    const x = face.a[0] + face.t[0] * s;
+                    const z = face.a[1] + face.t[1] * s;
+                    const inDoorway = story === 0 && Math.hypot(x - door.x, z - door.z) < 7.5;
+                    const onGarage = garagePart && inside(garagePart, x - face.n[0], z - face.n[1]);
+                    if (inDoorway || onGarage || s < 3 || s > face.length - 3) continue;
+                    windowOn(kit, face, s, story * STORY_FT + WINDOW_Y, isFront ? 4.6 : 4.2, story ? 4 : 4.4, isFront);
                 }
+            }
+        }
+        if (garage) {
+            const spot = nearestFace(edges, [garage.x, garage.z], 'front') || nearestFace(edges, [garage.x, garage.z]);
+            if (spot) {
+                garageDoorOn(kit, mats, spot.face, spot.s, garage, plan.style);
             }
         }
     }
 
     // Entry door with sidelights and transom, under a porch with two columns.
-    const front = faces(main)[0];
-    const s = door.x - main.x0;
+    const front = { a: [door.x, door.z], t: [1, 0], n: [0, 1], rotY: 0 };
+    const s = 0;
     onFace(kit, front, 'door', 3.3, 7.3, 0.3, s, 3.75, 0.05);
     onFace(kit, front, 'trim', 6.6, 8.6, 0.24, s, 4.3, -0.02);
     onFace(kit, front, 'glass', 1.05, 6.6, 0.3, s - 2.35, 3.75, 0.06);
@@ -788,13 +945,54 @@ function buildFlat(plan) {
     mats.deck = new MeshStandardMaterial({ color: new Color(plan.style.roofColor || '#d8d6cf'), roughness: 0.92 });
     mats.frame = new MeshStandardMaterial({ color: new Color('#34393e'), roughness: 0.4, metalness: 0.6 });
     const kit = new Kit(mats);
-    const { parts, main, door, porch } = plan;
+    const { parts, main, door, porch, ring } = plan;
     const height = plan.wallHeight;
     const inside = (part, x, z) => x > part.x0 + 0.1 && x < part.x1 - 0.1 && z > part.z0 + 0.1 && z < part.z1 - 0.1;
     const hidden = (face, s, self) => parts.some((part) => part !== self
         && inside(part, face.a[0] + face.t[0] * s + face.n[0] * 1.5, face.a[1] + face.t[1] * s + face.n[1] * 1.5));
 
-    for (const part of parts) {
+    if (ring) {
+        // The real footprint extruded, with a parapet ring and metal coping on its outline.
+        const t = 0.8;
+        g.add(prism(ring, 0, height, mats.wall));
+        g.add(prism(offsetRing(ring, 0.2), 0, 1.1, mats.base));
+        g.add(prism(offsetRing(ring, 0.25), height - 1.1, 0.8, mats.band));
+        g.add(prism(ring, height, 0.2, mats.deck));
+        g.add(prism(ring, height, PARAPET_FT, mats.wall, { hole: offsetRing(ring, -t) }));
+        g.add(prism(offsetRing(ring, 0.2), height + PARAPET_FT, 0.3, mats.metal, { hole: offsetRing(ring, -t - 0.2) }));
+
+        const edges = ringFaces(ring);
+        const entry = nearestFace(edges, [door.x, door.z], 'front');
+        let service = null;
+        for (const face of edges) {
+            if (face.side === 'front') {
+                storefront(kit, face, entry && face === entry.face ? entry.s : null, height);
+            } else {
+                const count = Math.floor(face.length / 18);
+                for (let i = 0; i < count; i++) {
+                    const s = (face.length / count) * (i + 0.5);
+                    onFace(kit, face, 'frame', 6.5, 3, 0.3, s, 7.6, 0.08);
+                    onFace(kit, face, 'glass', 6, 2.5, 0.34, s, 7.6, 0.06);
+                }
+                if (face.side === 'back' && (!service || face.length > service.length)) service = face;
+            }
+            for (let story = 1; story < main.stories; story++) {
+                const count = Math.max(1, Math.floor(face.length / 9));
+                for (let i = 0; i < count; i++) {
+                    const s = (face.length / count) * (i + 0.5);
+                    if (s < 3 || s > face.length - 3) continue;
+                    onFace(kit, face, 'frame', 5.4, 4.6, 0.3, s, story * COMMERCIAL_STORY_FT + 6.5, 0.08);
+                    onFace(kit, face, 'glass', 5, 4.2, 0.34, s, story * COMMERCIAL_STORY_FT + 6.5, 0.06);
+                }
+            }
+        }
+        if (service && service.length > 8) {
+            onFace(kit, service, 'door', 3.5, 7.2, 0.25, service.length * 0.25, 3.6, 0.05);
+            onFace(kit, service, 'frame', 4.1, 0.3, 0.3, service.length * 0.25, 7.35, 0.1);
+        }
+    }
+
+    for (const part of ring ? [] : parts) {
         const width = part.x1 - part.x0;
         const depth = part.z1 - part.z0;
         const cx = (part.x0 + part.x1) / 2;

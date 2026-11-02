@@ -39,8 +39,9 @@ export default defineConfig(({ mode }) => {
         build: {
             outDir,
             emptyOutDir: true,
-            // The 3D view chunk (three.js) is ~530 kB, loaded only when "View in 3D" is pressed.
-            chunkSizeWarningLimit: 600,
+            // The 3D view chunk (three.js) is ~650 kB, loaded only when "View in 3D" is pressed; the
+            // Google 3D Tiles renderer is a further chunk, loaded only when a tiles key is set.
+            chunkSizeWarningLimit: 700,
         },
     };
 });

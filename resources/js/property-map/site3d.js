@@ -5,9 +5,12 @@
  * garage, a curved walkway to the porch, clusters of palms over low shrubs, and soft
  * contact shadows where things meet the ground.
  *
- * With a satellite photo (see viewer3d.js) the board's top shows the real ground, mapped
- * vertex by vertex at its true scale, and the drawn paving is left out: the photo already
- * has the real streets, parking and driveways.
+ * The real property guides it. From the 3D scan of Google's tiles (tileScan.js) the paving
+ * is the real paving, in its own shape and angle, and the trees stand where they are at
+ * their height; no street is made up. Without the scan, from the satellite photo
+ * (viewer3d.js): the street runs past the gated side of the fence, the driveway sits where
+ * the real one is (with a parked car), and the trees stand where the photo shows canopies.
+ * Neither the photo nor the tiles are shown: they guide clean geometry.
  *
  * Works in the house's local coordinates (feet, front toward +z, see house3d.js); the
  * viewer turns and places the whole group like the house.
@@ -176,27 +179,6 @@ ${NOISE_GLSL}`)
 }`);
     };
     material.customProgramCacheKey = () => 'pm-soil';
-    return material;
-}
-
-/*
- * Satellite photo on the board. The photo carries its own light, so it is dimmed a little
- * and given a touch more contrast and saturation: the scene's sun and shadows then sit on
- * it like on real ground.
- */
-function satelliteMaterial(texture) {
-    const material = new MeshStandardMaterial({ map: texture, roughness: 1, metalness: 0 });
-    material.onBeforeCompile = (shader) => {
-        shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
-{
-    vec3 c = diffuseColor.rgb;
-    float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    c = mix(vec3(l), c, 1.15);
-    c = max((c - 0.2) * 1.1 + 0.2, 0.0);
-    diffuseColor.rgb = c * 0.78;
-}`);
-    };
-    material.customProgramCacheKey = () => 'pm-satellite';
     return material;
 }
 
@@ -512,7 +494,7 @@ function buildTrees(list, seed) {
             shadows.push([x, z, 2.6], [x + lx, z + lz, 7.5]);
         } else {
             const height = tree.height || 15 + rnd() * 6;
-            const radius = 7 + rnd() * 3;
+            const radius = tree.radius || 7 + rnd() * 3;
             const trunkHeight = height * 0.45;
             const trunk = new CylinderGeometry(0.55, 0.85, trunkHeight, 10);
             trunk.translate(x, trunkHeight / 2, z);
@@ -572,6 +554,37 @@ function buildTrees(list, seed) {
     return { group, shadows };
 }
 
+/* ── car ─────────────────────────────────────────────────────────────────── */
+
+const CAR_COLORS = ['#f2f2ef', '#b9bdc1', '#2c3e57', '#8e2a2a', '#3b3f44'];
+
+/* A stylized sedan parked at [x, z], nose toward -z (the house). */
+function buildCar(x, z, seed) {
+    const color = CAR_COLORS[Math.floor(random(seed * 13 + 5)() * CAR_COLORS.length)];
+    const paint = new MeshStandardMaterial({ color: new Color(color), roughness: 0.3, metalness: 0.5 });
+    const glass = new MeshStandardMaterial({ color: new Color('#1f2a33'), roughness: 0.08, metalness: 0.6 });
+    const tire = new MeshStandardMaterial({ color: new Color('#1b1b1b'), roughness: 0.9 });
+    const group = new Group();
+    const part = (geometry, material, px, py, pz) => {
+        const mesh = new Mesh(geometry, material);
+        mesh.position.set(px, py, pz);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        group.add(mesh);
+        return mesh;
+    };
+    part(new BoxGeometry(6.1, 1.9, 15), paint, 0, 1.75, 0);
+    part(new BoxGeometry(5.5, 1.7, 7.4), glass, 0, 3.5, 0.6);
+    part(new BoxGeometry(5.3, 0.25, 6.6), paint, 0, 4.4, 0.7);
+    part(new BoxGeometry(5.8, 0.5, 0.3), glass, 0, 2.1, -7.55); // grille
+    for (const [wx, wz] of [[-2.85, -4.6], [2.85, -4.6], [-2.85, 4.7], [2.85, 4.7]]) {
+        const wheel = part(new CylinderGeometry(1.15, 1.15, 0.8, 16), tire, wx, 1.15, wz);
+        wheel.rotation.z = Math.PI / 2;
+    }
+    group.position.set(x, 0.2, z);
+    return group;
+}
+
 /* ── layout helpers ──────────────────────────────────────────────────────── */
 
 function distanceToSegment(p, a, b) {
@@ -626,9 +639,10 @@ function ribbon(points, width, y) {
 
 /*
  * Extent of the model lot: the drawing and the house with a margin on every side, and in
- * front the yard, sidewalk, parkway, curb and street.
+ * front the yard, sidewalk, parkway, curb and street. With `street` (the z of the fence run
+ * that faces the street), the sidewalk starts just past that run and the curb is 10 ft out.
  */
-function layoutLot(plan, fence) {
+function layoutLot(plan, fence, street = null, bare = false) {
     const xs = fence.points.map((p) => p[0]);
     const zs = fence.points.map((p) => p[1]);
     if (plan) {
@@ -636,7 +650,7 @@ function layoutLot(plan, fence) {
         zs.push(plan.bounds.z0, plan.bounds.z1);
     }
     const houseFront = plan ? plan.bounds.z1 : Math.max(...zs);
-    const sidewalk = Math.max(houseFront + FRONT_YARD, Math.max(...zs) + 6);
+    const sidewalk = street !== null ? street + 1.5 : Math.max(houseFront + FRONT_YARD, Math.max(...zs) + 6);
     const curb = sidewalk + SIDEWALK + PARKWAY;
     const streetEnd = curb + 0.6 + STREET;
     let x0 = Math.min(...xs) - BOARD_MARGIN;
@@ -644,15 +658,11 @@ function layoutLot(plan, fence) {
     const widen = Math.max(0, 130 - (x1 - x0)) / 2;
     x0 -= widen;
     x1 += widen;
+    // A bare lot (real paving from the scan) has no made-up street in front.
     return {
         xs, zs, houseFront, sidewalk, curb, streetEnd,
-        board: { x0, x1, z0: Math.min(...zs) - BOARD_MARGIN, z1: streetEnd + 0.6 + PARKWAY + 1 },
+        board: { x0, x1, z0: Math.min(...zs) - BOARD_MARGIN, z1: bare ? Math.max(...zs) + BOARD_MARGIN : streetEnd + 0.6 + PARKWAY + 1 },
     };
-}
-
-/** The board's rectangle in local coordinates, before building it (for the satellite photo). */
-export function lotBounds({ plan, fence }) {
-    return layoutLot(plan, fence).board;
 }
 
 /**
@@ -663,14 +673,20 @@ export function lotBounds({ plan, fence }) {
  * @param seed    varies trees and their positions per property
  * @param view    angle (radians, from the front, toward +x) the default camera looks from;
  *                trees stay out of that line of sight
- * @param ground  satellite photo { texture, uvOf([x, z]) -> [u, v], plantable([x, z]) }, or null
+ * From the satellite photo, when it was read (else null):
+ * @param street  z of the fence run facing the street
+ * @param paved   { x0, x1 } of the real driveway between the house and the street
+ * @param trees   [{ at: [x, z], radius, height? }] where the photo or the scan shows trees
+ * From the 3D scan, when there is one:
+ * @param paving  [{ corners: [[x, z] x 4], light }] the real paving (light: concrete, else
+ *                asphalt); the lot then gets no made-up street, sidewalk or driveway
  * @returns { group, casters (objects that cast shadows, for the shadow box), board }
  */
-export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground = null }) {
+export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, street = null, paved = null, trees: seen = null, paving: real = null }) {
     const group = new Group();
-    const { xs, houseFront, sidewalk, curb, streetEnd, board } = layoutLot(plan, fence);
-    // Drawn paving only without the photo, which shows the real one.
-    const paved = ground ? new Group() : group;
+    const { xs, houseFront, sidewalk, curb, streetEnd, board } = layoutLot(plan, fence, street, Boolean(real));
+    // With the real paving, the made-up street, sidewalk, driveway and walkway are left out.
+    const made = real ? new Group() : group;
 
     // Board: rounded rectangle extruded down. The shape's y is -z once laid flat.
     const radius = 9;
@@ -689,18 +705,7 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
     const boardGeometry = new ExtrudeGeometry(shape, {
         depth, bevelEnabled: true, bevelThickness: BOARD_BEVEL, bevelSize: BOARD_BEVEL, bevelSegments: 3, curveSegments: 10,
     });
-    let top = lawnMaterial();
-    if (ground) {
-        // Each vertex gets its own place in the photo (shape y is -z), so it never stretches.
-        const position = boardGeometry.attributes.position;
-        const uv = boardGeometry.attributes.uv;
-        for (let i = 0; i < position.count; i++) {
-            const [u, v] = ground.uvOf([position.getX(i), -position.getY(i)]);
-            uv.setXY(i, u, v);
-        }
-        top = satelliteMaterial(ground.texture);
-    }
-    const boardMesh = new Mesh(boardGeometry, [top, soilMaterial()]);
+    const boardMesh = new Mesh(boardGeometry, [lawnMaterial(), soilMaterial()]);
     boardMesh.rotation.x = -Math.PI / 2;
     boardMesh.position.y = -(depth + BOARD_BEVEL);
     boardMesh.receiveShadow = true;
@@ -715,18 +720,23 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
 
     // Sidewalk, parkway strip, curb and street across the front of the lot.
     const walkLength = board.x1 - board.x0 - 0.4;
-    paved.add(slab(new MeshStandardMaterial({ map: paving(walkLength, SIDEWALK, SIDEWALK, { across: 5 }), roughness: 0.9 }),
+    made.add(slab(new MeshStandardMaterial({ map: paving(walkLength, SIDEWALK, SIDEWALK, { across: 5 }), roughness: 0.9 }),
         board.x0 + 0.2, board.x1 - 0.2, sidewalk, sidewalk + SIDEWALK, 0.24, 0.3));
     const curbMaterial = new MeshStandardMaterial({ color: new Color('#cfcac0'), roughness: 0.85 });
     const road = asphalt();
     road.repeat.set((board.x1 - board.x0) / 18, STREET / 18);
-    paved.add(slab(curbMaterial, board.x0 + 0.2, board.x1 - 0.2, curb, curb + 0.6, 0.42, 0.6));
-    paved.add(slab(new MeshStandardMaterial({ map: road, roughness: 0.88 }), board.x0 + 0.2, board.x1 - 0.2, curb + 0.6, streetEnd, 0.06, 0.2));
-    paved.add(slab(curbMaterial, board.x0 + 0.2, board.x1 - 0.2, streetEnd, streetEnd + 0.6, 0.42, 0.6));
+    made.add(slab(curbMaterial, board.x0 + 0.2, board.x1 - 0.2, curb, curb + 0.6, 0.42, 0.6));
+    made.add(slab(new MeshStandardMaterial({ map: road, roughness: 0.88 }), board.x0 + 0.2, board.x1 - 0.2, curb + 0.6, streetEnd, 0.06, 0.2));
+    made.add(slab(curbMaterial, board.x0 + 0.2, board.x1 - 0.2, streetEnd, streetEnd + 0.6, 0.42, 0.6));
 
-    // Driveway: from the garage door to the street, or from the street to the widest gate.
+    // Driveway: where the photo shows it, else from the garage door to the street, or from
+    // the street to the widest gate.
     let driveway = null;
-    if (plan?.garage) {
+    if (real) {
+        // The real driveway is part of the scanned paving.
+    } else if (paved) {
+        driveway = { x0: paved.x0, x1: paved.x1, z0: plan ? plan.main.z1 - 1 : sidewalk - 30, z1: curb };
+    } else if (plan?.garage) {
         const width = Math.max(plan.garage.doorWidth + 2.5, 11);
         driveway = { x0: plan.garage.x - width / 2, x1: plan.garage.x + width / 2, z0: plan.garage.z, z1: curb };
     } else if (gate && gate.width >= 8 && gate.z < sidewalk - 6 && (!plan || gate.z > plan.main.z1)) {
@@ -735,11 +745,39 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
     if (driveway) {
         const w = driveway.x1 - driveway.x0;
         const l = driveway.z1 - driveway.z0;
-        paved.add(slab(new MeshStandardMaterial({ map: paving(w, l, 10, { center: w >= 16 }), roughness: 0.88 }),
+        made.add(slab(new MeshStandardMaterial({ map: paving(w, l, 10, { center: w >= 16 }), roughness: 0.88 }),
             driveway.x0, driveway.x1, driveway.z0, driveway.z1, 0.2, 0.3));
         // Apron flares where it meets the curb.
-        paved.add(slab(new MeshStandardMaterial({ map: paving(w + 4, PARKWAY, PARKWAY), roughness: 0.88 }),
+        made.add(slab(new MeshStandardMaterial({ map: paving(w + 4, PARKWAY, PARKWAY), roughness: 0.88 }),
             driveway.x0 - 2, driveway.x1 + 2, sidewalk + SIDEWALK, curb, 0.21, 0.3));
+    }
+    // The real driveway has the household's car on it, parked near the house.
+    const car = paved && driveway.z1 - driveway.z0 > 22 ? buildCar((driveway.x0 + driveway.x1) / 2, driveway.z0 + 10, seed) : null;
+    if (car) {
+        group.add(car);
+    }
+
+    // The real paving from the scan: flat strips just above the lawn, cut to the board.
+    if (real) {
+        const inBoard = ([x, z]) => x > board.x0 + 1 && x < board.x1 - 1 && z > board.z0 + 1 && z < board.z1 - 1;
+        for (const light of [true, false]) {
+            const positions = [];
+            for (const strip of real) {
+                if (strip.light !== light || !strip.corners.every(inBoard)) continue;
+                const [a, b, c, d] = strip.corners;
+                positions.push(a[0], 0.08, a[1], c[0], 0.08, c[1], b[0], 0.08, b[1], a[0], 0.08, a[1], d[0], 0.08, d[1], c[0], 0.08, c[1]);
+            }
+            if (!positions.length) continue;
+            const geometry = new BufferGeometry();
+            geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+            geometry.computeVertexNormals();
+            const mesh = new Mesh(geometry, new MeshStandardMaterial({
+                color: new Color(light ? '#cbc7be' : '#5b5e61'), roughness: 0.9, side: DoubleSide,
+                polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+            }));
+            mesh.receiveShadow = true;
+            group.add(mesh);
+        }
     }
 
     // Walkway from the porch steps, curving to the driveway (or straight out to the sidewalk).
@@ -759,16 +797,15 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
         const { geometry, curve } = ribbon(points, 3.8, 0.16);
         const mesh = new Mesh(geometry, new MeshStandardMaterial({ map, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -1 }));
         mesh.receiveShadow = true;
-        paved.add(mesh);
-        walkway = curve;
+        made.add(mesh);
+        walkway = real ? null : curve;
     }
 
     /*
      * Vegetation in small natural clusters, two or three palms of different heights over
      * low shrubs, by the building's corners and the lot's corners and edges. They stay
-     * outside the fenced yard, clear of the fence, house and paving, out of the default
-     * camera's line of sight, and (with the photo) on unpaved ground. Palms are scaled to
-     * the building: 18 to 26 ft.
+     * outside the fenced yard, clear of the fence, house and paving, and out of the default
+     * camera's line of sight. Palms are scaled to the building: 18 to 26 ft.
      */
     const rnd = random(seed);
     const front = plan ? plan.bounds : { x0: Math.min(...xs), x1: Math.max(...xs), z0: 0, z1: houseFront };
@@ -776,14 +813,20 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
     const houseSize = plan ? Math.max(plan.main.x1 - plan.main.x0, plan.main.z1 - plan.main.z0) : 40;
     const tall = Math.max(18, Math.min(26, 14 + houseSize * 0.12 + (plan?.kind === 'flat' ? 4 : 0)));
     const walkSamples = walkway ? Array.from({ length: 24 }, (_, i) => walkway.getPointAt(i / 23)) : [];
+    // A real tree may stand in the yard; it only has to clear the fence line, house and paving.
+    const clearOfBuilt = (p, radius) => {
+        if (fence.segments.some(([a, b]) => distanceToSegment(p, a, b) < Math.min(4, radius))) return false;
+        if (plan && plan.parts.some((r) => insideRect(p, r, 2))) return false;
+        if (driveway && insideRect(p, driveway, 1)) return false;
+        return real || p[1] < sidewalk - 2;
+    };
     const clear = (p) => {
         if (p[0] < board.x0 + 9 || p[0] > board.x1 - 9 || p[1] < board.z0 + 9 || p[1] > sidewalk - 7) return false;
         if (fence.yard && pointInPolygon(p, fence.yard)) return false;
         if (fence.segments.some(([a, b]) => distanceToSegment(p, a, b) < 9)) return false;
         if (plan && plan.parts.concat([plan.porch]).some((r) => insideRect(p, r, 8))) return false;
         if (driveway && insideRect(p, driveway, 7)) return false;
-        if (walkSamples.some((w) => Math.hypot(w.x - p[0], w.z - p[1]) < 7)) return false;
-        return !ground || ground.plantable(p);
+        return !walkSamples.some((w) => Math.hypot(w.x - p[0], w.z - p[1]) < 7);
     };
     const anchors = [];
     if (plan) {
@@ -809,7 +852,7 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
         const inSight = Math.abs(Math.atan2(Math.sin(bearing - view), Math.cos(bearing - view))) < 0.6;
         return { ...anchor, score: anchor.weight + rnd() * 0.6 - (inFront ? 1.2 : 0) - (inSight ? 1.5 : 0) };
     }).sort((a, b) => b.score - a.score);
-    const wanted = rnd() < 0.6 ? 3 : 2;
+    const wanted = seen ? 0 : rnd() < 0.6 ? 3 : 2;
     const clusters = [];
     for (const anchor of scored) {
         if (clusters.length >= wanted) break;
@@ -821,6 +864,14 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
     }
     const plants = [];
     const bushes = [];
+    // Trees where the photo has them: broad canopies as shade trees, small ones as palms.
+    const onBoard = ([x, z]) => x > board.x0 + 4 && x < board.x1 - 4 && z > board.z0 + 4 && z < board.z1 - 4;
+    for (const { at, radius, height } of seen || []) {
+        if (!onBoard(at) || !clearOfBuilt(at, radius)) continue;
+        plants.push(radius >= 6
+            ? { at, kind: 'oak', radius, height: height || Math.min(34, 6 + radius * 1.6) }
+            : { at, kind: 'palm', height: height || Math.max(18, Math.min(26, 14 + radius * 2)) });
+    }
     for (const cluster of clusters) {
         const [x, z] = cluster.p;
         if (cluster.weight <= 1 && rnd() < 0.3) {
@@ -843,7 +894,7 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
     }
     const trees = buildTrees(plants, seed);
     group.add(trees.group);
-    const casters = [trees.group];
+    const casters = [trees.group, car].filter(Boolean);
     if (bushes.length) {
         const shrubGroup = buildShrubs(bushes);
         group.add(shrubGroup);
@@ -857,6 +908,9 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
     }
     const strips = fence.segments.map(([a, b]) => ({ a, b, width: 1.9 }));
     const blobs = (plan ? plan.shrubs : []).concat(bushes).map(([x, z, r]) => [x, z, r * 1.7]).concat(trees.shadows);
+    if (car) {
+        rects.push({ x0: car.position.x - 3.2, x1: car.position.x + 3.2, z0: car.position.z - 7.6, z1: car.position.z + 7.6, spread: 1.4, opacity: 0.55 });
+    }
     group.add(contactShadows({ rects, strips, blobs }));
 
     return { group, casters, board };

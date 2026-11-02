@@ -98,8 +98,10 @@ window.WFS_PROPERTY_MAP = {
     mapId: __DEMO_MAP_ID__,
     materials: [material],
     fetchScene,
-    // No server here to serve the satellite ground: the 3D view draws its own lawn.
+    // No server here for the satellite photo, and no Map Tiles API on the public demo key:
+    // the 3D view shows its drawn model lot.
     groundUrl: null,
+    tilesKey: null,
 };
 document.body.classList.add('pm-map-active');
 

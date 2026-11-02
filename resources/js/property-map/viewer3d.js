@@ -1,14 +1,19 @@
 /*
- * 3D view of the customer's property (Phase 2): the customer's house, shaped, sized and
- * turned like the real one (footprint from FEMA USA Structures), on a lot built like an
- * architectural model (lawn, driveway, walkway, sidewalk and street, palms), with the
- * chosen fence built along the drawn sides with its gates. Loaded on demand the first
- * time "View in 3D" is pressed.
+ * 3D view of the customer's property (Phase 2): the chosen fence, built along the drawn
+ * sides with its gates, on the real property. Loaded on demand the first time "View in
+ * 3D" is pressed.
+ *
+ * The property is rebuilt as clean geometry from the real data, on a model lot
+ * (site3d.js). The source, best first:
+ *   - Google Photorealistic 3D Tiles as a hidden 3D scanner (googleTiles3d.js, its own
+ *     chunk, and tileScan.js): the real building's outline, height and roof, the trees at
+ *     their height and the paving, in their real place, shape and angle;
+ *   - without tiles: the house from its FEMA USA Structures footprint (house3d.js), with
+ *     roof color, driveway, street side and trees read from the satellite photo (readPhoto).
+ * Neither the tiles nor the photo are shown: they guide the model.
  *
  * Lighting comes from a generated sky (PMREM, no HDRI file) and the textures are drawn on
- * canvases. The ground is the real satellite photo when the server can provide it
- * (GET /property-map/ground), mapped at its true Web Mercator scale; otherwise a noise
- * shader lawn.
+ * canvases.
  *
  * Units are feet. World axes: x east, z south, y up; the origin is the middle of the
  * drawing. The fence geometry comes from fence3d/cerca.js, the same builder as the
@@ -19,19 +24,20 @@ import {
     Scene, PerspectiveCamera, WebGLRenderer, Group, Color, FogExp2, HemisphereLight, DirectionalLight,
     Mesh, SphereGeometry, PlaneGeometry, MeshBasicMaterial, MeshStandardMaterial, ShaderMaterial, BackSide,
     PCFSoftShadowMap, ACESFilmicToneMapping, SRGBColorSpace, Vector3, Box3, PMREMGenerator, BoxGeometry,
-    OrthographicCamera, CanvasTexture, ClampToEdgeWrapping,
+    OrthographicCamera,
 } from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
 import * as Cerca from './fence3d/cerca.js';
 import * as T from './fence3d/texturas.js';
 import * as Person from './fence3d/persona.js';
 import { planHouse, buildHouse, withRoofColor, pointInPolygon } from './house3d.js';
-import { buildSite, lotBounds } from './site3d.js';
+import { buildSite } from './site3d.js';
+import { readScan, wallPoint } from './tileScan.js';
 import { COLOR_CHOICES, COLOR_LABELS, SWATCHES, fenceOptions } from './fence-catalog.js';
 
-const FEET_PER_METER = 3.28084;
-const METERS_PER_DEGREE_LAT = 110574;
-const METERS_PER_DEGREE_LNG = 111320;
+const FEET_PER_METER = 1 / 0.3048;
+// WGS84, the ellipsoid of the 3D tiles: semi-major axis (m) and eccentricity squared.
+const WGS84 = { a: 6378137, e2: 0.00669437999014 };
 const WALL_THICKNESS_FT = 0.7;
 // The website viewer's standard home, used when the real footprint is not found.
 const STANDARD_HOUSE = { width: 48, depth: 34, height: 11 };
@@ -42,27 +48,46 @@ const SUN_DIRECTION = new Vector3(-0.42, 0.8, 0.43).normalize();
 const VIEW_ANGLE = 0.5;
 const OUTSIDE_POLAR = ((90 - 20) * Math.PI) / 180;
 const FOV_DEGREES = 42;
+// Camera range for the drawn scene (the 3D tiles set their own while shown).
+const CAMERA_RANGE = { near: 0.5, far: 3000 };
 const SKY = { zenith: '#5c9ad6', horizon: '#d8e7f2', below: '#c6d0d8', fog: '#dce6ed' };
 // Static Maps image: 640 logical pixels (1280 at scale 2) on each side.
 const GROUND_PIXELS = 640;
+// The 3D scan covers this far (ft) each way from the fence's center, in cells of
+// SCAN_CELL_FT, seen from SCAN_VIEW_FT above while the tiles load.
+const SCAN_HALF_FT = 120;
+const SCAN_CELL_FT = 1.25;
+const SCAN_VIEW_FT = 340;
+// The scan waits for the tiles to be quiet this long (ms), at most SCAN_WAIT_MS.
+const SCAN_QUIET_MS = 1500;
+const SCAN_WAIT_MS = 25000;
+// An open fence's end this close (ft) to the scanned building is joined to its wall.
+const WALL_REACH_FT = 15;
+// The drawn scene's "Outside" camera stands this many fence spans away, at least 45 ft.
+const OUTSIDE_SPANS = 1.45;
+// The satellite photo covers the house and fence plus this margin (ft).
+const PHOTO_MARGIN_FT = 45;
+// Tree canopies are looked for in cells of this size (ft).
+const TREE_CELL_FT = 12;
 
 /* ── coordinates ─────────────────────────────────────────────────────────── */
 
-function projector(origin) {
-    const cosLat = Math.cos((origin.lat * Math.PI) / 180);
-    return (lat, lng) => [
-        (lng - origin.lng) * METERS_PER_DEGREE_LNG * cosLat * FEET_PER_METER,
-        (origin.lat - lat) * METERS_PER_DEGREE_LAT * FEET_PER_METER,
-    ];
-}
-
-// Inverse of projector(): [x, z] in feet back to { lat, lng }.
-function unprojector(origin) {
-    const cosLat = Math.cos((origin.lat * Math.PI) / 180);
-    return ([x, z]) => ({
-        lat: origin.lat - z / (METERS_PER_DEGREE_LAT * FEET_PER_METER),
-        lng: origin.lng + x / (METERS_PER_DEGREE_LNG * cosLat * FEET_PER_METER),
-    });
+/**
+ * The one projection of the 3D view, shared by the fence, the footprint, the satellite
+ * photo and the 3D tiles: feet from `origin`, +X east, -Z north (+Z south). The scale is
+ * WGS84's at the origin's latitude (radii of curvature along the meridian and the parallel),
+ * the same local frame the 3D tiles are re-centered in, so both line up 1:1.
+ */
+export function sceneFeet(origin) {
+    const lat = (origin.lat * Math.PI) / 180;
+    const w = 1 - WGS84.e2 * Math.sin(lat) ** 2;
+    const perDegree = (meters) => (meters * Math.PI / 180) * FEET_PER_METER;
+    const northFeet = perDegree((WGS84.a * (1 - WGS84.e2)) / w ** 1.5);
+    const eastFeet = perDegree((WGS84.a / Math.sqrt(w)) * Math.cos(lat));
+    return {
+        latLngToSceneFeet: (pointLat, pointLng) => [(pointLng - origin.lng) * eastFeet, -(pointLat - origin.lat) * northFeet],
+        sceneFeetToLatLng: ([x, z]) => ({ lat: origin.lat - z / northFeet, lng: origin.lng + x / eastFeet }),
+    };
 }
 
 // Web Mercator pixel coordinates of a point at a zoom level (256 px tiles), as Google uses.
@@ -72,10 +97,12 @@ function mercator(lat, lng, zoom) {
     return [((lng + 180) / 360) * size, (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * size];
 }
 
-function boundsCenter(vertices) {
-    const lats = vertices.map((v) => v.lat);
-    const lngs = vertices.map((v) => v.lng);
-    return { lat: (Math.min(...lats) + Math.max(...lats)) / 2, lng: (Math.min(...lngs) + Math.max(...lngs)) / 2 };
+// The fence's corners' centroid: the scene's origin.
+function nodesCentroid(vertices) {
+    return {
+        lat: vertices.reduce((total, v) => total + v.lat, 0) / vertices.length,
+        lng: vertices.reduce((total, v) => total + v.lng, 0) / vertices.length,
+    };
 }
 
 /* ── fence layout from the map project ───────────────────────────────────── */
@@ -378,30 +405,27 @@ function existingWalls(walls, height) {
     return group;
 }
 
-/* ── satellite ground ────────────────────────────────────────────────────── */
+/* ── satellite photo ─────────────────────────────────────────────────────── */
 
 /*
- * Satellite photo for the ground, centered on the model lot, at the highest zoom whose
- * image covers the lot within its middle 92% (Google's logo and credits run along the
- * bottom edge). Every point maps to the photo through its own latitude and longitude in
- * Web Mercator, so the photo keeps its true proportions.
- *
- * Returns { texture, uvOf(world), plantable(world), roofColor(outline) } or null when
- * there is no photo (no URL, an error, or a lot too big).
+ * The satellite photo of an area (world [x, z] corners) as pixels to read: the step
+ * between the real property and the clean model. Centered on the area at the highest zoom
+ * that covers it within its middle 80%; every point maps to its pixel through its own
+ * latitude and longitude in Web Mercator. Never shown. Null without a photo.
+ * Returns { pixelAt([x, z]) -> [r, g, b] or null, roofColor(outline) }.
  */
-async function loadGround({ url, unproject, corners }) {
+async function loadPhoto({ url, unproject, corners }) {
     if (!url) return null;
     const xs = corners.map((p) => p[0]);
     const zs = corners.map((p) => p[1]);
     const middle = unproject([(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2]);
     // The server caches by rounded center; the mapping must use that same center.
     const center = { lat: Math.round(middle.lat * 1e5) / 1e5, lng: Math.round(middle.lng * 1e5) / 1e5 };
-    const extentMeters = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs)) / FEET_PER_METER;
+    const extentMeters = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs), 30) / FEET_PER_METER;
     // Meters per logical pixel at zoom z: 156543.03392 * cos(lat) / 2^z.
     const metersPerPixelAtZero = 156543.03392 * Math.cos((center.lat * Math.PI) / 180);
-    const zoom = Math.min(20, Math.floor(Math.log2((metersPerPixelAtZero * GROUND_PIXELS * 0.92) / extentMeters)));
-    if (zoom < 16) return null;
-    const source = url(center.lat, center.lng, zoom);
+    const zoom = Math.min(20, Math.floor(Math.log2((metersPerPixelAtZero * GROUND_PIXELS * 0.8) / extentMeters)));
+    const source = zoom >= 17 ? url(center.lat, center.lng, zoom) : null;
     if (!source) return null;
 
     const image = await new Promise((resolve, reject) => {
@@ -412,63 +436,38 @@ async function loadGround({ url, unproject, corners }) {
         element.onerror = () => { clearTimeout(timer); reject(new Error('Satellite image failed')); };
         element.src = source;
     });
-
     const size = image.naturalWidth;
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
     const context = canvas.getContext('2d', { willReadFrequently: true });
     context.drawImage(image, 0, 0, size, size);
-    let pixels = null;
-    try {
-        pixels = context.getImageData(0, 0, size, size).data;
-    } catch {
-        pixels = null; // a cross-origin photo without CORS: shown, but not sampled
-    }
+    const pixels = context.getImageData(0, 0, size, size).data;
 
     const [cx, cy] = mercator(center.lat, center.lng, zoom);
-    const uvOf = (point) => {
+    const pixelAt = (point) => {
         const { lat, lng } = unproject(point);
         const [px, py] = mercator(lat, lng, zoom);
-        return [0.5 + (px - cx) / GROUND_PIXELS, 0.5 - (py - cy) / GROUND_PIXELS];
-    };
-    const pixelAt = (point) => {
-        const [u, v] = uvOf(point);
-        const x = Math.round(u * size);
-        const y = Math.round((1 - v) * size);
-        if (!pixels || x < 0 || y < 0 || x >= size || y >= size) return null;
+        const x = Math.round((0.5 + (px - cx) / GROUND_PIXELS) * size);
+        const y = Math.round((0.5 + (py - cy) / GROUND_PIXELS) * size);
+        if (x < 0 || y < 0 || x >= size || y >= size) return null;
         const i = (y * size + x) * 4;
         return [pixels[i], pixels[i + 1], pixels[i + 2]];
     };
 
-    // Ground that can take a planting: colored (grass, soil, sand), not gray paving or roofs.
-    const plantable = (point) => {
-        let colored = 0;
-        let seen = 0;
-        for (const dx of [-3, 0, 3]) {
-            for (const dz of [-3, 0, 3]) {
-                const pixel = pixelAt([point[0] + dx, point[1] + dz]);
-                if (!pixel) continue;
-                seen++;
-                const [r, g, b] = pixel;
-                if (Math.max(r, g, b) - Math.min(r, g, b) > 16 && g >= b && (r + g + b) / 3 < 205) colored++;
-            }
-        }
-        return seen === 0 || colored >= seen * 0.6;
-    };
-
     /*
-     * Typical roof color inside a footprint (world [x, z] outline): pixels well inside the
-     * outline, without the darkest 30% (shadows, vents) and the brightest 5% (glare).
+     * Typical roof color inside a footprint: pixels well inside the outline, without the
+     * darkest 30% (shadows, vents) and the brightest 5% (glare).
      */
     const roofColor = (outline) => {
-        if (!pixels) return null;
-        const mid = [outline.reduce((t, p) => t + p[0], 0) / outline.length, outline.reduce((t, p) => t + p[1], 0) / outline.length];
+        const ox = outline.map((q) => q[0]);
+        const oz = outline.map((q) => q[1]);
+        const mid = [ox.reduce((t, x) => t + x, 0) / ox.length, oz.reduce((t, z) => t + z, 0) / oz.length];
         const inner = outline.map(([x, z]) => [mid[0] + (x - mid[0]) * 0.8, mid[1] + (z - mid[1]) * 0.8]);
-        const ox = inner.map((p) => p[0]);
-        const oz = inner.map((p) => p[1]);
+        const ix = inner.map((q) => q[0]);
+        const iz = inner.map((q) => q[1]);
         const samples = [];
-        for (let x = Math.min(...ox); x <= Math.max(...ox); x += 1) {
-            for (let z = Math.min(...oz); z <= Math.max(...oz); z += 1) {
+        for (let x = Math.min(...ix); x <= Math.max(...ix); x += 1) {
+            for (let z = Math.min(...iz); z <= Math.max(...iz); z += 1) {
                 if (!pointInPolygon([x, z], inner)) continue;
                 const pixel = pixelAt([x, z]);
                 if (pixel) samples.push(pixel);
@@ -481,11 +480,170 @@ async function loadGround({ url, unproject, corners }) {
         return `#${mean.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
     };
 
-    const texture = new CanvasTexture(canvas);
-    texture.colorSpace = SRGBColorSpace;
-    texture.wrapS = texture.wrapT = ClampToEdgeWrapping;
-    texture.anisotropy = 8;
-    return { texture, uvOf, plantable, roofColor };
+    return { pixelAt, roofColor };
+}
+
+// Concrete or light asphalt: gray (little saturation) and bright.
+const isPaved = ([r, g, b]) => Math.max(r, g, b) - Math.min(r, g, b) < 24 && (r + g + b) / 3 > 125;
+// Tree canopy: dark and green, not the lighter, smoother lawn or a gray shadow.
+const isCanopy = ([r, g, b]) => (r + g + b) / 3 < 95 && g >= r && g > b + 4;
+
+/*
+ * Reads the photo in the house's frame (local [x, z] through frame.toWorld):
+ *   driveway: the paved strip between the house front and the street (columns 1 ft wide
+ *             that are mostly paved), 8 to 26 ft wide, nearest the house's middle;
+ *   trees:    cells of TREE_CELL_FT that are mostly canopy with leafy texture, merged into
+ *             patches; one tree per patch (or per ~18 ft of a big one), sized like it.
+ * house: the house's local rectangle; street: z of the street-side fence run or null;
+ * area: the local box to look for trees in; avoid(p): points the fence line takes.
+ */
+function readPhoto({ photo, frame, house, street, area, avoid }) {
+    const at = (x, z) => photo.pixelAt(frame.toWorld([x, z]));
+    const share = (points, test) => {
+        let yes = 0;
+        let seen = 0;
+        for (const [x, z] of points) {
+            const pixel = at(x, z);
+            if (!pixel) continue;
+            seen++;
+            if (test(pixel)) yes++;
+        }
+        return seen ? yes / seen : 0;
+    };
+
+    let driveway = null;
+    const from = house.z1 + 2;
+    const to = street !== null ? street - 1 : house.z1 + 30;
+    if (to - from >= 8) {
+        const columns = [];
+        for (let x = house.x0 - 15; x <= house.x1 + 15; x += 1) {
+            const samples = [];
+            for (let z = from; z <= to; z += 2) samples.push([x, z]);
+            columns.push({ x, paved: share(samples, isPaved) >= 0.6 });
+        }
+        const runs = [];
+        let open = null;
+        for (const column of columns.concat([{ x: Infinity, paved: false }])) {
+            if (column.paved && !open) open = { x0: column.x, x1: column.x };
+            else if (column.paved) open.x1 = column.x;
+            else if (open) { runs.push(open); open = null; }
+        }
+        const middle = (house.x0 + house.x1) / 2;
+        driveway = runs
+            .filter((run) => run.x1 - run.x0 >= 8 && run.x1 - run.x0 <= 26)
+            .sort((a, b) => Math.abs((a.x0 + a.x1) / 2 - middle) - Math.abs((b.x0 + b.x1) / 2 - middle))[0] || null;
+    }
+
+    const cells = new Map();
+    const half = TREE_CELL_FT / 2;
+    const offsets = [-0.375, -0.125, 0.125, 0.375].map((k) => k * TREE_CELL_FT);
+    for (let x = area.x0 + half; x < area.x1; x += TREE_CELL_FT) {
+        for (let z = area.z0 + half; z < area.z1; z += TREE_CELL_FT) {
+            if (x > house.x0 - 3 && x < house.x1 + 3 && z > house.z0 - 3 && z < house.z1 + 3) continue;
+            if (street !== null && z > street - 2) continue;
+            if (avoid([x, z])) continue;
+            const samples = offsets.flatMap((dx) => offsets.map((dz) => [x + dx, z + dz]));
+            const pixels = samples.map(([sx, sz]) => at(sx, sz)).filter(Boolean);
+            if (pixels.length < 10) continue;
+            const light = pixels.map(([r, g, b]) => (r + g + b) / 3);
+            const mean = light.reduce((t, v) => t + v, 0) / light.length;
+            const spread = Math.sqrt(light.reduce((t, v) => t + (v - mean) ** 2, 0) / light.length);
+            if (pixels.filter(isCanopy).length / pixels.length >= 0.6 && spread >= 8) {
+                cells.set(`${x},${z}`, [x, z]);
+            }
+        }
+    }
+    const trees = [];
+    const visited = new Set();
+    for (const [key, start] of cells) {
+        if (visited.has(key)) continue;
+        const patch = [];
+        const queue = [start];
+        visited.add(key);
+        while (queue.length) {
+            const [x, z] = queue.pop();
+            patch.push([x, z]);
+            for (const dx of [-1, 0, 1]) {
+                for (const dz of [-1, 0, 1]) {
+                    const next = `${x + dx * TREE_CELL_FT},${z + dz * TREE_CELL_FT}`;
+                    if (cells.has(next) && !visited.has(next)) {
+                        visited.add(next);
+                        queue.push(cells.get(next));
+                    }
+                }
+            }
+        }
+        if (patch.length <= 4) {
+            const cx = patch.reduce((t, p) => t + p[0], 0) / patch.length;
+            const cz = patch.reduce((t, p) => t + p[1], 0) / patch.length;
+            trees.push({ at: [cx, cz], radius: Math.max(4, Math.min(16, Math.sqrt(patch.length) * TREE_CELL_FT * 0.55)) });
+        } else {
+            // A long row or a grove: trees about 18 ft apart across the patch.
+            const placed = [];
+            for (const p of patch) {
+                if (placed.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) >= 18)) placed.push(p);
+            }
+            placed.forEach((p) => trees.push({ at: p, radius: 9 }));
+        }
+    }
+    return { driveway, trees: trees.slice(0, 16) };
+}
+
+/* ── 3D scan ─────────────────────────────────────────────────────────────── */
+
+// Resolves once the tiles have been quiet for SCAN_QUIET_MS (true), or after SCAN_WAIT_MS.
+function quietTiles(google, alive) {
+    return new Promise((resolve) => {
+        const started = performance.now();
+        let quietSince = started;
+        const check = () => {
+            const now = performance.now();
+            if (!alive()) return resolve(false);
+            if (google.busy()) quietSince = now;
+            if (now - quietSince >= SCAN_QUIET_MS || now - started >= SCAN_WAIT_MS) return resolve(true);
+            setTimeout(check, 200);
+            return undefined;
+        };
+        check();
+    });
+}
+
+/*
+ * Loads Google's 3D tiles over the property (hidden), lets them refine under a camera
+ * looking straight down, scans them and reads the scan. Returns the reading with Google's
+ * credits, or null (no key access, no coverage, no float targets, closed meanwhile).
+ */
+async function scanProperty({ viewer, session, alive, apiKey, origin, center, anchors, fence }) {
+    let google = null;
+    try {
+        const { createGoogleTiles } = await import('./googleTiles3d.js');
+        if (!alive()) return null;
+        google = createGoogleTiles({ apiKey, origin, area: { center, half: SCAN_HALF_FT }, camera: viewer.camera, renderer: viewer.renderer });
+        session.tiles = google;
+        viewer.target.set(center[0], 0, center[1]);
+        Object.assign(viewer, { distance: SCAN_VIEW_FT, azimuth: 0, polar: 0.12 });
+        viewer.place();
+        viewer.onFrame = google.update;
+        if (!(await google.ready) || !(await quietTiles(google, alive))) return null;
+        const reading = readScan(google.scan(SCAN_CELL_FT), anchors, fence);
+        console.info('3D scan', reading && {
+            building: reading.building && { corners: reading.building.outline.length, eave: reading.building.eave, ridge: reading.building.ridge, flat: reading.building.flat },
+            trees: reading.trees.length,
+            paving: reading.paving.length,
+        });
+        return reading && { ...reading, credits: google.attributions() };
+    } catch (error) {
+        console.warn('3D scan failed', error);
+        return null;
+    } finally {
+        viewer.onFrame = null;
+        if (google) {
+            google.dispose();
+            session.tiles = null;
+        }
+        Object.assign(viewer.camera, CAMERA_RANGE);
+        viewer.camera.updateProjectionMatrix();
+    }
 }
 
 /* ── viewer ──────────────────────────────────────────────────────────────── */
@@ -500,7 +658,7 @@ class Viewer {
         this.scene.fog = new FogExp2(new Color(SKY.fog), 0.34 / Math.max(120, span * 2.4));
         this.scene.add(backdrop());
 
-        this.camera = new PerspectiveCamera(FOV_DEGREES, 16 / 9, 0.5, 3000);
+        this.camera = new PerspectiveCamera(FOV_DEGREES, 16 / 9, CAMERA_RANGE.near, CAMERA_RANGE.far);
         this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = PCFSoftShadowMap;
@@ -514,6 +672,7 @@ class Viewer {
         sun.position.copy(SUN_DIRECTION).multiplyScalar(200);
         sun.castShadow = true;
         const touch = window.matchMedia?.('(pointer: coarse)').matches;
+        this.touch = touch;
         sun.shadow.mapSize.set(touch ? 1024 : 2048, touch ? 1024 : 2048);
         sun.shadow.bias = -0.0002;
         sun.shadow.normalBias = 0.05;
@@ -548,6 +707,9 @@ class Viewer {
         this.world = new Group();
         this.scene.add(this.world);
         this.fence = null;
+        // Hooks for streamed content (the 3D tiles): every frame, and on resize.
+        this.onFrame = null;
+        this.onResize = null;
 
         this.target = new Vector3(0, 4, 0);
         this.distance = 80;
@@ -696,10 +858,12 @@ class Viewer {
         this.renderer.setSize(width, height, false);
         this.camera.aspect = width / Math.max(1, height);
         this.camera.updateProjectionMatrix();
+        this.onResize?.();
         this.dirty = true;
     }
 
-    // Renders only when something changed, so an idle view costs nothing on a phone.
+    // Renders only when something changed, so an idle view costs nothing on a phone (the 3D
+    // tiles still update every frame, and ask for a frame when they change).
     frame() {
         if (this.transition) {
             const t = this.transition;
@@ -715,6 +879,7 @@ class Viewer {
             }
             this.place();
         }
+        this.onFrame?.();
         if (this.dirty) {
             this.dirty = false;
             this.renderer.render(this.scene, this.camera);
@@ -771,6 +936,7 @@ function close() {
     }
     cancelAnimationFrame(current.loop);
     current.observer?.disconnect();
+    current.tiles?.dispose();
     current.viewer?.dispose();
     current.overlay.remove();
     document.removeEventListener('keydown', current.onKey);
@@ -783,10 +949,12 @@ function close() {
  * @param project   the map project (store.toJSON())
  * @param materials the fence configuration slots ({ slot, code, label, fields })
  * @param fetchScene async (project) => { house } from POST /property-map/scene
- * @param groundUrl  (lat, lng, zoom) => URL of the satellite photo for the ground, or null
- *                   for the drawn lawn
+ * @param groundUrl  (lat, lng, zoom) => URL of a satellite photo, read (never shown) when
+ *                   there is no 3D scan; null to skip
+ * @param tilesKey   Google Maps key with the Map Tiles API, for the 3D scan of Google's
+ *                   Photorealistic 3D Tiles; null to skip it
  */
-export async function open({ project, materials, fetchScene, groundUrl = null }) {
+export async function open({ project, materials, fetchScene, groundUrl = null, tilesKey = null }) {
     close();
     const overlay = document.createElement('div');
     overlay.className = 'pm3d';
@@ -815,14 +983,16 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
         return; // closed while loading
     }
 
-    const origin = boundsCenter(project.vertices);
-    const toXZ = projector(origin);
+    // One origin and one projection for everything: fence, footprint, photo and 3D tiles.
+    const origin = nodesCentroid(project.vertices);
+    const { latLngToSceneFeet: toXZ, sceneFeetToLatLng } = sceneFeet(origin);
     const points = project.vertices.map((v) => toXZ(v.lat, v.lng));
     const xs = points.map((p) => p[0]);
     const zs = points.map((p) => p[1]);
     const middle = [(Math.max(...xs) + Math.min(...xs)) / 2, (Math.max(...zs) + Math.min(...zs)) / 2];
     const last = points.length - 1;
     const closed = project.runs.some((run) => run.from === last && run.to === 0);
+    const fenceSpan = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs), 20);
 
     // The widest gate (usually the driveway gate).
     let widestGate = null;
@@ -831,26 +1001,87 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
             if (!widestGate || gate.width_ft > widestGate.width) {
                 const a = points[run.from];
                 const b = points[run.to];
-                widestGate = { at: [a[0] + (b[0] - a[0]) * gate.t, a[1] + (b[1] - a[1]) * gate.t], width: gate.width_ft };
+                widestGate = { at: [a[0] + (b[0] - a[0]) * gate.t, a[1] + (b[1] - a[1]) * gate.t], width: gate.width_ft, run };
             }
         }
     }
 
     /*
-     * Where the front of the house faces: with the house inside a closed fence, toward the
-     * widest gate (else south); with the house outside the fenced area, away from the yard.
+     * Where the front of the house faces, toward the street:
+     *   - inside a closed fence: toward the widest gate (else south);
+     *   - outside the fenced area with a gate across the yard from it (a front-yard fence,
+     *     gate by the sidewalk): toward that gate;
+     *   - otherwise (a back-yard fence): away from the yard.
      */
     const yardCenter = centroid(points);
+    const gateAcrossYard = (center) => widestGate
+        && Math.hypot(widestGate.at[0] - center[0], widestGate.at[1] - center[1])
+            > Math.hypot(yardCenter[0] - center[0], yardCenter[1] - center[1]) + 5;
     const frontHint = (center) => {
         const insideYard = closed && pointInPolygon(center, points);
-        const toward = insideYard
+        const toward = insideYard || gateAcrossYard(center)
             ? (widestGate ? [widestGate.at[0] - center[0], widestGate.at[1] - center[1]] : [0, 1])
             : [center[0] - yardCenter[0], center[1] - yardCenter[1]];
         const length = Math.hypot(toward[0], toward[1]);
         return length > 1 ? [toward[0] / length, toward[1] / length] : [0, 1];
     };
 
-    const outline = scene.house?.outline?.length >= 3 ? scene.house.outline.map(([lat, lng]) => toXZ(lat, lng)) : null;
+    let viewer;
+    try {
+        viewer = new Viewer(overlay.querySelector('canvas'), fenceSpan + 60);
+    } catch (error) {
+        console.error(error);
+        status.textContent = 'This browser cannot show the 3D view.';
+        return;
+    }
+    session.viewer = viewer;
+
+    // Sized and drawing from the start: the 3D scan runs behind the status message.
+    const stage = overlay.querySelector('.pm3d-stage');
+    const measure = () => {
+        const rect = stage.getBoundingClientRect();
+        viewer.resize(rect.width || 1280, rect.height || 720);
+    };
+    measure();
+    session.observer = new ResizeObserver(measure);
+    session.observer.observe(stage);
+    const loop = () => {
+        session.loop = requestAnimationFrame(loop);
+        viewer.frame();
+    };
+    loop();
+
+    /*
+     * The real building, trees and paving, measured from Google's 3D tiles. The building
+     * looked for is the one next to the fence: by an open fence's two ends (where it meets
+     * the wall), else by its corners.
+     */
+    let measured = null;
+    if (tilesKey) {
+        status.textContent = 'Scanning your property in 3D…';
+        measured = await scanProperty({
+            viewer,
+            session,
+            alive: () => current === session,
+            apiKey: tilesKey,
+            origin,
+            center: middle,
+            anchors: closed ? points : [points[0], points[last]],
+            // No building on the fence line, nor inside an open fence's yard (the strip it
+            // closes against the wall, often planted with trees as tall as the roof).
+            fence: {
+                segments: project.runs.filter((run) => points[run.from] && points[run.to]).map((run) => [points[run.from], points[run.to]]),
+                yard: !closed && points.length >= 3 ? points : null,
+            },
+        });
+        if (current !== session) {
+            return; // closed while scanning
+        }
+    }
+    const scanned = measured?.building || null;
+
+    const fema = scene.house?.outline?.length >= 3 ? scene.house.outline.map(([lat, lng]) => toXZ(lat, lng)) : null;
+    const outline = scanned ? scanned.outline : fema;
     const footprint = outline ? orientedRectangle(outline) : null;
     let site = null;
     if (footprint) {
@@ -870,34 +1101,56 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
     const seed = Math.floor(Math.abs(project.vertices[0].lat * 1e5) + Math.abs(project.vertices[0].lng * 1e5)) % 2147483647;
     const gate = widestGate ? { at: frame.toLocal(widestGate.at), width: widestGate.width } : null;
     let plan = null;
+    let planOptions = null;
     if (site) {
         // The rectangle's long side is its width; it is the facade unless the house faces an end.
         const facesLongSide = Math.abs(site.front[0] * site.rect.axis[0] + site.front[1] * site.rect.axis[1]) < 0.5;
-        plan = planHouse({
+        planOptions = {
             width: facesLongSide ? site.rect.width : site.rect.depth,
             depth: facesLongSide ? site.rect.depth : site.rect.width,
             outline: outline ? outline.map(frame.toLocal) : null,
-            height: footprint ? scene.house.height_ft || STANDARD_HOUSE.height : STANDARD_HOUSE.height,
+            // Measured: the eaves of a pitched roof (one or two stories), the top of a flat one.
+            height: scanned
+                ? (scanned.flat ? scanned.ridge : scanned.eave)
+                : (fema ? scene.house.height_ft || STANDARD_HOUSE.height : STANDARD_HOUSE.height),
             seed,
-            // The garage goes on the side of the widest gate, where the driveway is.
+            // The garage goes on the side of the widest gate, where the driveway is (or on the
+            // real driveway's side, once read from the photo).
             garageSide: gate && Math.abs(gate.at[0]) > 4 ? Math.sign(gate.at[0]) : (seed % 2 ? 1 : -1),
-            occupancy: footprint ? scene.house.occupancy : null,
-        });
+            occupancy: fema && !scanned ? scene.house.occupancy : null,
+            roof: scanned ? (scanned.flat ? 'flat' : 'pitched') : null,
+        };
+        plan = planHouse(planOptions);
+        if (scanned) {
+            plan = withRoofColor(plan, scanned.roofColor);
+        }
     }
 
-    const reach = site ? Math.max(site.rect.width, site.rect.depth) : 0;
-    const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs), reach, 30);
+    // Without the scan, the street runs past the fence run with the widest gate when that
+    // run is out in front of the house (local z beyond its front wall). With it, the real
+    // paving is used and no street is made up.
+    let street = null;
+    if (!measured && widestGate && site) {
+        const ends = [points[widestGate.run.from], points[widestGate.run.to]].map(frame.toLocal);
+        const runZ = Math.max(ends[0][1], ends[1][1]);
+        if (Math.min(ends[0][1], ends[1][1]) > planOptions.depth / 2 + 5) {
+            street = runZ;
+        }
+    }
+
     const fenceLayout = layout(project, toXZ, site ? site.rect.center : middle);
 
-    let viewer;
-    try {
-        viewer = new Viewer(overlay.querySelector('canvas'), span);
-    } catch (error) {
-        console.error(error);
-        status.textContent = 'This browser cannot show the 3D view.';
-        return;
+    // An open fence that stops short of the scanned building is carried on to its wall.
+    if (scanned && !closed && points.length >= 2) {
+        const runs = project.runs.filter((run) => points[run.from] && points[run.to]);
+        for (const [end, run] of [[points[0], runs[0]], [points[last], runs[runs.length - 1]]]) {
+            const wall = run && wallPoint(end, scanned.outline, WALL_REACH_FT);
+            const part = wall && fenceLayout.bySlot.get(run.material || 1);
+            if (part) {
+                part.tramos.push({ a: end, b: wall });
+            }
+        }
     }
-    session.viewer = viewer;
 
     /*
      * Where the "Outside" camera stands. With the yard beside or behind the house, it looks
@@ -910,38 +1163,58 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
         ? Math.atan2(yardCenter[0] - site.rect.center[0], yardCenter[1] - site.rect.center[1]) + VIEW_ANGLE * 0.7
         : frame.rotation + VIEW_ANGLE;
 
+    /*
+     * Clean model of the real property. Without the 3D scan, the satellite photo is the
+     * step in between: it gives the roof color, the driveway and the trees.
+     */
     const localPoints = points.map(frame.toLocal);
-    const fence = {
-        segments: project.runs.filter((run) => points[run.from] && points[run.to]).map((run) => [localPoints[run.from], localPoints[run.to]]),
-        points: localPoints,
-        // The fenced yard; an open fence is closed by the line between its ends.
-        yard: localPoints.length >= 3 ? localPoints : null,
-    };
-
-    // Satellite ground under the whole lot; the roof takes its color from the photo.
-    const board = lotBounds({ plan, fence });
-    let ground = null;
-    if (groundUrl) {
-        status.textContent = 'Loading the satellite view…';
-        try {
-            ground = await loadGround({
-                url: groundUrl,
-                unproject: unprojector(origin),
-                corners: [[board.x0, board.z0], [board.x1, board.z0], [board.x0, board.z1], [board.x1, board.z1]].map(frame.toWorld),
-            });
-        } catch (error) {
+    const segments = project.runs.filter((run) => points[run.from] && points[run.to]).map((run) => [localPoints[run.from], localPoints[run.to]]);
+    let reading = null;
+    if (!measured && groundUrl && site) {
+        status.textContent = 'Reading your property…';
+        const houseCorners = outline || [[-1, -1], [1, -1], [1, 1], [-1, 1]]
+            .map(([sx, sz]) => frame.toWorld([(sx * planOptions.width) / 2, (sz * planOptions.depth) / 2]));
+        const all = points.concat(houseCorners);
+        const wx = all.map((q) => q[0]);
+        const wz = all.map((q) => q[1]);
+        const corners = [
+            [Math.min(...wx) - PHOTO_MARGIN_FT, Math.min(...wz) - PHOTO_MARGIN_FT],
+            [Math.max(...wx) + PHOTO_MARGIN_FT, Math.max(...wz) + PHOTO_MARGIN_FT],
+        ];
+        const photo = await loadPhoto({ url: groundUrl, unproject: sceneFeetToLatLng, corners }).catch((error) => {
             console.warn(error);
-        }
+            return null;
+        });
         if (current !== session) {
             return;
         }
-    }
-    const roofColor = ground && outline ? ground.roofColor(outline) : null;
-    if (plan && roofColor) {
-        plan = withRoofColor(plan, roofColor);
+        if (photo) {
+            const local = all.map(frame.toLocal);
+            const lx = local.map((q) => q[0]);
+            const lz = local.map((q) => q[1]);
+            reading = readPhoto({
+                photo,
+                frame,
+                house: { x0: -planOptions.width / 2, x1: planOptions.width / 2, z0: -planOptions.depth / 2, z1: planOptions.depth / 2 },
+                street,
+                area: { x0: Math.min(...lx) - 35, x1: Math.max(...lx) + 35, z0: Math.min(...lz) - 35, z1: Math.max(...lz) + 35 },
+                avoid: (q) => segments.some(([a, b]) => {
+                    const dx = b[0] - a[0];
+                    const dz = b[1] - a[1];
+                    const t = Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dz) / (dx * dx + dz * dz || 1)));
+                    return Math.hypot(q[0] - a[0] - dx * t, q[1] - a[1] - dz * t) < 3;
+                }),
+            });
+            if (plan && reading.driveway && plan.kind === 'house') {
+                plan = planHouse({ ...planOptions, garageSide: Math.sign((reading.driveway.x0 + reading.driveway.x1) / 2) || 1 });
+            }
+            const roofColor = outline ? photo.roofColor(outline) : null;
+            if (plan && roofColor) {
+                plan = withRoofColor(plan, roofColor);
+            }
+        }
     }
 
-    // House and lot, built in the house's frame and placed together.
     const estate = new Group();
     estate.rotation.y = frame.rotation;
     estate.position.set(frame.origin[0], 0, frame.origin[1]);
@@ -951,15 +1224,26 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
     }
     const lot = buildSite({
         plan,
-        fence,
+        fence: {
+            segments,
+            points: localPoints,
+            // The fenced yard; an open fence is closed by the line between its ends.
+            yard: localPoints.length >= 3 ? localPoints : null,
+        },
         gate: gate ? { x: gate.at[0], z: gate.at[1], width: gate.width } : null,
         seed,
         view: outsideAzimuth - frame.rotation,
-        ground: ground && {
-            texture: ground.texture,
-            uvOf: (point) => ground.uvOf(frame.toWorld(point)),
-            plantable: (point) => ground.plantable(frame.toWorld(point)),
-        },
+        street,
+        paved: reading?.driveway || null,
+        trees: measured
+            ? measured.trees.map((tree) => ({ ...tree, at: frame.toLocal(tree.at) }))
+            : reading ? reading.trees : null,
+        paving: measured
+            ? measured.paving.map(({ x0, x1, z0, z1, light }) => ({
+                light,
+                corners: [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(frame.toLocal),
+            }))
+            : null,
     });
     estate.add(lot.group);
     viewer.world.add(estate);
@@ -1027,9 +1311,10 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
             (firstGate.a[1] + firstGate.b[1]) / 2 + out[1] * 4 + (dz / length) * (length / 2 + 2.5)];
         viewer.world.add(Person.crear(spot[0], spot[1], Math.atan2(-out[0], -out[1]), '#ff7133'));
     }
+
     viewer.fitShadows([house, viewer.fence, ...lot.casters].filter(Boolean));
 
-    // Camera presets. "Outside" looks at the front of the house, three-quarters on.
+    // Camera presets.
     const facing = frame.rotation;
     const closeTarget = firstGate
         ? [(firstGate.a[0] + firstGate.b[0]) / 2, 3, (firstGate.a[1] + firstGate.b[1]) / 2]
@@ -1038,24 +1323,22 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
         ? Math.atan2(-(firstGate.b[1] - firstGate.a[1]), firstGate.b[0] - firstGate.a[0])
         : facing;
     /*
-     * "Outside": a low, three-quarter view framed tight on the fence and the house beside
-     * it (sized to fit their width in the view); "top": the whole model lot straight down.
+     * "Outside": a low, three-quarter view close on the fence and the front of the house,
+     * so the fence's posts, panels and gates read large; "top": the whole model lot
+     * straight down.
      */
-    const houseCorners = plan
-        ? [[plan.bounds.x0, plan.bounds.z0], [plan.bounds.x1, plan.bounds.z0], [plan.bounds.x0, plan.bounds.z1], [plan.bounds.x1, plan.bounds.z1]].map(frame.toWorld)
-        : [];
-    const focus = points.concat(houseCorners);
+    const houseFront = plan ? [[plan.bounds.x0, plan.bounds.z1], [plan.bounds.x1, plan.bounds.z1]].map(frame.toWorld) : [];
+    const focus = points.concat(houseFront);
     const fx = focus.map((p) => p[0]);
     const fz = focus.map((p) => p[1]);
     const focusCenter = [(Math.min(...fx) + Math.max(...fx)) / 2, (Math.min(...fz) + Math.max(...fz)) / 2];
-    const focusRadius = Math.hypot(Math.max(...fx) - Math.min(...fx), Math.max(...fz) - Math.min(...fz)) / 2;
-    const halfWidthAngle = Math.atan(Math.tan(((FOV_DEGREES / 2) * Math.PI) / 180) * (16 / 9));
+    const { board } = lot;
     const boardSize = Math.hypot(board.x1 - board.x0, board.z1 - board.z0);
     const boardCenter = frame.toWorld([(board.x0 + board.x1) / 2, (board.z0 + board.z1) / 2 - (board.z1 - board.z0) * 0.08]);
     const views = {
         outside: {
             target: [focusCenter[0], 3, focusCenter[1]],
-            distance: Math.min(390, Math.max(45, (focusRadius / Math.tan(halfWidthAngle)) * 1.25)),
+            distance: Math.min(390, Math.max(45, fenceSpan * OUTSIDE_SPANS)),
             azimuth: outsideAzimuth,
             polar: OUTSIDE_POLAR,
         },
@@ -1072,37 +1355,29 @@ export async function open({ project, materials, fetchScene, groundUrl = null })
         });
     });
 
-    const stage = overlay.querySelector('.pm3d-stage');
-    const measure = () => {
-        const rect = stage.getBoundingClientRect();
-        viewer.resize(rect.width || 1280, rect.height || 720);
+    const showNotes = () => {
+        const notes = [];
+        if (scanned) {
+            notes.push('Building, trees and paving measured from Google\'s 3D imagery and drawn clean; the fence is drawn to your plan.');
+        } else if (footprint) {
+            notes.push(plan?.kind === 'flat'
+                ? 'Building size and position from public building records; its look is illustrative.'
+                : 'House size and position from public building records; its look is illustrative.');
+        } else if (plan) {
+            notes.push('We could not find your house in public records, so a standard home is shown.');
+        } else {
+            notes.push('We could not find your house in public records, so only the fence is shown.');
+        }
+        notes.push('Colors are a preview; your order keeps the color you chose.');
+        if (measured) {
+            // Google's credits for the 3D data the model was measured from.
+            notes.push(`3D data © Google${measured.credits ? ` · ${measured.credits}` : ''}.`);
+        }
+        note.textContent = notes.join(' ');
     };
-    measure();
-    session.observer = new ResizeObserver(measure);
-    session.observer.observe(stage);
-
-    const notes = [];
-    if (footprint) {
-        notes.push(plan?.kind === 'flat'
-            ? 'Building size and position from public building records; its look is illustrative.'
-            : 'House size and position from public building records; its look is illustrative.');
-    } else if (plan) {
-        notes.push('We could not find your house in public records, so a standard home is shown.');
-    } else {
-        notes.push('We could not find your house in public records, so only the fence is shown.');
-    }
-    notes.push('Colors are a preview; your order keeps the color you chose.');
-    if (ground) {
-        notes.push('Satellite imagery © Google.');
-    }
-    note.textContent = notes.join(' ');
+    showNotes();
 
     status.remove();
-    const loop = () => {
-        session.loop = requestAnimationFrame(loop);
-        viewer.frame();
-    };
-    loop();
 }
 
 export { close };
