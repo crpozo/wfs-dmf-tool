@@ -5,12 +5,9 @@
  * garage, a curved walkway to the porch, clusters of palms over low shrubs, and soft
  * contact shadows where things meet the ground.
  *
- * The real property guides it. From the 3D scan of Google's tiles (tileScan.js) the paving
- * is the real paving, in its own shape and angle, and the trees stand where they are at
- * their height; no street is made up. Without the scan, from the satellite photo
- * (viewer3d.js): the street runs past the gated side of the fence, the driveway sits where
- * the real one is (with a parked car), and the trees stand where the photo shows canopies.
- * Neither the photo nor the tiles are shown: they guide clean geometry.
+ * Two boards share the same base (buildBoard): buildSite() is the drawn lot for the
+ * "Close up" view, and buildPhotoBoard() carries the real satellite photo for the views
+ * from above, mapped vertex by vertex so it keeps its true proportions.
  *
  * Works in the house's local coordinates (feet, front toward +z, see house3d.js); the
  * viewer turns and places the whole group like the house.
@@ -179,6 +176,27 @@ ${NOISE_GLSL}`)
 }`);
     };
     material.customProgramCacheKey = () => 'pm-soil';
+    return material;
+}
+
+/*
+ * Satellite photo on the board. The photo carries its own light, so it is dimmed a little
+ * and given a touch more contrast and saturation: the scene's sun and the fence's shadows
+ * then sit on it like on real ground.
+ */
+function satelliteMaterial(texture) {
+    const material = new MeshStandardMaterial({ map: texture, roughness: 1, metalness: 0 });
+    material.onBeforeCompile = (shader) => {
+        shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+{
+    vec3 c = diffuseColor.rgb;
+    float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    c = mix(vec3(l), c, 1.15);
+    c = max((c - 0.2) * 1.1 + 0.2, 0.0);
+    diffuseColor.rgb = c * 0.78;
+}`);
+    };
+    material.customProgramCacheKey = () => 'pm-satellite';
     return material;
 }
 
@@ -638,6 +656,62 @@ function ribbon(points, width, y) {
 /* ── site ────────────────────────────────────────────────────────────────── */
 
 /*
+ * The model's base: a board with rounded corners on a 4.5 ft plinth, with a soft shadow
+ * under it so it sits on the backdrop. `top` is the material of its top face; uvOf([x, z])
+ * gives each top vertex its own place in that material's texture (the satellite photo).
+ */
+function buildBoard(board, top, uvOf = null) {
+    const group = new Group();
+    // Rounded rectangle extruded down. The shape's y is -z once laid flat.
+    const radius = 9;
+    const shape = new Shape();
+    const [sx0, sx1, sy0, sy1] = [board.x0, board.x1, -board.z1, -board.z0];
+    shape.moveTo(sx0 + radius, sy0);
+    shape.lineTo(sx1 - radius, sy0);
+    shape.quadraticCurveTo(sx1, sy0, sx1, sy0 + radius);
+    shape.lineTo(sx1, sy1 - radius);
+    shape.quadraticCurveTo(sx1, sy1, sx1 - radius, sy1);
+    shape.lineTo(sx0 + radius, sy1);
+    shape.quadraticCurveTo(sx0, sy1, sx0, sy1 - radius);
+    shape.lineTo(sx0, sy0 + radius);
+    shape.quadraticCurveTo(sx0, sy0, sx0 + radius, sy0);
+    const depth = BOARD_THICKNESS - BOARD_BEVEL * 2;
+    const geometry = new ExtrudeGeometry(shape, {
+        depth, bevelEnabled: true, bevelThickness: BOARD_BEVEL, bevelSize: BOARD_BEVEL, bevelSegments: 3, curveSegments: 10,
+    });
+    if (uvOf) {
+        const position = geometry.attributes.position;
+        const uv = geometry.attributes.uv;
+        for (let i = 0; i < position.count; i++) {
+            const [u, v] = uvOf([position.getX(i), -position.getY(i)]);
+            uv.setXY(i, u, v);
+        }
+    }
+    const mesh = new Mesh(geometry, [top, soilMaterial()]);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = -(depth + BOARD_BEVEL);
+    mesh.receiveShadow = true;
+    group.add(mesh);
+
+    const width = board.x1 - board.x0;
+    const length = board.z1 - board.z0;
+    const under = new Mesh(flat(new PlaneGeometry(width + 36, length + 36)), shadowMaterial(rectangleTexture(width, length, 18), 0.4));
+    under.position.set((board.x0 + board.x1) / 2, -BOARD_THICKNESS - 0.05, (board.z0 + board.z1) / 2);
+    group.add(under);
+    return group;
+}
+
+/**
+ * The board with the satellite photo on top, for the views from above.
+ * @param board   { x0, x1, z0, z1 } in scene feet
+ * @param texture the photo
+ * @param uvOf    [x, z] -> [u, v]: where a scene point falls in the photo
+ */
+export function buildPhotoBoard({ board, texture, uvOf }) {
+    return buildBoard(board, satelliteMaterial(texture), uvOf);
+}
+
+/*
  * Extent of the model lot: the drawing and the house with a margin on every side, and in
  * front the yard, sidewalk, parkway, curb and street. With `street` (the z of the fence run
  * that faces the street), the sidewalk starts just past that run and the curb is 10 ft out.
@@ -688,35 +762,7 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, street
     // With the real paving, the made-up street, sidewalk, driveway and walkway are left out.
     const made = real ? new Group() : group;
 
-    // Board: rounded rectangle extruded down. The shape's y is -z once laid flat.
-    const radius = 9;
-    const shape = new Shape();
-    const [sx0, sx1, sy0, sy1] = [board.x0, board.x1, -board.z1, -board.z0];
-    shape.moveTo(sx0 + radius, sy0);
-    shape.lineTo(sx1 - radius, sy0);
-    shape.quadraticCurveTo(sx1, sy0, sx1, sy0 + radius);
-    shape.lineTo(sx1, sy1 - radius);
-    shape.quadraticCurveTo(sx1, sy1, sx1 - radius, sy1);
-    shape.lineTo(sx0 + radius, sy1);
-    shape.quadraticCurveTo(sx0, sy1, sx0, sy1 - radius);
-    shape.lineTo(sx0, sy0 + radius);
-    shape.quadraticCurveTo(sx0, sy0, sx0 + radius, sy0);
-    const depth = BOARD_THICKNESS - BOARD_BEVEL * 2;
-    const boardGeometry = new ExtrudeGeometry(shape, {
-        depth, bevelEnabled: true, bevelThickness: BOARD_BEVEL, bevelSize: BOARD_BEVEL, bevelSegments: 3, curveSegments: 10,
-    });
-    const boardMesh = new Mesh(boardGeometry, [lawnMaterial(), soilMaterial()]);
-    boardMesh.rotation.x = -Math.PI / 2;
-    boardMesh.position.y = -(depth + BOARD_BEVEL);
-    boardMesh.receiveShadow = true;
-    group.add(boardMesh);
-
-    // Soft shadow under the board, so the model sits on the backdrop instead of floating.
-    const boardWidth = board.x1 - board.x0;
-    const boardDepth = board.z1 - board.z0;
-    const under = new Mesh(flat(new PlaneGeometry(boardWidth + 36, boardDepth + 36)), shadowMaterial(rectangleTexture(boardWidth, boardDepth, 18), 0.4));
-    under.position.set((board.x0 + board.x1) / 2, -BOARD_THICKNESS - 0.05, (board.z0 + board.z1) / 2);
-    group.add(under);
+    group.add(buildBoard(board, lawnMaterial()));
 
     // Sidewalk, parkway strip, curb and street across the front of the lot.
     const walkLength = board.x1 - board.x0 - 0.4;

@@ -15,8 +15,7 @@ export default defineConfig({
         }),
     ],
     build: {
-        // The 3D view chunk (three.js) is ~650 kB, loaded only when "View in 3D" is pressed; the
-        // Google 3D Tiles renderer is a further chunk, loaded only when a tiles key is set.
+        // The 3D view chunk (three.js) is ~600 kB, loaded only when "View in 3D" is pressed.
         chunkSizeWarningLimit: 700,
     },
 });

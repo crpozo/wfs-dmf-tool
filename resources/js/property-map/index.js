@@ -111,12 +111,9 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
                 materials: config.materials || [],
                 // The static demo (resources/demo) has no server and looks the house up itself.
                 fetchScene: config.fetchScene || fetchScene3d,
-                // Satellite photo from this server, sampled for the fallback house's roof color.
+                // Satellite photo from this server, the ground of the views from above; the
+                // static demo sets it to null and shows the drawn yard.
                 groundUrl: 'groundUrl' in config ? config.groundUrl : groundUrl3d,
-                // Google Photorealistic 3D Tiles, scanned (never shown) to measure the real
-                // building, trees and paving: the browser key, which needs the Map Tiles API.
-                // The static demo sets it to null and uses public records and the photo.
-                tilesKey: 'tilesKey' in config ? config.tilesKey : config.browserKey,
             });
         } catch (error) {
             console.error(error);
