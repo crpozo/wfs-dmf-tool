@@ -1,11 +1,14 @@
 /*
  * House footprint for the static demo, looked up from the browser. Same source and rules
  * as app/Services/BuildingFootprints.php (FEMA USA Structures, which allows cross-origin
- * requests): the largest building inside a closed fence, else the one nearest the middle
- * of the drawing, preferring the more detailed outline when a house appears twice.
+ * requests): the largest building inside a closed fence; for an open fence the one whose
+ * walls are nearest its two end points; else the one nearest the middle of the drawing,
+ * preferring the more detailed outline when a house appears twice.
  */
 const SERVICE = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/USA_Structures_View/FeatureServer/0/query';
 const SEARCH_MARGIN_METERS = 25;
+// An open fence end this close to a building's walls is taken as attached to it.
+const ANCHOR_METERS = 6;
 
 const center = (points) => ({
     lat: points.reduce((sum, p) => sum + p.lat, 0) / points.length,
@@ -42,7 +45,7 @@ async function buildingsAround(vertices) {
         geometryType: 'esriGeometryEnvelope',
         inSR: '4326',
         spatialRel: 'esriSpatialRelIntersects',
-        outFields: 'OCC_CLS,HEIGHT,SQMETERS',
+        outFields: 'OCC_CLS,PRIM_OCC,HEIGHT,SQMETERS',
         returnGeometry: 'true',
         outSR: '4326',
         f: 'geojson',
@@ -61,8 +64,42 @@ async function buildingsAround(vertices) {
                 center: center(outline),
                 area: Number(feature.properties?.SQMETERS) || 0,
                 height: feature.properties?.HEIGHT,
+                occupancy: feature.properties?.OCC_CLS || null,
+                use: feature.properties?.PRIM_OCC || null,
             };
         });
+}
+
+// Distance in meters from a point to the nearest edge of an outline.
+function distanceToOutline(point, outline) {
+    const cosLat = Math.cos((point.lat * Math.PI) / 180);
+    const toXY = (p) => [(p.lng - point.lng) * 111320 * cosLat, (p.lat - point.lat) * 110540];
+    let nearest = Infinity;
+    for (let i = 0; i < outline.length; i++) {
+        const [ax, ay] = toXY(outline[i]);
+        const [bx, by] = toXY(outline[(i + 1) % outline.length]);
+        const dx = bx - ax;
+        const dy = by - ay;
+        const lengthSquared = dx * dx + dy * dy;
+        const t = lengthSquared > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSquared)) : 0;
+        nearest = Math.min(nearest, Math.hypot(ax + dx * t, ay + dy * t));
+    }
+    return nearest;
+}
+
+// The building whose walls are nearest both ends of an open fence, or null.
+function anchoredTo(start, end, buildings) {
+    let best = null;
+    let bestScore = Infinity;
+    for (const building of buildings) {
+        const toStart = distanceToOutline(start, building.outline);
+        const toEnd = distanceToOutline(end, building.outline);
+        if (Math.min(toStart, toEnd) <= ANCHOR_METERS && toStart + toEnd < bestScore) {
+            bestScore = toStart + toEnd;
+            best = building;
+        }
+    }
+    return best;
 }
 
 function mostDetailed(chosen, buildings) {
@@ -78,7 +115,7 @@ function result(building) {
     const height = Number.isFinite(building.height) && building.height >= 2.5 && building.height <= 15
         ? Math.round(building.height * 3.28084 * 10) / 10
         : 11;
-    return { outline: building.outline.map((p) => [p.lat, p.lng]), height_ft: height };
+    return { outline: building.outline.map((p) => [p.lat, p.lng]), height_ft: height, occupancy: building.occupancy, use: building.use };
 }
 
 // Same answer shape as POST /property-map/scene: { house }.
@@ -103,6 +140,13 @@ export async function fetchScene(project) {
         const inside = buildings.filter((building) => contains(vertices, building.center)).sort((a, b) => b.area - a.area);
         if (inside.length) {
             return { house: result(mostDetailed(inside[0], buildings)) };
+        }
+    }
+
+    if (!closed) {
+        const anchored = anchoredTo(vertices[0], vertices[last], buildings);
+        if (anchored) {
+            return { house: result(mostDetailed(anchored, buildings)) };
         }
     }
 

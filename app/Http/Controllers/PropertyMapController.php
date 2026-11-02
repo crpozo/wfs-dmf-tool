@@ -9,6 +9,8 @@ use App\Services\PropertyMapQuote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 /**
@@ -124,6 +126,39 @@ class PropertyMapController extends Controller
 
         return response()->json([
             'house' => $footprints->houseFor($vertices, $closed),
+        ]);
+    }
+
+    /*
+     * Satellite photo under the 3D view's lot, served from this origin so the browser can
+     * read its pixels (roof color) and the server key stays private. Cached for 30 days
+     * per point and zoom; failures answer 502 and the view keeps its drawn lawn.
+     */
+    public function ground(Request $request, PropertyMapImage $images): Response
+    {
+        $validated = $request->validate([
+            'lat' => ['required', 'numeric', 'between:-85,85'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+            'zoom' => ['required', 'integer', 'between:16,20'],
+        ]);
+        $lat = round((float) $validated['lat'], 5);
+        $lng = round((float) $validated['lng'], 5);
+        $zoom = (int) $validated['zoom'];
+
+        $cacheKey = "ground:{$lat},{$lng},{$zoom}";
+        $encoded = Cache::get($cacheKey);
+        if (! is_string($encoded)) {
+            $bytes = $images->ground($lat, $lng, $zoom);
+            if ($bytes === null) {
+                return response('Satellite image unavailable.', 502);
+            }
+            $encoded = base64_encode($bytes);
+            Cache::put($cacheKey, $encoded, now()->addDays(30));
+        }
+
+        return response(base64_decode($encoded), 200, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'public, max-age=86400',
         ]);
     }
 

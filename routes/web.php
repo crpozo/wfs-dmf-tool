@@ -193,6 +193,9 @@ Route::prefix('property-map')->name('property-map.')->group(function () {
     Route::post('/scene', [PropertyMapController::class, 'scene'])
         ->middleware('throttle:30,1')
         ->name('scene');
+    Route::get('/ground', [PropertyMapController::class, 'ground'])
+        ->middleware('throttle:30,1')
+        ->name('ground');
     Route::post('/projects', [PropertyMapController::class, 'store'])
         ->middleware('throttle:20,1')
         ->name('projects.store');

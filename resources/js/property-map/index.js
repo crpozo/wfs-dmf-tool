@@ -111,6 +111,8 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
                 materials: config.materials || [],
                 // The static demo (resources/demo) has no server and looks the house up itself.
                 fetchScene: config.fetchScene || fetchScene3d,
+                // Satellite ground from this server; the static demo sets it to null (drawn lawn).
+                groundUrl: 'groundUrl' in config ? config.groundUrl : groundUrl3d,
             });
         } catch (error) {
             console.error(error);
@@ -160,6 +162,10 @@ function createNotifier(element) {
             element.hidden = true;
         }, 6000);
     };
+}
+
+function groundUrl3d(lat, lng, zoom) {
+    return `/property-map/ground?lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}&zoom=${zoom}`;
 }
 
 async function fetchScene3d(project) {

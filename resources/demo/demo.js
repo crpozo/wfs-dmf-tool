@@ -98,6 +98,8 @@ window.WFS_PROPERTY_MAP = {
     mapId: __DEMO_MAP_ID__,
     materials: [material],
     fetchScene,
+    // No server here to serve the satellite ground: the 3D view draws its own lawn.
+    groundUrl: null,
 };
 document.body.classList.add('pm-map-active');
 

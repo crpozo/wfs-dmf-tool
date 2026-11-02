@@ -28,6 +28,34 @@ class PropertyMapImage
         return $url === null ? null : $this->fetch($url);
     }
 
+    /**
+     * Plain satellite photo for the ground of the 3D view: 640x640 at scale 2 (1280 px),
+     * centered on a point, no paths or markers. Returns the JPEG bytes, or null. The 3D
+     * view maps it onto the lot with the Web Mercator scale of that zoom, so the photo
+     * keeps its true proportions.
+     */
+    public function ground(float $lat, float $lng, int $zoom): ?string
+    {
+        $key = config('services.google_maps.server_key');
+        if (blank($key)) {
+            return null;
+        }
+
+        $params = [
+            'size=640x640',
+            'scale=2',
+            'maptype=satellite',
+            'format=jpg',
+            sprintf('center=%.6f,%.6f', $lat, $lng),
+            'zoom='.$zoom,
+            'key='.rawurlencode($key),
+        ];
+        $pathAndQuery = '/maps/api/staticmap?'.implode('&', $params);
+        $dataUrl = $this->fetch(self::ENDPOINT.'?'.implode('&', $params).$this->signature($pathAndQuery));
+
+        return $dataUrl === null ? null : base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1));
+    }
+
     private function fetch(string $url): ?string
     {
         try {
