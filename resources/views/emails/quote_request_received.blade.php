@@ -47,6 +47,17 @@
     @endif
 </table>
 
+@if(!empty($quoteRequest->map_data))
+    <h2 style="font-size: 18px;">Property map</h2>
+    <p>
+        Drawn on the satellite map{{ !empty($quoteRequest->map_data['address']) ? ' at ' . $quoteRequest->map_data['address'] : '' }}.
+        @if($quoteRequest->sketch_image_path)
+            The satellite image with the fence is attached.
+        @endif
+        Lengths were measured on the map and must be confirmed with the customer.
+    </p>
+@endif
+
 <h2 style="font-size: 18px;">Quote links</h2>
 <p>
     <a href="{{ route('quote_requests.open_sketch', $quoteRequest) }}">Open sketch</a>

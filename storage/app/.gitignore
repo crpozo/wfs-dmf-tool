@@ -1,3 +1,5 @@
 *
 !public/
 !.gitignore
+# Panel optimization models (GLPK), used by HomeController::optimizePanels()
+!optimize_panels*.sh

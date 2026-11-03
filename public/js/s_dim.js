@@ -1,15 +1,19 @@
 class Dim{
 
-  constructor(x, y, texto, horAlign, verAlign, fs) {
+  // (x, y) is where the label is painted, in pixels, at the moment of creation.
+  // (ax, ay) is the pixel anchor the label hangs from (the segment midpoint): the
+  // anchor is stored in model units and the gap to it in pixels, so the label
+  // follows zoom and pan while keeping the same distance from its line.
+  constructor(x, y, texto, horAlign, verAlign, fs, ax, ay) {
+    if (ax == null || ay == null) {
+      ax = x;
+      ay = y;
+    }
+    this.anchor = pixelsToFt(ax, ay);
+    this.dx = x - ax;
+    this.dy = y - ay;
     this.x = x;
     this.y = y;
-    /*
-    console.log(x + ", " + y);
-    var p = pixelsToFt(x,y);
-    this.x = p.x;
-    this.y = p.y;
-    console.log(this.x + ", " + this.y);
-    */
     this.texto = texto;
     this.ref = texto;
     this.horAlign = horAlign;
@@ -17,8 +21,14 @@ class Dim{
     this.fs = fs;
     textSize(fs);
     this.width = textWidth(texto);
-    this.zoomLevel = zoomLevel;
     this.linked = null;
+  }
+
+  // Refresh the painted position from the anchor for the current zoom/pan.
+  update(){
+    var p = ftToPixels(this.anchor.x, this.anchor.y);
+    this.x = p.x + this.dx;
+    this.y = p.y + this.dy;
   }
 
   link(dim){
@@ -44,6 +54,7 @@ class Dim{
   }
 
   over() {
+    this.update();
     if (mouseX >= this.x - this.fs && mouseX <= this.x + this.fs*2 &&
         ((this.verAlign == TOP && mouseY >= this.y && mouseY <= this.y + this.fs) ||
             (mouseY >= this.y - this.fs && mouseY <= this.y)))
@@ -55,18 +66,12 @@ class Dim{
   }
 
   paint(){
+    this.update();
     push();
     textAlign(this.horAlign, this.verAlign);
     textSize(this.fs);
     strokeWeight(0.5);
-    if(zoomLevel == this.zoomLevel){
-      text(this.texto, this.x, this.y);
-    }
-    else{
-      var p = convertZoomLevel(this.x, this.y, this.zoomLevel, zoomLevel);
-      //console.log(p.x,p.y);
-      text(this.texto, p.x, p.y);
-    }
+    text(this.texto, this.x, this.y);
     pop();
   }
 }

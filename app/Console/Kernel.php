@@ -18,6 +18,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('quote-requests:sync-odoo-sent-at')
             ->everyFiveMinutes()
             ->withoutOverlapping();
+
+        // Property map projects saved by link expire after 90 days.
+        $schedule->command('model:prune', ['--model' => [\App\Models\SavedProject::class]])
+            ->daily();
     }
 
     /**
