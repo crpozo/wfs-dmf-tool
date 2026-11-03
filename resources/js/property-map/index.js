@@ -111,8 +111,9 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
                 materials: config.materials || [],
                 // The static demo (resources/demo) has no server and looks the house up itself.
                 fetchScene: config.fetchScene || fetchScene3d,
-                // Satellite ground from this server; the static demo sets it to null (drawn lawn).
-                groundUrl: 'groundUrl' in config ? config.groundUrl : groundUrl3d,
+                // Drawn lawn for now, as chosen for client review. To put the satellite photo
+                // back under the lot, pass groundUrl3d here.
+                groundUrl: config.groundUrl ?? null,
             });
         } catch (error) {
             console.error(error);
