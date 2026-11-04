@@ -10,6 +10,7 @@ use App\Http\Requests\StoreQuoteRequest;
 use App\Models\Customer;
 use App\Models\QuoteRequest;
 use App\Mail\QuoteRequestReceived;
+use App\Services\PropertyMapQuote;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -92,9 +93,16 @@ class QuoteRequestController extends Controller
             }
         }
 
+        // Drawn on the property map: keep the project and its satellite image (S3).
+        $propertyMap = app(PropertyMapQuote::class);
+        if ($propertyMap->isMapQuote()) {
+            $data = array_merge($data, $propertyMap->quoteFields($data['canvas_image'] ?? null, $data['odoo_id']));
+        }
+
         unset($data['canvas_image'], $data['lead_source_id']);
 
         $qr = QuoteRequest::create($data);
+        $propertyMap->forget();
 
         $this->sendQuoteRequestEmail($qr, $request->safe()->except('canvas_image'));
 
@@ -245,7 +253,14 @@ class QuoteRequestController extends Controller
             }
         }
 
+        // Drawn on the property map: keep the project and its satellite image (S3).
+        $propertyMap = app(PropertyMapQuote::class);
+        if ($propertyMap->isMapQuote()) {
+            $data = array_merge($data, $propertyMap->quoteFields($validated['canvas_image'] ?? null, $data['odoo_id']));
+        }
+
         $qr = QuoteRequest::create($data);
+        $propertyMap->forget();
 
         $this->sendQuoteRequestEmail($qr, collect($validated)->except('canvas_image')->all());
 

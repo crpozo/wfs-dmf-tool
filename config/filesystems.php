@@ -56,6 +56,16 @@ return [
             'throw' => false,
         ],
 
+        // Satellite images of property map quotes. Private bucket; on the server the
+        // credentials come from the EC2 instance role (drawfence-ec2-role).
+        'quote_images' => [
+            'driver' => 's3',
+            'region' => env('QUOTE_IMAGES_REGION', 'us-east-1'),
+            'bucket' => env('QUOTE_IMAGES_BUCKET', 'wfs-drawfence-quote-images'),
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
     ],
 
     /*

@@ -2,16 +2,34 @@
 /vendor/
 /node_modules/
 
-# Build output (rebuilt with npm run build)
+# Build output (rebuilt with npm run build / npm run build:demo)
 /public/build/
 /public/hot
 /public/storage
+/public/draw-my-fence-demo/
 
-# Secrets and environment
+# Secrets and environment (never commit real keys: the GitHub repository is shared)
 .env
 .env.*
 !.env.example
-/storage/app/google/service-account.json
+/storage/app/google/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+id_rsa*
+auth.json
+docker-compose.override.yml
+
+# Database dumps and backups (customer data)
+*.dump
+*.sql
+*.sql.gz
+*.sqlite
+*.backup
+*.7z
+*.zip
 
 # Laravel runtime
 /storage/*.key
@@ -25,8 +43,15 @@
 
 # Tooling
 /.phpunit.cache
+.phpunit.result.cache
+npm-debug.log*
+yarn-error.log
 /.idea
 /.vscode
 /.fleet
 .DS_Store
 Thumbs.db
+
+# Windows download markers ("file:Zone.Identifier" streams copied as files)
+*:Zone.Identifier
+*Zone.Identifier

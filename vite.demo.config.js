@@ -1,0 +1,46 @@
+import { defineConfig, loadEnv } from 'vite';
+import { resolve } from 'node:path';
+
+/*
+ * Static demo of the property map and 3D view (resources/demo) for client review on
+ * GitHub Pages. It is published by .github/workflows/demo-pages.yml on every push to the
+ * Phase 2 branch (https://crpozo.github.io/wfs-dmf-tool/), with DEMO_OUT_DIR set there.
+ * Locally the output defaults to ../../wfs-design-preview/draw-my-fence-demo.
+ *
+ * The demo has its own Maps key, GOOGLE_MAPS_DEMO_KEY (a repository secret in CI, or this
+ * project's .env locally), never the app's key: the built page is public. Restrict it in
+ * Google Cloud to the Pages URLs (https://crpozo.github.io/wfs-dmf-tool/*) and to Maps
+ * JavaScript, Places (New) and Geocoding, with daily quotas.
+ *
+ *   npm run build:demo
+ */
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, process.cwd(), '');
+    const outDir = resolve(env.DEMO_OUT_DIR || resolve(process.cwd(), '../../wfs-design-preview/draw-my-fence-demo'));
+
+    if (!env.GOOGLE_MAPS_DEMO_KEY) {
+        throw new Error('GOOGLE_MAPS_DEMO_KEY is not set in .env (a separate key for the public demo)');
+    }
+    if (env.GOOGLE_MAPS_DEMO_KEY === env.GOOGLE_MAPS_BROWSER_KEY) {
+        throw new Error('GOOGLE_MAPS_DEMO_KEY must not be the app key: the demo is published in a public repository');
+    }
+    if (!outDir.endsWith('draw-my-fence-demo')) {
+        throw new Error(`Refusing to empty ${outDir}: the demo folder must be named draw-my-fence-demo`);
+    }
+
+    return {
+        root: resolve(process.cwd(), 'resources/demo'),
+        base: './',
+        publicDir: false,
+        define: {
+            __DEMO_MAPS_KEY__: JSON.stringify(env.GOOGLE_MAPS_DEMO_KEY),
+            __DEMO_MAP_ID__: JSON.stringify(env.GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'),
+        },
+        build: {
+            outDir,
+            emptyOutDir: true,
+            // The 3D view chunk (three.js) is ~530 kB, loaded only when "View in 3D" is pressed.
+            chunkSizeWarningLimit: 600,
+        },
+    };
+});

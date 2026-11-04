@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Draw My Fence · Property Map Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+</head>
+<!-- Static demo: the markup of the map section mirrors resources/views/partials/property_map.blade.php. -->
+<body class="drawing">
+    <header class="demo-header">
+        <div class="demo-brand">
+            <strong>Western Fence Supply · Draw My Fence</strong>
+            <span>Property map and 3D view, preview for review</span>
+        </div>
+        <span class="demo-badge">Demo</span>
+    </header>
+
+    <div class="demo-picker" data-demo-picker>
+        <p class="wfs-eyebrow demo-picker-title">Your fence (chosen in the previous steps of the app)</p>
+        <label class="demo-field">
+            <span>Material</span>
+            <select class="form-select wfs-input" data-demo="material"></select>
+        </label>
+        <div class="demo-fields" data-demo-fields></div>
+    </div>
+
+    <section id="propertyMap" class="pm" aria-labelledby="propertyMapTitle">
+        <div class="pm-head">
+            <div class="pm-title">
+                <span class="wfs-eyebrow">Step 1</span>
+                <h2 class="wfs-display" id="propertyMapTitle">Draw on your property</h2>
+            </div>
+            <div class="pm-search">
+                <div class="pm-search-field" data-pm-search></div>
+                <button type="button" class="wfs-btn wfs-btn-outline pm-locate" data-pm-action="locate">
+                    <i class="fas fa-location-arrow" aria-hidden="true"></i> Use my location
+                </button>
+            </div>
+            <p class="pm-address" data-pm-address hidden></p>
+        </div>
+
+        <div class="pm-body">
+            <div class="pm-map-column">
+                <div class="pm-toolbar" role="toolbar" aria-label="Drawing tools">
+                    <div class="pm-toolbar-group pm-mode" role="group" aria-label="Mode">
+                        <button type="button" class="pm-tool" data-pm-action="mode-draw" aria-pressed="false">
+                            <i class="fas fa-pen" aria-hidden="true"></i><span>Draw</span>
+                        </button>
+                        <button type="button" class="pm-tool" data-pm-action="mode-navigate" aria-pressed="false">
+                            <i class="fas fa-hand-paper" aria-hidden="true"></i><span>Navigate</span>
+                        </button>
+                    </div>
+                    <div class="pm-toolbar-group" role="group" aria-label="Edit">
+                        <button type="button" class="pm-tool" data-pm-action="undo" aria-label="Undo" title="Undo (Ctrl+Z)">
+                            <i class="fas fa-undo" aria-hidden="true"></i><span>Undo</span>
+                        </button>
+                        <button type="button" class="pm-tool" data-pm-action="redo" aria-label="Redo" title="Redo (Ctrl+Y)">
+                            <i class="fas fa-redo" aria-hidden="true"></i><span>Redo</span>
+                        </button>
+                        <button type="button" class="pm-tool" data-pm-action="close" aria-label="Close shape" title="Join the last corner to the first one">
+                            <i class="fas fa-draw-polygon" aria-hidden="true"></i><span>Close shape</span>
+                        </button>
+                        <button type="button" class="pm-tool pm-tool-danger" data-pm-action="clear" aria-label="Clear all">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i><span>Clear all</span>
+                        </button>
+                    </div>
+                    <div class="pm-toolbar-group" role="group" aria-label="View">
+                        <button type="button" class="pm-tool pm-tool-accent" data-pm-action="view3d" aria-label="View in 3D">
+                            <i class="fas fa-cube" aria-hidden="true"></i><span>View in 3D</span>
+                        </button>
+                    </div>
+                </div>
+                <p class="pm-hint" data-pm-hint aria-live="polite"></p>
+                <div class="pm-map-frame">
+                    <div class="pm-map" data-pm-map></div>
+                    <p class="pm-message" data-pm-message role="status" hidden></p>
+                </div>
+                <p class="pm-disclaimer">
+                    Lengths are measured on satellite imagery and are approximate. Our sales team confirms them before your order.
+                </p>
+            </div>
+
+            <aside class="pm-panel wfs-panel" aria-labelledby="propertyMapRunsTitle">
+                <div class="wfs-panel-head">
+                    <span class="wfs-eyebrow">Your fence</span>
+                    <h2 class="wfs-display" id="propertyMapRunsTitle">Sides</h2>
+                    <p class="wfs-panel-hint">Each side is measured for you. If you know the exact length, type it in.</p>
+                </div>
+                <p class="pm-runs-empty" data-pm-runs-empty></p>
+                <ol class="pm-runs" data-pm-runs></ol>
+                <p class="pm-total" data-pm-total hidden></p>
+
+                <p class="demo-next">
+                    In the live tool, the next step is <strong>Continue to materials</strong>: the drawing becomes
+                    the list of materials, then the quote request with the satellite image goes to our sales team.
+                    You can also save a link to come back to the drawing.
+                </p>
+
+                <!-- Present for the shared map module; hidden in the demo (they need the server). -->
+                <div class="pm-actions">
+                    <button type="button" class="pm-action" data-pm-action="save">Save link</button>
+                    <button type="button" class="pm-action" data-pm-action="estimate">Continue to materials</button>
+                </div>
+                <div class="pm-saved" data-pm-saved hidden>
+                    <input type="text" data-pm-saved-url readonly>
+                    <button type="button" data-pm-action="copy-link">Copy</button>
+                </div>
+                <div class="pm-materials" data-pm-materials hidden>
+                    <p data-pm-materials-stale hidden></p>
+                    <textarea data-pm-materials-list readonly></textarea>
+                    <button type="button" data-pm-action="quote">Request a quote</button>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <script type="module" src="./demo.js"></script>
+</body>
+</html>
