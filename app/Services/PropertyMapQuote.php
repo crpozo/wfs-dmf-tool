@@ -23,7 +23,7 @@ class PropertyMapQuote
     {
         session([
             self::SESSION_PROJECT => $project,
-            self::SESSION_SKETCH_HASH => md5($sketchJson),
+            self::SESSION_SKETCH_HASH => hash('sha256', $sketchJson),
         ]);
     }
 
@@ -34,10 +34,12 @@ class PropertyMapQuote
     public function isMapQuote(): bool
     {
         $sketch = session('sketch');
+        $hash = session(self::SESSION_SKETCH_HASH);
 
         return is_array(session(self::SESSION_PROJECT))
             && is_string($sketch)
-            && session(self::SESSION_SKETCH_HASH) === md5($sketch);
+            && is_string($hash)
+            && hash_equals($hash, hash('sha256', $sketch));
     }
 
     /**

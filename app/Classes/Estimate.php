@@ -182,7 +182,7 @@ class Estimate implements IteratorAggregate {
         return new ArrayIterator($this->items);
     }
 
-    function convertToKeyValueMap(array $data, string $key): array
+    public function convertToKeyValueMap(array $data, string $key): array
     {
         $result = [];
         foreach ($data as $item) {

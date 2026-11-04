@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js" integrity="sha384-CCjG2Knb+Qu1xdhwQcRVYw4kVi6ensxLVKgWrdCF0pdLEPIP3L0JGrnYeB+3ScJ+" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js" integrity="sha384-Ozi5ax1b+B/XBCzskytbAcQlgO0fcBp6gBOgS1SNQgR55vMk33RdVPAAAvB/8kA6" crossorigin="anonymous"></script> -->
     <link rel="stylesheet" type="text/css" href="@assetv('css/style.css')">
     <link rel="stylesheet" href="@assetv('css/styles.css')" />
     <link rel="stylesheet" href="@assetv('css/fontawesome.css')" />
@@ -10,15 +10,15 @@
     <link rel="stylesheet" href="@assetv('css/bootstrap.css')" />
     <link rel="stylesheet" href="@assetv('css/styles.css')" />
     <link rel="stylesheet" href="@assetv('css/app.css')" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css" integrity="sha384-9zhnRArCpusIVIudEVdI3QmXKH9nCjEGc2rNvdcQ1utx3a3zbLtW3rBOeJ2PvupL" crossorigin="anonymous">
     <link href="@assetv('css/select2.min.css')" rel="stylesheet" />
     <link rel="stylesheet" href="@assetv('css/wfs-brand.css')" />
     <link rel="stylesheet" href="@assetv('drawfence-embed/embed.css')" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/shepherd.js/dist/css/shepherd.css">
-    <script type="module" src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js" integrity="sha384-YB/DdIkloKoRpclWB8bNcYXWakt57USgtQPDzvnIDHYU0lasD5eWlXVo1S4ODukY" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css" integrity="sha384-VWUneuWoHPNxFdNI1gGBoHQsTHU9ki8FAOtN7qJ3wNozUj0xiQ1+JLfKp7snTYw0" crossorigin="anonymous">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs" integrity="sha384-jkuCFNQpN6hhHJdg072N3ODm1SuuuzjQZ6VwZPGi8QaqoOu4sYVAnLQyTfAyOEIx" crossorigin="anonymous"></script>
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -149,7 +149,7 @@
                         <button id="btnRestart" type="button" class="btn btn-files" onclick="restart();">
                             <i class="fas fa-repeat me-2"></i> Restart Project
                         </button>
-                        <input type="file" id="fileInput" style="display: none;" accept=".wfs">
+                        <input type="file" id="fileInput" style="display: none;" accept=".wfs" aria-label="Load a saved project file">
 
                         <button
                             id="btnLoad"
@@ -268,11 +268,11 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalDims" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalLbl" aria-hidden="true">
+    <div class="modal fade" id="modalDims" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalDimsLbl" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title wfs-display" id="modalLbl">Enter length</h5>
+                    <h5 class="modal-title wfs-display" id="modalDimsLbl">Enter length</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -566,8 +566,9 @@
                     <p class="wfs-panel-hint">Draw each side of your fence, then enter its length in feet.</p>
                 </div>
                 <div class="table-responsive">
-                    <table class="table wfs-dims-table" id="dynamic_field">
-
+                    <table class="table wfs-dims-table">
+                        <thead class="visually-hidden"><tr><th scope="col">Side length</th></tr></thead>
+                        <tbody id="dynamic_field"></tbody>
                     </table>
                     <input type="button" name="submit" id="submitDims" style="display:none;" class="btn wfs-btn wfs-btn-outline" value="Update Layout" />
                     <div class="d-flex justify-content-center">
@@ -620,7 +621,7 @@
 
     <script src="@assetv('js/select2.min.js')"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js" integrity="sha384-YB/DdIkloKoRpclWB8bNcYXWakt57USgtQPDzvnIDHYU0lasD5eWlXVo1S4ODukY" crossorigin="anonymous"></script>
 
 
     <script>

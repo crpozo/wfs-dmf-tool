@@ -1,5 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your Draw My Fence account</title>
+</head>
 <body style="font-family: Arial, sans-serif;">
 <p>Hi {{ $name }},</p>
 

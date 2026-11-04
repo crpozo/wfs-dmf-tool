@@ -74,7 +74,7 @@ export function fitGate(gate, runLengthFt, otherGates = []) {
             if (candidates.length === 0) {
                 return null;
             }
-            t = candidates.reduce((best, value) => (Math.abs(value - t) < Math.abs(best - t) ? value : best));
+            t = candidates.reduce((best, value) => (Math.abs(value - t) < Math.abs(best - t) ? value : best), candidates[0]);
         }
     }
     const used = otherGates.reduce((sum, other) => sum + other.width_ft, gate.width_ft);

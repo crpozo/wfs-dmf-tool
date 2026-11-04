@@ -530,38 +530,6 @@ class HomeController extends Controller
                         $previews[$slot] = $this->fencePreview($data['code'] ?? '');
                     }
                     return view('summary', ['materials' => session('materials'), 'from' => $from, 'slot' => $material, 'previews' => $previews]);
-
-                    $title = "Does your project require a second type of fencing material?";
-                    if($material == 2){
-                        $title = "Does your project require a third type of fencing material?";
-                    }
-                    elseif($material == 3){
-                        return Redirect::to('/drawfence');
-                    }
-                    $titleStep = "STEP " . $this->step_actual;
-
-                    $colSize = "col-md-3";
-                    $cardTmplBtn = "<div class='$colSize' style='%%%COL_STYLE%%%'><div class='card border-0 justify-content-center card-step-alt' %%%STYLE%%%><a href='%%%URL%%%'><div class='card-body p-0'><div class='text-center mt-3' style='%%%TXT_STYLE%%%'>%%%TXT%%%</div><div class='text-center'></div></div></a></div></div>";
-                    $cardYES = str_replace("%%%COL_STYLE%%%", "margin-left:25%;", $cardTmplBtn);
-                    $cardYES = str_replace("%%%TXT_STYLE%%%", "", $cardYES);
-                    $cardYES = str_replace("%%%TXT%%%", "Yes", $cardYES);
-                    $material++;
-                    $url = "/step/$material/0";
-                    $cardYES = str_replace("%%%URL%%%", $url, $cardYES);
-
-                    $cardNO = str_replace("%%%COL_STYLE%%%", "", $cardTmplBtn);
-                    $cardNO = str_replace("%%%TXT_STYLE%%%", "", $cardNO);
-                    $cardNO = str_replace("%%%TXT%%%", "No", $cardNO);
-                    $cardNO = str_replace("%%%URL%%%", "/drawfence", $cardNO);
-
-                    $cardsTxt = $cardYES . $cardNO;
-
-                    $breadcrum .= "<li class='breadcrumb-item'><a href='#'>" . $sel["responses"][$acum]["name"] . "</a></li>";
-                    $breadcrum .= "</ol></nav>";
-
-                    return view('step', ['step' => $titleStep, 'title' => $title, 'from' => $from, 'cardsTxt' => $cardsTxt, 'breadcrums' => $breadcrum, 'inputBtn' => $inputBtn, 'step_note' => $step_note, 'code' => $step, 'slot' => $material, 'preview' => $this->fencePreview($step) ]);
-                    //return Redirect::to('/drawfence');
-                    //return view('simple_draw');
                 }
                 else{
                     if(($i == 0) || (array_key_exists("id", $sel) && $acum == $sel["id"])){
@@ -713,7 +681,7 @@ class HomeController extends Controller
         return $quote;
     }
 
-    function mergeDoors($doors) {
+    public function mergeDoors($doors) {
         $results = [];
 
         foreach ($doors as $door) {
@@ -2250,7 +2218,7 @@ class HomeController extends Controller
         //return $estimate;
     }
 
-    function bestRemainderMultipliersMinOvershoot(array $remainders, float $needed): array
+    public function bestRemainderMultipliersMinOvershoot(array $remainders, float $needed): array
     {
         $n = count($remainders);
         if ($n === 0) {
@@ -3195,7 +3163,7 @@ class HomeController extends Controller
      * @param string $path The current path of names leading to the node.
      * @param array $result Reference to the result array to collect data.
      */
-    function extractFinalOptions($node, $path = "", &$result = [])
+    public function extractFinalOptions($node, $path = "", &$result = [])
     {
         // Append current node's name to the path if it exists
         if (isset($node['name']) && !isset($node['responses'])) {
@@ -3220,7 +3188,7 @@ class HomeController extends Controller
         }
     }
 
-    function getMaterialsOptionsList()
+    public function getMaterialsOptionsList()
     {
         // Load JSON data
         $jsonFilePath = $path = resource_path() . '/steps.json';

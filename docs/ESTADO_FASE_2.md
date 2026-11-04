@@ -85,10 +85,7 @@ Se activa solo si `GOOGLE_MAPS_BROWSER_KEY` tiene valor. Sin key, la página es 
 
 ### 3.3 Demo estática
 
-- **Fuente:** `resources/demo/` (`index.html`, `demo.js`, `footprints.js`, `demo.css`). Usa los mismos módulos del mapa y del 3D.
-- **Diferencias con la app:** selector de cerca propio, casa consultada a FEMA desde el navegador, y sin materiales, enlace ni quote (se explican con un texto).
-- **Publicar:** automático. En cada push a `feature/property-map-drawing`, el workflow `demo-pages.yml` compila con `npm run build:demo` usando el secreto del repo **`GOOGLE_MAPS_DEMO_KEY`** (y la variable `GOOGLE_MAPS_MAP_ID`) y despliega en Pages. La key no queda en ningún commit.
-- **Compilar en local:** `npm run build:demo` escribe en `../../wfs-design-preview/draw-my-fence-demo` con la key del `.env`; se niega a compilar con la key de la app.
+Retirada el 4 nov 2026: la revisión del cliente se hace en staging (despliegue automático desde la rama `staging`). Se borraron `resources/demo/`, `vite.demo.config.js` y el workflow de GitHub Pages; quedan en el historial de git.
 
 ## 4. Mapa de archivos
 

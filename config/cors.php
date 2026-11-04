@@ -19,7 +19,8 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // Only the app itself; nothing on the website calls these API routes.
+    'allowed_origins' => array_filter(array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', 'https://app.westernfencesupply.com')))),
 
     'allowed_origins_patterns' => [],
 

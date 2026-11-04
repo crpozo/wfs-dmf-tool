@@ -108,7 +108,7 @@ function toolbar(){
 
   btnClear = createImg('img/clear.png','Clear');
   btnClear.position(posX, toolPos[tools.BIN]);
-  btnClear.mousePressed(function(){ clearSc(tools.BIN); });
+  btnClear.mousePressed(function(){ clearSc(); });
 }
 
 function setup(){
