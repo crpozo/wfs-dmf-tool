@@ -10,3 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
+
+# Run php-fpm, composer and artisan as www-data, not root (local development only).
+ENV COMPOSER_HOME=/tmp/composer
+USER www-data

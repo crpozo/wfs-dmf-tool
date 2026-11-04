@@ -234,8 +234,13 @@ function drawFallbackImage(project) {
 
 // Loads a project saved by link when the page was opened with ?project=<token>.
 export async function loadSavedProject({ token, loadProject, notify }) {
+    // Saved links carry a ULID (26 Crockford base32 characters); anything else is not ours.
+    if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(token)) {
+        notify('This saved drawing link is not valid. You can start a new one.');
+        return;
+    }
     try {
-        const response = await fetch(`${ROUTES.projects}/${encodeURIComponent(token)}`, {
+        const response = await fetch(`${ROUTES.projects}/${token}`, {
             headers: { Accept: 'application/json' },
         });
         if (!response.ok) {

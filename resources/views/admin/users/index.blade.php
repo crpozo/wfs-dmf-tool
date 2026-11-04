@@ -94,19 +94,19 @@
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                             <input id="name" type="text" required
                                                    class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                         </div>
 
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                             <input id="email" type="email" required
                                                    class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                         </div>
 
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Account type</label>
+                                            <label for="account_type" class="block text-sm font-medium text-gray-700 mb-1">Account type</label>
                                             <select id="account_type" required
                                                     class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                                 <option value="customer">customer</option>
@@ -115,7 +115,7 @@
                                         </div>
 
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Company role</label>
+                                            <label for="company_role" class="block text-sm font-medium text-gray-700 mb-1">Company role</label>
                                             <select id="company_role"
                                                     class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                                     disabled>
@@ -126,13 +126,13 @@
                                         </div>
 
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Odoo</label>
+                                            <label for="extrafield" class="block text-sm font-medium text-gray-700 mb-1">Odoo</label>
                                             <input id="extrafield" type="text"
                                                    class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                         </div>
 
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                            <label for="active" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                             <select id="active" required
                                                     class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                                                 <option value="1">active</option>

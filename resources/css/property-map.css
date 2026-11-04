@@ -43,7 +43,7 @@ body.drawing.pm-map-active { height: auto; min-height: 100%; overflow-y: auto; }
     font-size: 14px;
     color: var(--wfs-charcoal);
 }
-.pm-address::before { content: "\f3c5"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 8px; color: var(--wfs-blue); }
+.pm-address::before { content: "\f3c5"; font-family: "Font Awesome 6 Free", sans-serif; font-weight: 900; margin-right: 8px; color: var(--wfs-blue); }
 
 /* Body: map column + sides panel */
 .pm-body {

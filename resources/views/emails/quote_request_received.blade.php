@@ -1,5 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New quote request</title>
+</head>
 <body style="font-family: Arial, sans-serif; color: #222;">
 <p>A new quote request was received from <strong>{{ $quoteRequest->full_name }}</strong>.</p>
 

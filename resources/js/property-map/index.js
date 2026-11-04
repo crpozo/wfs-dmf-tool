@@ -24,7 +24,7 @@ const root = document.getElementById('propertyMap');
 const config = window.WFS_PROPERTY_MAP || {};
 
 if (root) {
-    boot();
+    boot().catch((error) => console.error(error));
 }
 
 async function boot() {
@@ -136,7 +136,7 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
     // Opened from a saved link (/property-map/p/<token> redirects here with ?project=).
     const savedToken = new URLSearchParams(window.location.search).get('project');
     if (savedToken) {
-        loadSavedProject({ token: savedToken, loadProject, notify });
+        loadSavedProject({ token: savedToken, loadProject, notify }).catch((error) => console.error(error));
     }
 
     // Access for the next steps (quote image) and for debugging.

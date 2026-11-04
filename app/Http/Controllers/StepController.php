@@ -116,10 +116,13 @@ class StepController extends Controller
             : base_path('resources/steps.json');
         $fileJson = file_get_contents($jsonPath);
 
+        $dbHash = hash('sha256', $dbJson);
+        $fileHash = hash('sha256', $fileJson);
+
         return response()->json([
-            'match' => md5($dbJson) === md5($fileJson),
-            'db_md5' => md5($dbJson),
-            'file_md5' => md5($fileJson)
+            'match' => hash_equals($dbHash, $fileHash),
+            'db_sha256' => $dbHash,
+            'file_sha256' => $fileHash
         ]);
     }
 

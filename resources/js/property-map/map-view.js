@@ -7,8 +7,8 @@
 export const DEFAULT_CENTER = { lat: 26.6406, lng: -81.8723 };
 export const DEFAULT_ZOOM = 20;
 
-export function createMap({ element, Map, mapId, center }) {
-    const map = new Map(element, {
+export function createMap({ element, Map: MapClass, mapId, center }) {
+    const map = new MapClass(element, {
         mapId,
         center: center || DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
