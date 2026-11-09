@@ -4,6 +4,7 @@
  * satellite image as the sketch) and "Save link" (anonymous, kept for 90 days).
  */
 import { mapToGraph } from './map-to-graph.js';
+import { addLengthLabels } from './quote-image.js';
 
 const ROUTES = {
     estimate: '/property-map/estimate',
@@ -51,7 +52,7 @@ export function mountActions({ root, store, notify }) {
                 notify(data.message || 'Get the materials list for your drawing first.');
                 return;
             }
-            quoteImage = response.ok && data.image ? data.image : drawFallbackImage(store.toJSON());
+            quoteImage = response.ok && data.image ? await labeledImage(data) : drawFallbackImage(store.toJSON());
             canvasQuoteButton.trigger('click');
         } catch (error) {
             console.error(error);
@@ -59,6 +60,16 @@ export function mountActions({ root, store, notify }) {
             canvasQuoteButton.trigger('click');
         } finally {
             quoteButton.disabled = false;
+        }
+    }
+
+    // Without its labels the photo is still worth sending: the quote is never blocked.
+    async function labeledImage(snapshot) {
+        try {
+            return await addLengthLabels(snapshot);
+        } catch (error) {
+            console.error(error);
+            return snapshot.image;
         }
     }
 

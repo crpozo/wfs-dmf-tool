@@ -75,12 +75,20 @@ class PropertyMapController extends Controller
             return response()->json(['message' => 'Get the materials list for your drawing first.'], 409);
         }
 
-        $dataUrl = $image->dataUrl(session(PropertyMapQuote::SESSION_PROJECT));
+        $project = session(PropertyMapQuote::SESSION_PROJECT);
+        $dataUrl = $image->dataUrl($project);
         if ($dataUrl === null) {
             return response()->json(['message' => 'The satellite image is not available right now.'], 502);
         }
 
-        return response()->json(['image' => $dataUrl]);
+        // The browser draws the length labels on the photo (quote-image.js).
+        [$center, $zoom] = $image->frame($project['vertices']);
+
+        return response()->json([
+            'image' => $dataUrl,
+            'frame' => ['center' => $center, 'zoom' => $zoom],
+            'project' => $project,
+        ]);
     }
 
     public function store(Request $request): JsonResponse
