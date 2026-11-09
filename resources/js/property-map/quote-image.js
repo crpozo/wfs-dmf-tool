@@ -1,8 +1,10 @@
 /*
- * Length labels and corners over the satellite image of the quote, styled like the map.
+ * Lengths, gates and corners over the satellite image of the quote, styled like the map.
  * The Maps Static API can't write text, so they are drawn here on the photo the server
  * returns; email, Odoo and S3 all receive this result.
  */
+import { gateLabel } from './gates.js';
+
 const TILE_SIZE = 256;
 const LOGICAL_WIDTH = 640; // the image is requested at size=640x640, scale=2
 
@@ -13,7 +15,13 @@ const LABEL_BACKGROUND = 'rgba(38, 49, 102, 0.92)';
 const FONT_FAMILY = 'Montserrat, "Segoe UI", Roboto, sans-serif';
 const FONT_SIZE = 14;
 
-// Where along a side the label may sit, best first: away from any gate marker.
+const LABEL_STYLES = {
+    side: { background: LABEL_BACKGROUND, color: WHITE, border: null, radius: 100 },
+    adjustedSide: { background: WHITE, color: INK, border: BLUE, radius: 100 },
+    gate: { background: INK, color: WHITE, border: WHITE, radius: 6 },
+};
+
+// Where along a side its length may sit, best first.
 const LABEL_POSITIONS = [0.5, 0.3, 0.7, 0.2, 0.8];
 
 function worldPoint({ lat, lng }, zoom) {
@@ -50,7 +58,28 @@ function loadImage(source) {
 function runLabel(run) {
     const adjusted = run.override_ft !== null && run.override_ft !== undefined;
     const feet = adjusted ? run.override_ft : run.calc_ft;
-    return { text: `${feet} ft${run.is_existing_wall ? ' · wall' : ''}${adjusted ? ' *' : ''}`, adjusted };
+    return {
+        text: `${feet} ft${run.is_existing_wall ? ' · wall' : ''}${adjusted ? ' *' : ''}`,
+        style: adjusted ? LABEL_STYLES.adjustedSide : LABEL_STYLES.side,
+    };
+}
+
+function along(a, b, t) {
+    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+}
+
+// The white stretch of the side the gate takes up, as on the map.
+function drawGateStretch(context, a, b, run, gate, scale) {
+    const feet = run.override_ft ?? run.calc_ft;
+    const half = feet > 0 ? gate.width_ft / 2 / feet : 0;
+    const start = along(a, b, Math.max(0, gate.t - half));
+    const end = along(a, b, Math.min(1, gate.t + half));
+    context.beginPath();
+    context.moveTo(start.x, start.y);
+    context.lineTo(end.x, end.y);
+    context.lineWidth = 7 * scale;
+    context.strokeStyle = WHITE;
+    context.stroke();
 }
 
 function drawCorner(context, point, isFirst, scale) {
@@ -68,54 +97,74 @@ function drawCorner(context, point, isFirst, scale) {
     context.stroke();
 }
 
-// The first position clear of every gate marker or, on a short side, the one farthest from them.
-function labelPoint(a, b, gatePoints, clearance) {
-    let best = null;
-    let bestDistance = -1;
-    for (const t of LABEL_POSITIONS) {
-        const point = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-        const distance = Math.min(Infinity, ...gatePoints.map((gate) => Math.hypot(gate.x - point.x, gate.y - point.y)));
-        if (distance >= clearance) {
-            return point;
-        }
-        if (distance > bestDistance) {
-            best = point;
-            bestDistance = distance;
-        }
-    }
-    return best;
+function labelSize(context, text, scale) {
+    return {
+        width: context.measureText(text).width + 20 * scale,
+        height: (FONT_SIZE * 1.2 + 8) * scale,
+    };
 }
 
-function drawLabel(context, { text, adjusted }, point, scale, canvasSize) {
-    context.font = `700 ${FONT_SIZE * scale}px ${FONT_FAMILY}`;
-    const width = context.measureText(text).width + 20 * scale;
-    const height = (FONT_SIZE * 1.2 + 8) * scale;
-    const margin = 4 * scale;
-    const x = Math.min(canvasSize.width - width - margin, Math.max(margin, point.x - width / 2));
-    const y = Math.min(canvasSize.height - height - margin, Math.max(margin, point.y - height / 2));
+function overlaps(a, b, gap) {
+    return a.x < b.x + b.width + gap && b.x < a.x + a.width + gap
+        && a.y < b.y + b.height + gap && b.y < a.y + a.height + gap;
+}
 
+// Places a label on the first candidate point that leaves every earlier label readable.
+function placeLabel(candidates, size, placed, scale, canvasSize) {
+    const margin = 4 * scale;
+    const boxes = candidates.map((point) => ({
+        ...size,
+        x: Math.min(canvasSize.width - size.width - margin, Math.max(margin, point.x - size.width / 2)),
+        y: Math.min(canvasSize.height - size.height - margin, Math.max(margin, point.y - size.height / 2)),
+    }));
+    const box = boxes.find((candidate) => !placed.some((other) => overlaps(candidate, other, margin))) ?? boxes[0];
+    placed.push(box);
+    return box;
+}
+
+// Points beside a spot on a side, alternating sides, each far enough to clear the previous one.
+function besideSide(point, a, b, size, scale) {
+    const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const normal = { x: -(b.y - a.y) / length, y: (b.x - a.x) / length };
+    const step = Math.abs(normal.x) * size.width + Math.abs(normal.y) * size.height + 6 * scale;
+    return [1, -1, 2, -2, 3, -3].map((times) => ({
+        x: point.x + normal.x * step * times,
+        y: point.y + normal.y * step * times,
+    }));
+}
+
+function drawLeader(context, from, box, scale) {
     context.beginPath();
-    context.roundRect(x, y, width, height, height / 2);
+    context.moveTo(from.x, from.y);
+    context.lineTo(box.x + box.width / 2, box.y + box.height / 2);
+    context.lineWidth = 2 * scale;
+    context.strokeStyle = WHITE;
+    context.stroke();
+}
+
+function drawLabel(context, text, style, box, scale) {
+    context.beginPath();
+    context.roundRect(box.x, box.y, box.width, box.height, style.radius * scale);
     context.shadowColor = 'rgba(0, 0, 0, 0.4)';
     context.shadowBlur = 4 * scale;
     context.shadowOffsetY = scale;
-    context.fillStyle = adjusted ? WHITE : LABEL_BACKGROUND;
+    context.fillStyle = style.background;
     context.fill();
     context.shadowColor = 'transparent';
-    if (adjusted) {
+    if (style.border) {
         context.lineWidth = 2 * scale;
-        context.strokeStyle = BLUE;
+        context.strokeStyle = style.border;
         context.stroke();
     }
 
-    context.fillStyle = adjusted ? INK : WHITE;
+    context.fillStyle = style.color;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText(text, x + width / 2, y + height / 2);
+    context.fillText(text, box.x + box.width / 2, box.y + box.height / 2);
 }
 
 /**
- * Returns the image as a JPEG data URL with the labels and corners drawn on it.
+ * Returns the image as a JPEG data URL with the labels, gates and corners drawn on it.
  * `frame` is the center and zoom the server used for the photo; `project` is the drawing
  * the photo shows. Rejects if the image can't be read, so the caller can keep the plain one.
  */
@@ -133,6 +182,13 @@ export async function addLengthLabels({ image, frame, project }) {
     const toPixels = createProjection({ ...frame, width: canvas.width, height: canvas.height });
     const { vertices, runs } = project;
     const points = vertices.map(toPixels);
+    const sides = runs
+        .map((run) => ({ run, a: points[run.from], b: points[run.to] }))
+        .filter(({ a, b }) => a && b);
+
+    for (const { run, a, b } of sides) {
+        (run.gates || []).forEach((gate) => drawGateStretch(context, a, b, run, gate, scale));
+    }
 
     // Same rule as the map: the first corner is highlighted while the shape can still close.
     const closed = runs.some((run) => run.from === vertices.length - 1 && run.to === 0);
@@ -140,17 +196,29 @@ export async function addLengthLabels({ image, frame, project }) {
         drawCorner(context, point, index === 0 && !closed && vertices.length >= 3, scale);
     });
 
-    for (const run of runs) {
-        const a = points[run.from];
-        const b = points[run.to];
-        if (!a || !b) {
-            continue;
+    context.font = `700 ${FONT_SIZE * scale}px ${FONT_FAMILY}`;
+    const placed = [];
+
+    // Gates first, so each label stays on its gate and the side lengths move out of the way.
+    for (const { run, a, b } of sides) {
+        for (const gate of run.gates || []) {
+            const text = gateLabel(gate);
+            const size = labelSize(context, text, scale);
+            const point = along(a, b, gate.t);
+            const box = placeLabel([point, ...besideSide(point, a, b, size, scale)], size, placed, scale, canvas);
+            if (Math.hypot(box.x + box.width / 2 - point.x, box.y + box.height / 2 - point.y) > size.height) {
+                drawLeader(context, point, box, scale);
+            }
+            drawLabel(context, text, LABEL_STYLES.gate, box, scale);
         }
-        const gatePoints = (run.gates || []).map(({ t }) => ({
-            x: a.x + (b.x - a.x) * t,
-            y: a.y + (b.y - a.y) * t,
-        }));
-        drawLabel(context, runLabel(run), labelPoint(a, b, gatePoints, 44 * scale), scale, canvas);
+    }
+
+    for (const { run, a, b } of sides) {
+        const { text, style } = runLabel(run);
+        const size = labelSize(context, text, scale);
+        const candidates = LABEL_POSITIONS.map((t) => along(a, b, t));
+        candidates.push(...besideSide(along(a, b, 0.5), a, b, size, scale));
+        drawLabel(context, text, style, placeLabel(candidates, size, placed, scale, canvas), scale);
     }
 
     return canvas.toDataURL('image/jpeg', 0.92);

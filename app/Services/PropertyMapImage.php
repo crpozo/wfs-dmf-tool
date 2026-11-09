@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Log;
 /**
  * Satellite image of a property map project for the quote (Phase 2, Feature 1):
  * Maps Static API, satellite, 640x640 at scale 2, one path per fence side in the brand
- * color (weight 5), existing walls in gray, and a marker on each gate. Requested from the
- * server with GOOGLE_MAPS_SERVER_KEY (restricted to the server IP).
+ * color (weight 5) and existing walls in gray. Lengths and gates are drawn over it in the
+ * browser (quote-image.js). Requested from the server with GOOGLE_MAPS_SERVER_KEY
+ * (restricted to the server IP).
  */
 class PropertyMapImage
 {
     private const ENDPOINT = 'https://maps.googleapis.com/maps/api/staticmap';
     private const FENCE_COLOR = '0x2E59C1FF';
     private const WALL_COLOR = '0xC4C9D6FF';
-    private const GATE_COLOR = '0xFFFFFF';
 
     /**
      * Returns the image as a data URL, or null when it can't be generated.
@@ -105,14 +105,6 @@ class PropertyMapImage
             }
             $color = ! empty($run['is_existing_wall']) ? self::WALL_COLOR : self::FENCE_COLOR;
             $params[] = 'path='.rawurlencode("color:{$color}|weight:5|enc:".$this->encodePolyline([$from, $to]));
-
-            foreach ($run['gates'] ?? [] as $gate) {
-                $t = min(1, max(0, (float) ($gate['t'] ?? 0.5)));
-                $lat = $from['lat'] + ($to['lat'] - $from['lat']) * $t;
-                $lng = $from['lng'] + ($to['lng'] - $from['lng']) * $t;
-                $label = ($gate['type'] ?? '') === 'double' ? 'D' : 'G';
-                $params[] = 'markers='.rawurlencode(sprintf('size:mid|color:%s|label:%s|%.6f,%.6f', self::GATE_COLOR, $label, $lat, $lng));
-            }
         }
 
         $params[] = 'key='.rawurlencode($key);
