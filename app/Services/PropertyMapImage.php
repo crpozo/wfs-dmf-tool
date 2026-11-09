@@ -125,13 +125,14 @@ class PropertyMapImage
      * Center and zoom so the fence fills about 75% of the image. Without them Google
      * frames the paths loosely and a backyard fence ends up tiny.
      */
-    private function frame(array $vertices): array
+    public function frame(array $vertices): array
     {
         $lats = array_column($vertices, 'lat');
         $lngs = array_column($vertices, 'lng');
+        // Rounded like the center= parameter, so the browser places the labels on the same pixels.
         $center = [
-            'lat' => (min($lats) + max($lats)) / 2,
-            'lng' => (min($lngs) + max($lngs)) / 2,
+            'lat' => round((min($lats) + max($lats)) / 2, 6),
+            'lng' => round((min($lngs) + max($lngs)) / 2, 6),
         ];
 
         $cosLat = cos(deg2rad($center['lat']));
