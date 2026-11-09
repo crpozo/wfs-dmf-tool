@@ -3,6 +3,7 @@
  * through the map's POST route), "Request a quote" (the canvas quote flow, with the
  * satellite image as the sketch) and "Save link" (anonymous, kept for 90 days).
  */
+import { gateLabel } from './gates.js';
 import { mapToGraph } from './map-to-graph.js';
 import { addLengthLabels } from './quote-image.js';
 
@@ -52,7 +53,7 @@ export function mountActions({ root, store, notify }) {
                 notify(data.message || 'Get the materials list for your drawing first.');
                 return;
             }
-            quoteImage = response.ok && data.image ? await labeledImage(data) : drawFallbackImage(store.toJSON());
+            quoteImage = response.ok && data.image ? await addLengthLabels(data) : drawFallbackImage(store.toJSON());
             canvasQuoteButton.trigger('click');
         } catch (error) {
             console.error(error);
@@ -60,16 +61,6 @@ export function mountActions({ root, store, notify }) {
             canvasQuoteButton.trigger('click');
         } finally {
             quoteButton.disabled = false;
-        }
-    }
-
-    // Without its labels the photo is still worth sending: the quote is never blocked.
-    async function labeledImage(snapshot) {
-        try {
-            return await addLengthLabels(snapshot);
-        } catch (error) {
-            console.error(error);
-            return snapshot.image;
         }
     }
 
@@ -229,6 +220,8 @@ function drawFallbackImage(project) {
                 context.moveTo(a.x + (b.x - a.x) * from, a.y + (b.y - a.y) * from);
                 context.lineTo(a.x + (b.x - a.x) * to, a.y + (b.y - a.y) * to);
                 context.stroke();
+                context.fillStyle = '#cf2e2e';
+                context.fillText(gateLabel(gate), a.x + (b.x - a.x) * gate.t, a.y + (b.y - a.y) * gate.t + 44);
             }
 
             context.fillStyle = '#263166';
