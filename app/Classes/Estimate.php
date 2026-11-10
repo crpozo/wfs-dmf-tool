@@ -306,7 +306,8 @@ class Estimate implements IteratorAggregate {
         ?string $pricelist = null,
         ?array $notes = null,        
         ?int $companyId = 1,
-        ?int $leadSourceId = null
+        ?int $leadSourceId = null,
+        array $extraFields = []
     ): array {
         $odooBaseUrl = config('services.odoo.base_url');
         $odooApiKey = config('services.odoo.api_key');
@@ -423,6 +424,8 @@ class Estimate implements IteratorAggregate {
 
             $quoteData['wfs_lead_source_id'] = $leadSourceId;
         }
+
+        $quoteData = array_merge($quoteData, $extraFields);
 
         if ($reference) {
             $quoteData['client_order_ref'] = $reference;

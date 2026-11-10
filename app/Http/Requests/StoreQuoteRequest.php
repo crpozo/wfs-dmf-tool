@@ -41,6 +41,7 @@ class StoreQuoteRequest extends FormRequest
             'fulfillment_method' => ['required', 'string', 'in:pickup,delivery'],
             'company_id' => ['nullable', 'integer', 'in:1,2', 'required_if:fulfillment_method,pickup'],
             'canvas_image' => ['required', 'string'],
+            'attribution' => ['nullable', 'string'],
         ];
     }
 }

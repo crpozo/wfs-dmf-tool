@@ -62,6 +62,12 @@ return [
         'customer' => env('ODOO_CUSTOMER'),
         'user_id' => env('ODOO_USR_ID'),
         'special_price_notes_field' => env('ODOO_SPECIAL_PRICE_NOTES_FIELD'),
+        // Off until Captivea creates the wfs_* fields: Odoo rejects unknown fields.
+        'send_attribution' => (bool) env('ODOO_SEND_ATTRIBUTION', false),
+    ],
+
+    'gtm' => [
+        'id' => env('GTM_ID'),
     ],
 
 ];

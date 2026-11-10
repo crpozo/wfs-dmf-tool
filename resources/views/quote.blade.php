@@ -22,6 +22,7 @@
         <form method="POST" action="{{ route('quote.store') }}" class="wfs-form" id="quoteRequestForm">
             @csrf
             <input type="hidden" name="canvas_image" id="quoteCanvasImage">
+            <input type="hidden" name="attribution" id="quoteAttribution">
 
             <div class="wfs-form-grid">
                 <div class="wfs-field">
@@ -220,6 +221,10 @@
 
         if (submitButton.disabled) {
             return;
+        }
+
+        if (window.WFSAttribution) {
+            document.getElementById('quoteAttribution').value = JSON.stringify(window.WFSAttribution.get());
         }
 
         submitButton.disabled = true;
