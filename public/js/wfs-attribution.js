@@ -20,6 +20,33 @@
     var ALL_KEYS = CAMPAIGN_KEYS.concat(URL_KEYS);
     var MAX_LENGTH = { utm: 150, click: 255, url: 500 };
 
+    // Agreed source names (Nov 2026): forms and calls must read the same in
+    // Odoo. Common variants are folded into google, gbp, meta and tiktok.
+    var SOURCE_ALIASES = {
+        google: ['google', 'googleads', 'google-ads', 'google_ads', 'adwords', 'google.com', 'gads'],
+        gbp: ['gbp', 'gmb', 'google-business', 'google_business', 'googlebusiness', 'google-business-profile',
+            'google_business_profile', 'google-my-business', 'google_my_business', 'business-profile'],
+        meta: ['meta', 'facebook', 'fb', 'instagram', 'ig', 'facebook.com', 'instagram.com', 'meta-ads',
+            'meta_ads', 'facebook-ads', 'facebook_ads', 'fb-ads', 'fb_ads', 'm.facebook.com', 'l.facebook.com'],
+        tiktok: ['tiktok', 'tik-tok', 'tik_tok', 'tiktok-ads', 'tiktok_ads', 'tiktok.com', 'tt']
+    };
+    // With no utm_source, the click ID tells which platform sent the visit.
+    var SOURCE_FROM_CLICK = { gclid: 'google', fbclid: 'meta', ttclid: 'tiktok' };
+
+    function normalizeSource(data) {
+        var source = (data.utm_source || '').toLowerCase();
+        Object.keys(SOURCE_ALIASES).forEach(function (name) {
+            if (SOURCE_ALIASES[name].indexOf(source) !== -1) { source = name; }
+        });
+        if (!source) {
+            Object.keys(SOURCE_FROM_CLICK).forEach(function (key) {
+                if (!source && data[key]) { source = SOURCE_FROM_CLICK[key]; }
+            });
+        }
+        data.utm_source = source;
+        return data;
+    }
+
     function isOwnHost(hostname) {
         return hostname === ROOT_DOMAIN || hostname.slice(-(ROOT_DOMAIN.length + 1)) === '.' + ROOT_DOMAIN;
     }
@@ -93,7 +120,7 @@
         CLICK_KEYS.forEach(function (key) {
             incoming[key] = (params.get(key) || '').trim().slice(0, MAX_LENGTH.click);
         });
-        return incoming;
+        return normalizeSource(incoming);
     }
 
     function externalReferrer() {
@@ -137,7 +164,8 @@
             ALL_KEYS.forEach(function (key) {
                 data[key] = stored && stored[key] ? String(stored[key]) : '';
             });
-            return data;
+            // Also folds values saved before the agreed names existed.
+            return normalizeSource(data);
         }
     };
 })(window, document);
