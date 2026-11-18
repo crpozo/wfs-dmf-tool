@@ -1,0 +1,62 @@
+{
+ "fenceBluePixels": {
+  "01-satellite-u-shape": 11175,
+  "02-plan-u-shape": 11043,
+  "03-plan-after-pan-and-zoom-out": 3839,
+  "04-plan-after-drawing-and-dragging": 13850,
+  "05-back-to-satellite": 14061,
+  "06-satellite-drawing-out-of-view": 0,
+  "07-plan-framed": 13846,
+  "08-satellite-short-sides": 1858,
+  "09-plan-short-sides": 1658,
+  "08-satellite-gate-kinds": 9539,
+  "09-plan-gate-kinds": 9200
+ },
+ "whiteAfterMs": {
+  "74": 94.8,
+  "298": 94.8,
+  "450": 94.8,
+  "810": 94.7,
+  "1511": 94.8
+ },
+ "sameProjectInPlan": true,
+ "planControls": {
+  "mapSatelliteSwitch": false,
+  "googleLogo": true,
+  "attribution": [
+   "Keyboard shortcuts",
+   "Map DataImagery ©2026 Vexcel",
+   "10 ft Click to toggle betwee",
+   "Terms",
+   "Report a map error"
+  ]
+ },
+ "whiteAfterPanZoom": 95.3,
+ "drawInPlan": {
+  "cornersBefore": 4,
+  "cornersAfterClick": 5,
+  "cornerMovedByDrag": true
+ },
+ "backToSatellite": {
+  "sameProject": true,
+  "mapSatelliteSwitch": true
+ },
+ "framing": {
+  "corners": 4,
+  "allInside": true
+ },
+ "short-sidesLabels": [
+  "Single gate · 4 ft",
+  "Double gate · 8 ft",
+  "G3 · 4 ft",
+  "Double gate · 8 ft",
+  "Double gate sliding · 12 ft"
+ ],
+ "gate-kindsLabels": [
+  "Single gate · 4 ft",
+  "Double gate · 8 ft",
+  "Double gate sliding · 12 ft",
+  "Double gate cantilever · 16 ft"
+ ],
+ "consoleErrors": []
+}

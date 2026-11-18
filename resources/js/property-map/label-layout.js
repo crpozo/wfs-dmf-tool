@@ -29,6 +29,7 @@ export const LAYOUT_DEFAULTS = {
 // Where along a side its label may sit, best first.
 const SIDE_POSITIONS = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8];
 // How far a gate label may slide along the side, in label widths.
+const ON_GATE_COST = 1000; // above any place beside the gate
 const GATE_SHIFTS = [0, -0.3, 0.3, -0.55, 0.55, -0.85, 0.85];
 
 /* ---------- geometry ---------- */
@@ -228,9 +229,10 @@ function gateCandidates(segment, frame, gate, size, inward, options) {
     const alongExtent = Math.abs(frame.u.x) * size.width + Math.abs(frame.u.y) * size.height;
     const opening = Math.hypot(gate.to.x - gate.from.x, gate.to.y - gate.from.y);
 
-    // On the gate itself only when the opening stays visible on both ends of the label.
+    // On the gate itself only when the opening stays visible on both ends of the label,
+    // and only when there is no room beside it: the white stretch is what says "gate".
     if (opening >= alongExtent + 12 * options.scale) {
-        candidates.push({ slot: 'on', anchor, box: boxAround(anchor, size), distance: 0, cost: 0 });
+        candidates.push({ slot: 'on', anchor, box: boxAround(anchor, size), distance: 0, cost: ON_GATE_COST });
     }
     for (const d of distances(options)) {
         for (const shift of GATE_SHIFTS) {

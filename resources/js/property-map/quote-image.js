@@ -95,7 +95,11 @@ function drawGateStretches(context, gates, theme, scale) {
     };
     for (const gate of gates) {
         if (theme.gateOutline) {
-            stroke(gate, WEIGHTS.gate + 2 * WEIGHTS.gateOutline, theme.gateOutline);
+            // Longer by the outline at each end, so the gate is closed all around.
+            const length = Math.hypot(gate.to.x - gate.from.x, gate.to.y - gate.from.y) || 1;
+            const extra = (WEIGHTS.gateOutline * scale) / length;
+            const closed = { from: lerp(gate.from, gate.to, -extra), to: lerp(gate.from, gate.to, 1 + extra) };
+            stroke(closed, WEIGHTS.gate + 2 * WEIGHTS.gateOutline, theme.gateOutline);
         }
         stroke(gate, WEIGHTS.gate, theme.gate);
     }

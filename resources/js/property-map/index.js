@@ -94,7 +94,7 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
         onRunFocus: (key) => drawing.revealRun(key),
     });
     const actions = mountActions({ root, store, notify });
-    mountPlanView({ map, background, Size: google.maps.Size });
+    mountPlanView({ map, background, store, Size: google.maps.Size });
     mountToolbar({ root, store, mode, background, onBeforeChange: drawing.closeMenu });
     mountSearch({
         root,
