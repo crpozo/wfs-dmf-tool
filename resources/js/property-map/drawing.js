@@ -9,13 +9,21 @@
  *   panning is off while that applies; Navigate mode pans.
  * - A dotted preview line follows the pointer from the last corner while drawing.
  * - Corners can be dragged; tapping one opens a menu to delete it.
- * - Each run gets a polyline and a length label at its midpoint.
+ * - Each run gets a polyline and a length label; each gate a label too. Where the labels
+ *   sit is decided by label-layout.js (the same placement the quote image uses): on the
+ *   side when there is room, right beside it otherwise, with a thin connector when a
+ *   label has to step away, and in a shorter form ("G1 · 4 ft", then a number) when the
+ *   drawing is too small on screen. It is worked out again when the drawing or the zoom
+ *   changes; panning moves nothing.
  * Everything is re-rendered from the project store, so undo/redo and loading a saved
  * project need no extra code here.
  */
 
-import { gateLabel } from './gates.js';
+import { gateSpan, worldPoint, worldToLatLng } from './geometry.js';
+import { layoutLabels, rememberLayout } from './label-layout.js';
+import { describeLabels } from './labels.js';
 import { hasFinePointer } from './mode.js';
+import { THEMES } from './theme.js';
 
 // Pointer travel that turns a press into a drag, and the snap radius to an existing corner.
 const DRAG_PX = 6;
@@ -30,23 +38,31 @@ const PENCIL_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
     + '</svg>'
 )}") 3 29, crosshair`;
 
-const COLORS = {
-    fence: '#4f7dff',
-    selected: '#ffffff',
-    wall: '#c4c9d6',
-    gate: '#ffffff',
-    gateProblem: '#cf2e2e',
-};
+// Small dot where a connector meets the side (a symbol on the connector's polyline).
+const LEADER_DOT = 'M -1,0 A 1,1 0 1,1 1,0 A 1,1 0 1,1 -1,0 Z';
 
-export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
+export function mountDrawing({ map, store, mode, background, libs, onRunFocus, notify }) {
     const { Polyline, InfoWindow, AdvancedMarkerElement, spherical } = libs;
+    const isPlan = () => background?.get() === 'plan';
+    const theme = () => (isPlan() ? THEMES.plan : THEMES.satellite);
 
     const vertexMarkers = new Map();
     const runLines = new Map();
     const runLabels = new Map();
     const gateViews = new Map();
+    const leaders = new Map();
+    const labelSizes = new Map();
+    let measurer = null;
+    let lastLayout = null;
+    let layoutFrame = 0;
     const menu = new InfoWindow({ headerDisabled: true });
     const preview = new Polyline({ map: null, clickable: false, zIndex: 5, ...previewStyle() });
+    // Labels are laid out for a zoom level; when it changes they are placed again, once per frame.
+    map.addListener('zoom_changed', scheduleLayout);
+    document.fonts?.ready.then(() => {
+        labelSizes.clear(); // measured before the brand font arrived
+        scheduleLayout();
+    });
     let draggingId = null;
     let draggingGateId = null;
     // Mouse press on the map in Draw mode (drag-to-draw): where it started and the last
@@ -227,7 +243,7 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         const content = document.createElement('button');
         content.type = 'button';
         content.className = 'pm-label';
-        const label = new AdvancedMarkerElement({ map, content, zIndex: 20 });
+        const label = new AdvancedMarkerElement({ map: null, content, zIndex: 20 });
         label.addListener('click', () => {
             store.selectRun(key);
             onRunFocus?.(key);
@@ -240,7 +256,7 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         const line = new Polyline({ map, clickable: false, zIndex: 15, strokeWeight: 7, strokeOpacity: 1 });
         const content = document.createElement('div');
         content.className = 'pm-gate-label';
-        const marker = new AdvancedMarkerElement({ map, content, zIndex: 25, gmpDraggable: mode.isDrawing() });
+        const marker = new AdvancedMarkerElement({ map: null, content, zIndex: 25, gmpDraggable: mode.isDrawing() });
 
         const runOf = () => store.runs().find((run) => run.gates.some((gate) => gate.id === gateId));
         marker.addListener('dragstart', () => {
@@ -285,6 +301,7 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
 
     function renderGates(runs) {
         const live = new Set();
+        const colors = theme();
         for (const run of runs) {
             const a = { lat: run.a.lat, lng: run.a.lng };
             const b = { lat: run.b.lat, lng: run.b.lng };
@@ -295,19 +312,11 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
                     view = createGateView(gate.id);
                     gateViews.set(gate.id, view);
                 }
-                const half = run.effective_ft > 0 ? gate.width_ft / 2 / run.effective_ft : 0;
-                view.line.setPath([
-                    spherical.interpolate(a, b, Math.max(0, gate.t - half)),
-                    spherical.interpolate(a, b, Math.min(1, gate.t + half)),
-                ]);
-                view.line.setOptions({ strokeColor: run.gates_fit ? COLORS.gate : COLORS.gateProblem });
-                if (gate.id !== draggingGateId) {
-                    view.marker.position = spherical.interpolate(a, b, gate.t);
-                }
+                const span = gateSpan(run, gate);
+                view.line.setPath([spherical.interpolate(a, b, span.from), spherical.interpolate(a, b, span.to)]);
+                view.line.setOptions({ strokeColor: run.gates_fit ? colors.gate : colors.gateProblem });
                 view.marker.gmpDraggable = mode.isDrawing();
-                view.marker.content.textContent = gateLabel(gate);
                 view.marker.content.classList.toggle('is-problem', !run.gates_fit);
-                view.marker.title = mode.isDrawing() ? 'Drag along the side to move the gate' : gateLabel(gate);
             }
         }
         for (const [id, view] of gateViews) {
@@ -319,11 +328,166 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         }
     }
 
+    /* ---------- label placement ---------- */
+
+    // Size of a label as the page's CSS renders it; measured once per text and style.
+    function labelSize(className, text) {
+        const cacheKey = `${className}|${text}`;
+        let size = labelSizes.get(cacheKey);
+        if (!size) {
+            if (!measurer) {
+                measurer = document.createElement('div');
+                measurer.setAttribute('aria-hidden', 'true');
+                measurer.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;pointer-events:none;';
+                map.getDiv().appendChild(measurer);
+            }
+            const probe = document.createElement('span');
+            probe.className = className;
+            probe.style.cssText = 'display:inline-block;transform:none;';
+            probe.textContent = text;
+            measurer.appendChild(probe);
+            const box = probe.getBoundingClientRect();
+            probe.remove();
+            // The outline of a selected or adjusted label is part of what must not be covered.
+            size = { width: Math.ceil(box.width) + 2, height: Math.ceil(box.height) + 2 };
+            if (box.width > 0) {
+                labelSizes.set(cacheKey, size);
+            }
+        }
+        return size;
+    }
+
+    function scheduleLayout() {
+        if (!layoutFrame) {
+            layoutFrame = requestAnimationFrame(() => {
+                layoutFrame = 0;
+                layout();
+            });
+        }
+    }
+
+    function setOnMap(item, shown) {
+        const next = shown ? map : null;
+        if (item.map !== next) {
+            item.map = next;
+        }
+    }
+
+    function layout() {
+        const zoom = map.getZoom();
+        if (!Number.isFinite(zoom)) {
+            return;
+        }
+        const runs = store.runs();
+        const drawing = mode.isDrawing();
+        const { selectedRun, vertices } = store.state;
+        const described = describeLabels(runs, { numbered: isPlan() });
+        const toWorld = (point) => worldPoint(point, zoom);
+        const at = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+        const segments = runs.map((run) => ({ key: run.key, a: toWorld(run.a), b: toWorld(run.b) }));
+        const segmentOf = new Map(segments.map((segment) => [segment.key, segment]));
+        const gates = [];
+        const labels = [];
+        const details = new Map();
+
+        for (const item of described.gates) {
+            const view = gateViews.get(item.gate.id);
+            if (!view || item.gate.id === draggingGateId) {
+                continue; // the gate being dragged follows the pointer
+            }
+            const { a, b } = segmentOf.get(item.run.key);
+            const span = gateSpan(item.run, item.gate);
+            gates.push({ key: item.gate.id, segment: item.run.key, from: at(a, b, span.from), to: at(a, b, span.to), at: at(a, b, item.gate.t) });
+            const className = `pm-gate-label${item.run.gates_fit ? '' : ' is-problem'}`;
+            details.set(item.gate.id, { item, marker: view.marker, className });
+            labels.push({
+                key: item.gate.id,
+                kind: 'gate',
+                segment: item.run.key,
+                gate: item.gate.id,
+                variants: ['full', 'compact', 'ref'].map((level) => ({ level, ...labelSize(`${className} is-${level}`, item[level]) })),
+            });
+        }
+        for (const item of described.sides) {
+            const marker = runLabels.get(item.run.key);
+            const className = `pm-label${item.adjusted ? ' is-adjusted' : ''}${item.run.key === selectedRun ? ' is-selected' : ''}`;
+            details.set(item.run.key, { item, marker, className });
+            labels.push({
+                key: item.run.key,
+                kind: 'side',
+                segment: item.run.key,
+                variants: ['full', 'ref'].map((level) => ({ level, ...labelSize(`${className} is-${level}`, item[level]) })),
+            });
+        }
+
+        const placements = layoutLabels({
+            segments,
+            vertices: vertices.map(toWorld),
+            gates,
+            labels,
+            previous: lastLayout,
+        });
+        lastLayout = rememberLayout(placements);
+
+        const colors = theme();
+        const liveLeaders = new Set();
+        for (const placement of placements) {
+            const { item, marker, className } = details.get(placement.key);
+            const shown = Boolean(placement.box);
+            if (shown) {
+                const text = item[placement.level];
+                if (marker.content.textContent !== text) {
+                    marker.content.textContent = text;
+                }
+                marker.content.className = `${className} is-${placement.level}`;
+                marker.content.dataset.pmLabel = item.id; // side number or gate name, as in the panel
+                marker.position = worldToLatLng({
+                    x: placement.box.x + placement.box.width / 2,
+                    y: placement.box.y + placement.box.height / 2,
+                }, zoom);
+            }
+            setOnMap(marker, shown);
+            if (placement.kind === 'gate') {
+                marker.title = drawing ? `${item.title}. Drag along the side to move the gate` : item.title;
+            } else {
+                marker.title = item.title;
+                marker.content.setAttribute('aria-label', item.title);
+            }
+
+            if (placement.leader) {
+                liveLeaders.add(placement.key);
+                let line = leaders.get(placement.key);
+                if (!line) {
+                    line = new Polyline({ map, clickable: false, zIndex: 12 });
+                    leaders.set(placement.key, line);
+                }
+                line.setPath([worldToLatLng(placement.leader.from, zoom), worldToLatLng(placement.leader.to, zoom)]);
+                line.setOptions({
+                    strokeColor: colors.leader,
+                    strokeOpacity: colors.leaderOpacity,
+                    strokeWeight: 1.5,
+                    // A dot where the connector meets a side; a gate's own opening already marks it.
+                    icons: placement.kind === 'gate' ? [] : [{
+                        icon: { path: LEADER_DOT, scale: 2.5, fillColor: colors.leader, fillOpacity: 1, strokeOpacity: 0 },
+                        offset: '0%',
+                    }],
+                });
+            }
+        }
+        for (const [key, line] of leaders) {
+            if (!liveLeaders.has(key)) {
+                line.setMap(null);
+                leaders.delete(key);
+            }
+        }
+    }
+
     function previewStyle() {
         return {
             strokeOpacity: 0,
             icons: [{
-                icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.9, strokeWeight: 3, strokeColor: COLORS.fence, scale: 2 },
+                icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.9, strokeWeight: 3, strokeColor: THEMES.satellite.fence, scale: 2 },
                 offset: '0',
                 repeat: '10px',
             }],
@@ -331,20 +495,21 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
     }
 
     function lineStyle(run, isSelected) {
+        const colors = theme();
         if (run.is_existing_wall) {
             // Dashed line: invisible stroke with a repeated dash symbol.
             return {
                 strokeOpacity: 0,
                 strokeWeight: 5,
                 icons: [{
-                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeWeight: isSelected ? 6 : 4, strokeColor: isSelected ? COLORS.selected : COLORS.wall, scale: 3 },
+                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeWeight: isSelected ? 6 : 4, strokeColor: isSelected ? colors.selected : colors.wall, scale: 3 },
                     offset: '0',
                     repeat: '14px',
                 }],
             };
         }
         return {
-            strokeColor: isSelected ? COLORS.selected : COLORS.fence,
+            strokeColor: isSelected ? colors.selected : colors.fence,
             strokeOpacity: 1,
             strokeWeight: isSelected ? 7 : 5,
             icons: [],
@@ -387,7 +552,7 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         syncMap(runKeys, runLines, createRunLine);
         syncMap(runKeys, runLabels, createRunLabel);
 
-        runs.forEach((run, index) => {
+        runs.forEach((run) => {
             const isSelected = run.key === selectedRun;
             const path = [{ lat: run.a.lat, lng: run.a.lng }, { lat: run.b.lat, lng: run.b.lng }];
 
@@ -395,19 +560,11 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
             line.setPath(path);
             line.setOptions(lineStyle(run, isSelected));
 
-            const label = runLabels.get(run.key);
-            label.position = spherical.interpolate(path[0], path[1], 0.5);
-            label.content.textContent = `${run.effective_ft} ft${run.is_existing_wall ? ' · wall' : ''}`;
-            label.content.classList.toggle('is-adjusted', run.override_ft !== null);
-            label.content.classList.toggle('is-selected', isSelected);
-            label.content.setAttribute(
-                'aria-label',
-                `Side ${index + 1}: ${run.effective_ft} feet${run.override_ft !== null ? ', adjusted by hand' : ''}`
-            );
-            label.title = run.override_ft !== null ? `Adjusted by hand (measured ${run.calc_ft} ft)` : 'Measured on the map';
         });
 
         renderGates(runs);
+        map.getDiv().classList.toggle('is-plan', isPlan());
+        layout();
     }
 
     // Bring a run into view when it is picked from the side panel.
@@ -452,6 +609,7 @@ export function mountDrawing({ map, store, mode, libs, onRunFocus, notify }) {
         applyInteraction();
         render();
     });
+    background?.subscribe(render);
     applyInteraction();
     render();
 

@@ -176,6 +176,9 @@ body.drawing.pm-map-active { height: auto; min-height: 100%; overflow-y: auto; }
 .pm-label.is-adjusted { background: var(--wfs-white); color: var(--wfs-ink); outline: 2px solid var(--wfs-blue); }
 .pm-label.is-adjusted::after { content: " *"; color: var(--wfs-blue); }
 .pm-label.is-selected { outline: 3px solid var(--wfs-blue-ice); }
+/* A side too short on screen for its length: just its number (Side 3 in the panel). */
+.pm-label.is-ref { min-width: 24px; padding: 4px 7px; text-align: center; }
+.pm-label.is-ref.is-adjusted::after { content: none; }
 
 .pm-menu { padding: 4px; }
 .pm-menu-item {
@@ -267,6 +270,28 @@ body.drawing.pm-map-active { height: auto; min-height: 100%; overflow-y: auto; }
     cursor: grab;
 }
 .pm-gate-label.is-problem { background: var(--wfs-danger); }
+/* Short forms when the full label has no room: "G1 · 4 ft", then "G1" (named in the panel). */
+.pm-gate-label.is-ref { padding: 4px 7px; }
+.pm-gate-id {
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: var(--wfs-ink);
+    color: var(--wfs-white);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Download image */
+.pm-export {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 14px;
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--wfs-charcoal);
+}
+.pm-export-title { font-weight: 600; }
 .pm-gates { display: grid; gap: 8px; margin-top: 8px; }
 .pm-gate { padding: 8px; border-radius: 8px; background: var(--wfs-sea); }
 .pm-gate-fields { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
