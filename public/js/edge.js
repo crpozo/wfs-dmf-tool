@@ -318,8 +318,8 @@ class Edge{
     }
     drawingContext.setLineDash([]);
     stroke(0);
-    for(let i=0;i<this.dims.length;i++){
-        this.dims[i].paint();
+    for (const dim of this.dims) {
+        dim.paint();
     }
     pop();
   }

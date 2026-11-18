@@ -42,9 +42,7 @@ function gridlines(){
 }
 
 function dimension(xo,yo,x,y,d,gap){
-    let ang, signX, signY, xA, xp, yA, yp;
-    let po = pixelsToFt(xo,yo);
-    let p = pixelsToFt(x,y);
+    let ang, m, signX, signY, w, x1, xA, xp, y1, yA, yp;
 
     w = textWidth(d);
 

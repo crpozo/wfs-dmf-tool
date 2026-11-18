@@ -16,8 +16,8 @@ class Graph{
 
   over(){
     let overt = null;
-    for(let i=0;i<this.vertices.length;i++){
-        overt = this.vertices[i].over();
+    for (const vert of this.vertices) {
+        overt = vert.over();
         if(overt != null){
             break;
         }
@@ -64,8 +64,7 @@ class Graph{
 
   countEdgesVert(id){
     let c = 0;
-    for(let i=0;i<this.vertices.length;i++){
-      let v = this.vertices[i];
+    for (const v of this.vertices) {
       c = c + v.countEdgesId(id);
     }
     return c;
@@ -140,8 +139,7 @@ class Graph{
 
   check(x,y,d){
     let resp = null;
-    for(let i=0;i<this.vertices.length;i++){
-      let vertx = this.vertices[i];
+    for (const vertx of this.vertices) {
       if(actual == null || (vertx.id != actual.id)){
       //if(actual != null && (vertx.id != actual.id) ){
         if(vertx.check(x,y,d)){
@@ -301,10 +299,8 @@ class Graph{
 
     getEdgeSameLine(node, delEdge){
         let sameLineEdge = null;
-        for(let i=0;i<this.vertices.length;i++){
-            let vert = this.vertices[i];
-            for(let j=0;j<vert.edges.length;j++){
-                let edge = vert.edges[j];
+        for (const vert of this.vertices) {
+            for (const edge of vert.edges) {
                 if(edge != delEdge){
                     if((edge.node1 == node || edge.node2 == node) && (round(edge.m,4) == round(delEdge.m,4) || round(edge.ms) == round(delEdge.ms)))    {
                         sameLineEdge = edge;
@@ -320,10 +316,8 @@ class Graph{
     }
 
     checkEdges(x,y,d){
-        for(let i=0;i<this.vertices.length;i++){
-          let vert = this.vertices[i];
-          for(let j=0;j<vert.edges.length;j++){
-            let edge = vert.edges[j];
+        for (const vert of this.vertices) {
+          for (const edge of vert.edges) {
             if(true) { //edge.type != types.WALL){ //if(edge.type == tools.FENCE || edge.type == tools.FENCE_2){
               if(!edge.check(x,y,d)){
                 edge.setDel(false);
@@ -418,10 +412,8 @@ class Graph{
 
     setDim(id, val){
         if(typeof(id) == "string") {
-            for (let i = 0; i < this.vertices.length; i++) {
-                let vert = this.vertices[i];
-                for (let j = 0; j < vert.edges.length; j++) {
-                    let edge = vert.edges[j];
+            for (const vert of this.vertices) {
+                for (const edge of vert.edges) {
                     let dim = edge.getDim();
                     if (dim != null && dim.texto == id) {
                         dim.setTexto(val);
@@ -431,10 +423,8 @@ class Graph{
             }
         }
         else {
-            for (let i = 0; i < this.vertices.length; i++) {
-                let vert = this.vertices[i];
-                for (let j = 0; j < vert.edges.length; j++) {
-                    let edge = vert.edges[j];
+            for (const vert of this.vertices) {
+                for (const edge of vert.edges) {
                     let dim = edge.getDim();
                     if (dim != null && dim == id) {
                         dim.setTexto(val);
@@ -447,10 +437,8 @@ class Graph{
 
     getDims(){
         let dims = [];
-        for(let i=0;i<this.vertices.length;i++){
-            let vert = this.vertices[i];
-            for(let j=0;j<vert.edges.length;j++){
-                let edge = vert.edges[j];
+        for (const vert of this.vertices) {
+            for (const edge of vert.edges) {
                 let dim = edge.getDim();
                 if(dim != null && dim.texto.substr(0,1) == "d") {
                     dims.push(dim.texto);
@@ -548,7 +536,7 @@ class Graph{
             if(typeof(item.length) == "string") {
                 if(Number.isNaN(Number(item.length))) {
                     graph.maxId++;
-                    let edge = vert1.addEdgeId(vert2, type, graph.maxId);
+                    vert1.addEdgeId(vert2, type, graph.maxId);
                     pend++;
                 }
                 else{

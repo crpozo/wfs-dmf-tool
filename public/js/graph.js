@@ -29,8 +29,7 @@ class Graph{
 
   countEdgesVert(id){
     let c = 0;
-    for(let i=0;i<this.vertices.length;i++){
-      let v = this.vertices[i];
+    for (const v of this.vertices) {
       c = c + v.countEdgesId(id);
     }
     return c;
@@ -93,8 +92,7 @@ class Graph{
 
   check(x,y,d){
     let resp = null;
-    for(let i=0;i<this.vertices.length;i++){
-      let vertx = this.vertices[i];
+    for (const vertx of this.vertices) {
       if(actual == null || (vertx.id != actual.id)){
       //if(actual != null && (vertx.id != actual.id) ){
         if(vertx.check(x,y,d)){
@@ -153,10 +151,8 @@ class Graph{
     }
 
     checkEdges(x,y,d){
-        for(let i=0;i<this.vertices.length;i++){
-          let vert = this.vertices[i];
-          for(let j=0;j<vert.edges.length;j++){
-            let edge = vert.edges[j];
+        for (const vert of this.vertices) {
+          for (const edge of vert.edges) {
             if(edge.type == tools.FENCE || edge.type == tools.FENCE_2){
               if(!edge.check(x,y,d)){
                 edge.setDel(false);

@@ -603,7 +603,7 @@ function draw() {
                                             let v = graph.addVertex(xo, yo);
                                             //console.log(v.x, v.y);
                                             //var edge = graph.addEdge(actual, v, toolActual);
-                                            let edge = graph.addEdge(actual, v, type);
+                                            graph.addEdge(actual, v, type);
 
                                             //actual = v;
                                             setActual(v);

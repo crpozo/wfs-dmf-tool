@@ -203,7 +203,7 @@ function draw() {
           else{
             let v = graph.addVertex(xo,yo);
             //console.log(v.x, v.y);
-            let edge = graph.addEdge(actual, v, toolActual);
+            graph.addEdge(actual, v, toolActual);
             //actual = v;
             setActual(v);
           }

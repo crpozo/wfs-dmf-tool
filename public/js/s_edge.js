@@ -125,8 +125,8 @@ class Edge{
   over(){
     let odim = null;
     if(toolActualGroup[1] != tools.GATE && toolActualGroup[1] != tools.DOUBLE) {
-        for (let i = 0; i < this.dims.length; i++) {
-            odim = this.dims[i].over();
+        for (const dim of this.dims) {
+            odim = dim.over();
             if (odim != null) {
                 break;
             }
@@ -170,8 +170,7 @@ class Edge{
 
   getNodeAsoc(){
       let nodeAsoc = null;
-      for(let i=0;i<this.node1.edges.length;i++){
-          let edge = this.node1.edges[i];
+      for (const edge of this.node1.edges) {
           if(edge == this){
               nodeAsoc = this.node1;
               break;
@@ -346,8 +345,6 @@ class Edge{
               }
           // Debe hacerse proporcional al largo del edge
           //var w = wDoor * gridSpacing;
-          let edgeLength = sqrt(sq(this.xMax-this.xMin) + sq(this.yMax-this.yMin));
-          edgeLength = this.length;
           let w = this.length / this.ft * wDoor * gridSpacing;
           //console.log("W: ", w);
           let x2 = x1 + w / (sqrt(1 + sq(this.m)));
@@ -377,13 +374,14 @@ class Edge{
               //if(toolActual == tools.GATE) {
               if(toolActualGroup[1] == tools.GATE) {
                   switch(doorType) {
-                      case doorTypes.SWING_GATE:
+                      case doorTypes.SWING_GATE: {
                           let dx = (x2 - x1) / w;
                           let dy = (y2 - y1) / w;
                           let x3 = x1 + w * dx * sqrt(2) / 2 - w * dy * sqrt(2) / 2;
                           let y3 = y1 + w * dy * sqrt(2) / 2 + w * dx * sqrt(2) / 2;
                           line(x1, y1, x3, y3);
                           break;
+                      }
                       case doorTypes.ROLLING_GATE:
                           /*
                           line(x1+2, y1+6, x2-2, y1+6);
@@ -416,25 +414,19 @@ class Edge{
               }
               else{ //DOUBLE
                   switch(doorType) {
-                      case doorTypes.SWING_GATE:
+                      case doorTypes.SWING_GATE: {
                           let dx = ((x2+x1)/2 - x1) / (w/2);
                           let dy = ((y2+y1)/2 - y1) / (w/2);
                           let x3 = x1 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
                           let y3 = y1 + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
                           line(x1, y1, x3, y3);
 
-                          /*
-                          dx = (x2 - (x2+x1)/2) / (w/2);
-                          dy = (y2 - (y2+y1)/2) / (w/2);
-                          let x4 = x2 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
-                          let y4 = y2 - (w/2) * dy * sqrt(2) / 2 - (w/2) * dx * sqrt(2) / 2;
-                          line(x2, y2, x4, y4);
-                           */
                           let dw = w * (sqrt(2) - 1) / sqrt(2);
                           let x4 = x3 + dw / (sqrt(1 + sq(this.m)));
                           let y4 = y3 + this.m * dw / (sqrt(1 + sq(this.m)));
                           line(x2, y2, x4, y4);
                           break;
+                      }
                       case doorTypes.ROLLING_GATE:
                           push();
                           translate(x1,y1);
@@ -706,11 +698,12 @@ class Edge{
 
         if(this.type == tools.DOUBLE){
             switch(this.doorType){
-                case doorTypes.SWING_GATE:
+                case doorTypes.SWING_GATE: {
                     let p4 = ftToPixels(this.x4, this.y4);
                     line(p1.x, p1.y, p3.x, p3.y);
                     line(p2.x, p2.y, p4.x, p4.y);
                     break;
+                }
                 case doorTypes.ROLLING_GATE:
                     push();
 
@@ -793,8 +786,8 @@ class Edge{
     }
     drawingContext.setLineDash([]);
     stroke(0);
-    for(let i=0;i<this.dims.length;i++){
-        this.dims[i].paint();
+    for (const dim of this.dims) {
+        dim.paint();
     }
     pop();
   }

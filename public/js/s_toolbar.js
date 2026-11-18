@@ -19,8 +19,7 @@ class Toolbar{
 
     //let toolPos = [7,60,113,186,239,292,365,418,491,574];
     let toolPos = [];
-    for(let i=0;i < qtyBts.length;i++){
-        let size = qtyBts[i];
+    for (const size of qtyBts) {
         for(let j=0;j < size;j++){
             toolPos.push(top);
             //console.log(top);
@@ -146,14 +145,14 @@ class Toolbar{
   }
 
   show(){
-    for(let i=0;i<this.buttons.length;i++){
-      this.buttons[i].show();
+    for (const btn of this.buttons) {
+      btn.show();
     }
   }
 
   over(){
-    for(let i=0;i<this.buttons.length;i++){
-      this.buttons[i].over();
+    for (const btn of this.buttons) {
+      btn.over();
     }
   }
 
@@ -176,9 +175,9 @@ class Toolbar{
 
       if(r != null){
           this.actual = this.buttons[i];
-          for(let i=0;i<this.buttons.length;i++){
-              if(this.buttons[i] != r && r.group == this.buttons[i].group) {
-                  this.buttons[i].setSelected(false);
+          for (const btn of this.buttons) {
+              if(btn != r && r.group == btn.group) {
+                  btn.setSelected(false);
               }
           }
           if (r.val == tools.ORTO) {
@@ -190,6 +189,7 @@ class Toolbar{
           else {
               r.setSelected(true);
           }
+          break; // one button per click; the old shared `var i` ended the loop here
       }
       /*
       if(r){
@@ -204,12 +204,12 @@ class Toolbar{
   }
 
   shortcut(code){
-    for(let i=0;i<this.buttons.length;i++){
-      let r = this.buttons[i].shortcutted(code);
+    for (const btn of this.buttons) {
+      let r = btn.shortcutted(code);
       if(r){
-        if(this.actual && this.buttons[i].group == 1){
+        if(this.actual && btn.group == 1){
           this.actual.setSelected(false);
-          this.actual = this.buttons[i];
+          this.actual = btn;
         }
         break;
       }
