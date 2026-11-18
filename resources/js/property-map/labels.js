@@ -3,7 +3,7 @@
  * and the technical plan. Sides are numbered like the Sides panel (Side 1, Side 2...);
  * gates are G1, G2... in the same order as the panel lists them.
  *
- *   full     "42 ft"            "Gate · 4 ft"
+ *   full     "42 ft"            "Single gate · 4 ft"
  *   compact                     "G1 · 4 ft"
  *   ref      "3"                "G1"            (the rest is in the panel or the legend)
  *

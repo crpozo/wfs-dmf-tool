@@ -53,7 +53,7 @@ for (const name of names) {
             expect(label.text).toMatch(/^\d+ ft( · wall)?( \*)?$/);
         }
         for (const label of scene.labels.filter((item) => item.kind === 'gate' && item.level === 'full')) {
-            expect(label.text).toMatch(/^(Gate|Double gate)( \w+)? · \d+ ft$/);
+            expect(label.text).toMatch(/^(Single gate|Double gate)( \w+)? · \d+ ft$/);
         }
         // A legend appears only for labels that had to become a reference, one line each.
         const shortened = scene.labels.filter((item) => item.level !== 'full');
@@ -102,6 +102,13 @@ test('lines, corners and gates are drawn where the projection puts them', async 
     // Each gate opening is white, centred on its side.
     for (const gate of scene.gates) {
         expect(near(png.at(gate.at.x, gate.at.y), [255, 255, 255]), `gate ${gate.key}`).toBe(true);
+    }
+
+    // The same on the technical plan: blue is fence, white is gate, whatever the kind of gate.
+    const plan = await renderImage(page, 'plan', snapshot);
+    const planPng = PNG.decode(plan.png);
+    for (const gate of plan.layout.scene.gates) {
+        expect(near(planPng.at(gate.at.x, gate.at.y), [255, 255, 255]), `plan gate ${gate.key}`).toBe(true);
     }
 });
 
