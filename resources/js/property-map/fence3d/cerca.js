@@ -14,7 +14,7 @@ var PUL = 1 / 12;   // una pulgada, en pies
 /* Anchura de vano por material: es el panel que se fabrica, no una eleccion
    estetica. Cambiarla mueve los postes de sitio y deja de parecerse al
    producto real. */
-var VANO = { aluminum: 6, 'chain-link': 10, vinyl: 8, metal: 6, ecfence: 8 };
+const VANO = { aluminum: 6, 'chain-link': 10, vinyl: 8, metal: 6, ecfence: 8 };
 
 /* ── base local del tramo ──────────────────────────────────────────────────
    u avanza a lo largo del tramo, v cruza. Una caja girada rotY sobre Y lleva
@@ -158,8 +158,7 @@ export function materiales(mat, estilo, colorHex, ancho, altoMalla, marcoHex) {
 function vanoAluminio(e, m, est, mk, u0, ancho, alto) {
   var rail = 1 * PUL, pk = 0.75 * PUL;
   var rotY = mk.rotY;
-  var yTop = alto - 1.5 * PUL;                 // eje del rail superior
-  var pitch = est.indexOf('3" Spacing') !== -1 ? 3.75 * PUL : 4.65 * PUL;
+  var pitch = est.includes('3" Spacing') ? 3.75 * PUL : 4.65 * PUL;
   if (est === 'Pool Code') { pitch = 4.65 * PUL; }
 
   /* Donde va cada riel, MEDIDO en la foto de su perfil (fraccion de la altura,
@@ -176,7 +175,7 @@ function vanoAluminio(e, m, est, mk, u0, ancho, alto) {
     '4-Rail Custom':             [0.86, 0.77, 0.16, 0.07]
   };
   var rails = (RIELES[est] || [0.96, 0.05]).map(function (f) { return f * alto; });
-  yTop = rails[0];
+  var yTop = rails[0];                        // eje del rail superior
 
   for (var i = 0; i < rails.length; i++) {
     var c = mk.p(u0 + ancho / 2, rails[i], 0);
@@ -410,7 +409,7 @@ function hoja(e, m, mat, est, a, b, alto, ref) {
   /* Refuerzos, como en las fotos: el walk gate de chain link lleva una barra
      horizontal a media altura ("el palito en la mitad"); el Custom Opening
      Gate con bastidor metalico lleva una cruz (montante central y travesaño). */
-  if (ref && ref.diagonales) {
+  if (ref?.diagonales) {
     /* Hoja de correderas y cantilever, como la foto: montantes cada tramo y
        una DIAGONAL por tramo, de abajo a arriba, que es lo que arriostra una
        hoja larga que vuela. Sin travesaño horizontal. */
@@ -418,7 +417,7 @@ function hoja(e, m, mat, est, a, b, alto, ref) {
     for (var si = 0; si < ns; si++) {
       var u0 = tubo + si * w;
       if (si > 0) { e.caja(mm, 'marco', mk.p(u0, alto / 2 + 1.5 * PUL, vB), [tubo, alto - 3 * PUL, tubo * 1.1], mk.rotY); }
-      var len = Math.sqrt(w * w + hh * hh), ang = Math.atan2(hh, w);
+      var len = Math.hypot(w, hh), ang = Math.atan2(hh, w);
       e.caja(mm, 'diag', mk.p(u0 + w / 2, 3 * PUL + tubo + hh / 2, vB), [len, tubo * 0.8, tubo * 0.9], mk.rotY, ang);
     }
   } else if (mat === 'chain-link') {

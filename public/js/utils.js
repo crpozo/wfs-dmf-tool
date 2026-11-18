@@ -1,11 +1,12 @@
 function gridlines(){
+  let count, count2;
   buffer.textSize(fsGrid);
   buffer.background(220);
   buffer.stroke(30, 30, 30, 20);
   buffer.strokeWeight(2);
   count = 1;
   count2 = 1;
-  for(var x=0;x<=_W;x=x+gridSpacing){
+  for(let x=0;x<=_W;x=x+gridSpacing){
     buffer.line(x,0,x,_H);
     if(count == 1){
       buffer.strokeWeight(1);
@@ -22,7 +23,7 @@ function gridlines(){
   buffer.strokeWeight(2);
   count = 1;
   count2 = 1;
-  for(var y=0;y<=_H;y=y+gridSpacing){
+  for(let y=0;y<=_H;y=y+gridSpacing){
     buffer.line(0,y,_W,y);
     if(count == 1){
       buffer.strokeWeight(1);
@@ -40,8 +41,9 @@ function gridlines(){
 }
 
 function dimension(xo,yo,x,y){
-    var po = pixelsToFt(xo,yo);
-    var p = pixelsToFt(x,y);
+    let ang, m, signX, signY, x1, xA, y1, yA;
+    let po = pixelsToFt(xo,yo);
+    let p = pixelsToFt(x,y);
     /*
     xo = po.x;
     yo = po.y;
@@ -97,6 +99,7 @@ function dimension(xo,yo,x,y){
 }
 
 function pixelsToFt(x,y){
+  let xft, yft;
   xft = round((x - toolbarWidth) / gridSpacing);
   yft = round(y / gridSpacing);
   return new Pt(xft, yft);
@@ -109,17 +112,18 @@ function ftToPixels(xft, yft){
 }
 
 function convertZoomLevel(x,y,fromZoomLevel,toZoomLevel){
+  let fromGridSpacing, toGridSpacing;
   fromGridSpacing = (_W-toolbarWidth)/zoomLevels[fromZoomLevel];
   toGridSpacing = (_W-toolbarWidth)/zoomLevels[toZoomLevel];
-  var xc = (x-toolbarWidth) * toGridSpacing/fromGridSpacing + toolbarWidth;
-  var yc = y * toGridSpacing/fromGridSpacing;
-  var p = new Pt(xc, yc);
+  let xc = (x-toolbarWidth) * toGridSpacing/fromGridSpacing + toolbarWidth;
+  let yc = y * toGridSpacing/fromGridSpacing;
+  let p = new Pt(xc, yc);
   return p;
 }
 
 function setActual(vert){
   actual = vert;
-  var po = ftToPixels(vert.x,vert.y);
+  let po = ftToPixels(vert.x,vert.y);
   xo = po.x;
   yo = po.y;
 }

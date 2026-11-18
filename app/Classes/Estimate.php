@@ -70,7 +70,7 @@ class Estimate implements IteratorAggregate {
     }
     */
 
-    public function add(OdooItem $item) {        
+    public function add(OdooItem $item) {
         if (trim((string) $item->sku) === 'N/A') {
             return;
         }
@@ -89,8 +89,8 @@ class Estimate implements IteratorAggregate {
             }
         }
         if(!$found) {
-            $this->items[] = $item;            
-        }        
+            $this->items[] = $item;
+        }
     }
 
     public function updateIds()
@@ -122,7 +122,7 @@ class Estimate implements IteratorAggregate {
     // Agregar secciones PRIMARY y HARDWARE en cotización
     public function addSections($matCode){
         $mat = substr($matCode, 0, 1);
-        $mapOption = MapOption::getOptionByMaterialAndName($mat, 'CONCRETE');        
+        $mapOption = MapOption::getOptionByMaterialAndName($mat, 'CONCRETE');
         $orderPrimary = 0;
         $orderHardware = $mapOption->sort_order + 2; // el sort_order en BD deja 2 espacios después de concreto, uno para PALLET FEE y otro para sección HARDWARE
 
@@ -136,7 +136,7 @@ class Estimate implements IteratorAggregate {
                 $hayHardware = true;
             }
             if(!$hayPrimary && $item->sort_order < $orderHardware){
-                $hayPrimary = true;            
+                $hayPrimary = true;
             }
             if($hayPrimary && $hayHardware){
                 break;
@@ -147,10 +147,10 @@ class Estimate implements IteratorAggregate {
         }
         if($hayHardware){
             $this->add($odooHardware);
-        }                      
-        return $this;  
-    }        
-                    
+        }
+        return $this;
+    }
+
     public function sortItems()
     {
         usort($this->items, function ($a, $b) {
@@ -197,7 +197,6 @@ class Estimate implements IteratorAggregate {
     }
 
     public function getFishbowlInfo(){
-        //$sql = "SELECT sku, description, price from product where SKU in (";
         $sql = "SELECT p.sku, p.num, p.description, p.price, p.taxableFlag taxable, p.kitFlag kit, u.code uom from product p, uom u WHERE p.uomId=u.id and sku in (";
         foreach($this->items as $item){
             $sql .= "'" . $item->sku . "',";
@@ -224,7 +223,6 @@ class Estimate implements IteratorAggregate {
     public function sendToFB($customer){
         $cc = new CustomerController();
         $customerInfo = $cc->getCustomer($customer);
-        //$estimate = Session::get('estimate');
         $estimate = session('estimate');
 
         $this->createFishbowlJSON($customerInfo, $estimate);
@@ -268,7 +266,6 @@ class Estimate implements IteratorAggregate {
         $salesman_email = session('user_email');
 
         $timestamp = time();
-        //$date = gmdate('mm/dd/yyyy', $timestamp);
         $date = date('m/d/Y', $timestamp);
 
         $shippingTerms = "Prepaid & Billed";
@@ -288,7 +285,6 @@ class Estimate implements IteratorAggregate {
             ];
             array_push($body, $line);
         }
-        //echo json_encode($body, true);
         $fbAC = new FishbowlAPIController();
         $data = $fbAC->createEstimate($body);
         $ret = "ERROR";
@@ -298,13 +294,13 @@ class Estimate implements IteratorAggregate {
         echo $ret;
         die;
     }
-    
+
     public function createOdooQuote(
         ?int $customerId = null,
         ?string $reference = 'Fence App Quote',
         ?int $salespersonId = null,
         ?string $pricelist = null,
-        ?array $notes = null,        
+        ?array $notes = null,
         ?int $companyId = 1,
         ?int $leadSourceId = null,
         array $extraFields = []
@@ -312,7 +308,7 @@ class Estimate implements IteratorAggregate {
         $odooBaseUrl = config('services.odoo.base_url');
         $odooApiKey = config('services.odoo.api_key');
         $odooDatabase = config('services.odoo.database');
-        
+
         if (empty($odooBaseUrl)) {
             throw new \RuntimeException('Missing Odoo base URL. Set ODOO_BASE_URL and rebuild the config cache.');
         }
@@ -407,15 +403,15 @@ class Estimate implements IteratorAggregate {
         if (empty($orderLines)) {
             throw new \Exception('Cannot create Odoo quote: no valid order lines.');
         }
-        
+
         $quoteData = [
             'partner_id' => $customerId,
             'partner_invoice_id' => $customerId,
             'partner_shipping_id'=> $customerId,
             'order_line' => $orderLines,
-            'company_id' => $companyId            
+            'company_id' => $companyId
         ];
-        
+
         if ($customerId === (int) config('services.odoo.customer')) {
             if (!$leadSourceId) {
                 //throw new \InvalidArgumentException('A lead source is required for walk-in Odoo quotes.');
@@ -433,14 +429,14 @@ class Estimate implements IteratorAggregate {
 
         if ($pricelist) {
             $quoteData['pricelist_id'] = $this->resolveOdooPricelistId($pricelist);
-        }        
+        }
 
         // Optional: set salesperson at creation time.
         // If this causes access issues, create first and update user_id after.
         if ($salespersonId) {
             $quoteData['user_id'] = $salespersonId;
         }
-        
+
         $quoteResponse = Http::withHeaders($headers)
             ->timeout(60)
             ->post($baseUrl . '/sale.order/create', [
@@ -475,24 +471,6 @@ class Estimate implements IteratorAggregate {
         }
 
         $salespersonResponse = null;
-        /*
-        if ($salespersonId) {
-            $salespersonResponse = Http::withHeaders($headers)
-                ->timeout(60)
-                ->post($baseUrl . '/sale.order/write', [
-                    'ids' => [$saleOrderId],
-                    'vals' => [
-                        'user_id' => $salespersonId,
-                    ],
-                ]);
-
-            if ($salespersonResponse->failed()) {
-                throw new \Exception(
-                    'Odoo salesperson update failed: ' . $salespersonResponse->body()
-                );
-            }
-        }
-        */
 
         // Read quote after final updates so the returned payload reflects the assigned salesperson.
         $readResponse = Http::withHeaders($headers)
@@ -522,9 +500,8 @@ class Estimate implements IteratorAggregate {
         }
 
         $user = Auth::user();
-        //$companyRole = strtolower(trim((string) ($user->company_role ?? '')));
         $accType = strtolower(trim((string) ($user->account_type ?? '')));
-        
+
         $username = trim((string) ($user->username ?? ''));
 
         if ($user && $accType === 'company' && $username !== '') {

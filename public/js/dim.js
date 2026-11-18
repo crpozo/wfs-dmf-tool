@@ -5,7 +5,7 @@ class Dim{
     this.y = y;
     /*
     console.log(x + ", " + y);
-    var p = pixelsToFt(x,y);
+    let p = pixelsToFt(x,y);
     this.x = p.x;
     this.y = p.y;
     console.log(this.x + ", " + this.y);
@@ -27,7 +27,7 @@ class Dim{
       text(this.texto, this.x, this.y);
     }
     else{
-      var p = convertZoomLevel(this.x, this.y, this.zoomLevel, zoomLevel);
+      let p = convertZoomLevel(this.x, this.y, this.zoomLevel, zoomLevel);
       //console.log(p.x,p.y);
       text(this.texto, p.x, p.y);
     }

@@ -1,7 +1,29 @@
+// Actions of the single gate, double gate and orthogonal-lines buttons.
+function fncGate(){
+    wDoor = wSDoor;
+    toolClick(tools.GATE);
+    document.getElementById("btnGate").click();
+}
+
+function fncDouble(){
+    wDoor = wDDoor;
+    toolClick(tools.DOUBLE);
+    document.getElementById("btnDblGate").click();
+}
+
+function fncOrto(){
+    ortoShift = !ortoShift;
+    toolClick(tools.ORTO);
+    let btnOrto = tb?.getButton ? tb.getButton(tools.ORTO) : null;
+    if (btnOrto) {
+        btnOrto.setSelected(ortoShift);
+    }
+}
+
 class Toolbar{
   createEnum(values) {
     const enumObject = {};
-    var i = 0;
+    let i = 0;
     for (const val of values) {
       enumObject[val] = i;
       i++;
@@ -19,9 +41,8 @@ class Toolbar{
 
     //let toolPos = [7,60,113,186,239,292,365,418,491,574];
     let toolPos = [];
-    for(var i=0;i < qtyBts.length;i++){
-        var size = qtyBts[i];
-        for(var j=0;j < size;j++){
+    for (const size of qtyBts) {
+        for(let j=0;j < size;j++){
             toolPos.push(top);
             //console.log(top);
             top = top + btnSize;
@@ -48,29 +69,10 @@ class Toolbar{
 
     let cursors = [CROSS, CROSS, HAND, CROSS, CROSS, CROSS, CROSS, CROSS, CROSS, HAND, CROSS];
 
-    var fncGate = function(){
-        wDoor = wSDoor;
-        toolClick(tools.GATE);
-        document.getElementById("btnGate").click();
-    };
-    var fncDouble = function(){
-        wDoor = wDDoor;
-        toolClick(tools.DOUBLE);
-        document.getElementById("btnDblGate").click();
-    };
-    var fncOrto = function(){
-        ortoShift = !ortoShift;
-        toolClick(tools.ORTO);
-        var btnOrto = tb && tb.getButton ? tb.getButton(tools.ORTO) : null;
-        if (btnOrto) {
-            btnOrto.setSelected(ortoShift);
-        }
-    }
-
-    var posX = 5;
-    var posY = 0;
-    for(var i=0;i < Object.keys(tools).length;i++){
-      var btn = new Tool(posX, toolPos[posY], toolSize, toolSize, i, 'img/' + Object.keys(tools)[i].toLowerCase() + ".png", toolNames[i] + " (" + shortCuts[i] + ")", cursors[i], shortCutsCodes[i], toolsGroups[i]);
+    let posX = 5;
+    let posY = 0;
+    for(let i=0;i < Object.keys(tools).length;i++){
+      let btn = new Tool(posX, toolPos[posY], toolSize, toolSize, i, 'img/' + Object.keys(tools)[i].toLowerCase() + ".png", toolNames[i] + " (" + shortCuts[i] + ")", cursors[i], shortCutsCodes[i], toolsGroups[i]);
       btn.setSelected(i==0 || type == i);
       switch(i){
           case tools.GATE:
@@ -94,29 +96,29 @@ class Toolbar{
     }
 
     /*
-    var btnLine = new Tool(posX, toolPos[tools.LINE], 50, 50, tools.LINE, 'img/line.png', 'Line (L)', CROSS, 70);
+    let btnLine = new Tool(posX, toolPos[tools.LINE], 50, 50, tools.LINE, 'img/line.png', 'Line (L)', CROSS, 70);
     this.buttons.push(btnLine);
     //newText("LINE", 9, 25, 50);
 
-    var btnRect = new Tool(posX, toolPos[tools.RECT], 50, 50, tools.RECT, 'img/rect.png', 'Rectangle (R)', CROSS, 70);
+    let btnRect = new Tool(posX, toolPos[tools.RECT], 50, 50, tools.RECT, 'img/rect.png', 'Rectangle (R)', CROSS, 70);
     this.buttons.push(btnRect);
 
-    var btnEraser = new Tool(posX, toolPos[tools.ERASER], 50, 50, tools.ERASER, 'img/eraser.png', 'Eraser (E)', HAND, 69);
+    let btnEraser = new Tool(posX, toolPos[tools.ERASER], 50, 50, tools.ERASER, 'img/eraser.png', 'Eraser (E)', HAND, 69);
     this.buttons.push(btnEraser);
 
-    var btnFence = new Tool(posX, toolPos[tools.FENCE], 50, 50, tools.FENCE, 'img/fence2.png', 'Fence (F)', CROSS, 70);
+    let btnFence = new Tool(posX, toolPos[tools.FENCE], 50, 50, tools.FENCE, 'img/fence2.png', 'Fence (F)', CROSS, 70);
     btnFence.setSelected(type == types.FENCE);
     this.buttons.push(btnFence);
 
-    var btnChannel = new Tool(posX, toolPos[tools.FENCE_2], 50, 50, tools.FENCE_2, 'img/channel.png', 'Fence Type 2 (C)', CROSS, 67);
+    let btnChannel = new Tool(posX, toolPos[tools.FENCE_2], 50, 50, tools.FENCE_2, 'img/channel.png', 'Fence Type 2 (C)', CROSS, 67);
     btnChannel.setSelected(type == types.FENCE_2);
     this.buttons.push(btnChannel);
 
-    var btnWall = new Tool(posX, toolPos[tools.WALL], 50, 50, tools.WALL, 'img/wall.png', 'Existing Wall (W)', CROSS, 87);
+    let btnWall = new Tool(posX, toolPos[tools.WALL], 50, 50, tools.WALL, 'img/wall.png', 'Existing Wall (W)', CROSS, 87);
     btnWall.setSelected(type == types.WALL);
     this.buttons.push(btnWall);
 
-    var btnGate = new Tool(posX, toolPos[tools.GATE], 50, 50, tools.GATE, 'img/single_gate.png', 'Single Gate (G)', CROSS, 71);
+    let btnGate = new Tool(posX, toolPos[tools.GATE], 50, 50, tools.GATE, 'img/single_gate.png', 'Single Gate (G)', CROSS, 71);
     btnGate.setFnc(function(){
         wDoor = wSDoor;
         toolClick(tools.GATE);
@@ -124,7 +126,7 @@ class Toolbar{
     });
     this.buttons.push(btnGate);
 
-    var btnDouble = new Tool(posX, toolPos[tools.DOUBLE], 50, 50, tools.DOUBLE, 'img/double_gate.png', 'Double Gate (D)', CROSS, 68);
+    let btnDouble = new Tool(posX, toolPos[tools.DOUBLE], 50, 50, tools.DOUBLE, 'img/double_gate.png', 'Double Gate (D)', CROSS, 68);
     btnDouble.setFnc(function(){
         wDoor = wDDoor;
         toolClick(tools.DOUBLE);
@@ -132,10 +134,10 @@ class Toolbar{
     });
     this.buttons.push(btnDouble);
 
-    var btnOrto = new Tool(posX, toolPos[tools.ORTO], 50, 50, tools.ORTO, 'img/ortogonal.png', 'Orto', HAND, 0);
+    let btnOrto = new Tool(posX, toolPos[tools.ORTO], 50, 50, tools.ORTO, 'img/ortogonal.png', 'Orto', HAND, 0);
     this.buttons.push(btnOrto);
 
-    var btnClear = new Tool(posX, toolPos[tools.BIN], 50, 50, tools.BIN, 'img/clear.png', 'Clear (X)', CROSS, 88);
+    let btnClear = new Tool(posX, toolPos[tools.BIN], 50, 50, tools.BIN, 'img/clear.png', 'Clear (X)', CROSS, 88);
     btnClear.setFnc(function(){ confirmClearSc(); });
     this.buttons.push(btnClear);
     */
@@ -146,22 +148,22 @@ class Toolbar{
   }
 
   show(){
-    for(var i=0;i<this.buttons.length;i++){
-      this.buttons[i].show();
+    for (const btn of this.buttons) {
+      btn.show();
     }
   }
 
   over(){
-    for(var i=0;i<this.buttons.length;i++){
-      this.buttons[i].over();
+    for (const btn of this.buttons) {
+      btn.over();
     }
   }
 
   getButton(tipo){
-      var btn = null;
-      for(var i=0;i<this.buttons.length;i++){
-          if(this.buttons[i].val == tipo){
-              btn = this.buttons[i];
+      let btn = null;
+      for (const candidate of this.buttons) {
+          if(candidate.val == tipo){
+              btn = candidate;
               break;
           }
       }
@@ -171,14 +173,14 @@ class Toolbar{
   clicked(){
 
 
-    for(var i=0;i<this.buttons.length;i++){
-      var r = this.buttons[i].clicked();
+    for (const button of this.buttons) {
+      let r = button.clicked();
 
       if(r != null){
-          this.actual = this.buttons[i];
-          for(var i=0;i<this.buttons.length;i++){
-              if(this.buttons[i] != r && r.group == this.buttons[i].group) {
-                  this.buttons[i].setSelected(false);
+          this.actual = button;
+          for (const btn of this.buttons) {
+              if(btn != r && r.group == btn.group) {
+                  btn.setSelected(false);
               }
           }
           if (r.val == tools.ORTO) {
@@ -190,6 +192,7 @@ class Toolbar{
           else {
               r.setSelected(true);
           }
+          break; // one button per click; the old shared `var i` ended the loop here
       }
       /*
       if(r){
@@ -204,12 +207,12 @@ class Toolbar{
   }
 
   shortcut(code){
-    for(var i=0;i<this.buttons.length;i++){
-      var r = this.buttons[i].shortcutted(code);
+    for (const btn of this.buttons) {
+      let r = btn.shortcutted(code);
       if(r){
-        if(this.actual && this.buttons[i].group == 1){
+        if(this.actual && btn.group == 1){
           this.actual.setSelected(false);
-          this.actual = this.buttons[i];
+          this.actual = btn;
         }
         break;
       }

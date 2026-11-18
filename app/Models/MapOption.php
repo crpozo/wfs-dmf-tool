@@ -15,7 +15,7 @@ class MapOption extends Model
         'option',
         'sort_order',
     ];
-    
+
     /**
      * Get the option number for a given material and name.
      *

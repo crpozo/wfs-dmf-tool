@@ -24,14 +24,14 @@ class Edge{
     }
 
     if(type == tools.GATE){
-        var dx = (this.node2.x-this.node1.x)/this.length;
-        var dy = (this.node2.y-this.node1.y)/this.length;
+        let dx = (this.node2.x-this.node1.x)/this.length;
+        let dy = (this.node2.y-this.node1.y)/this.length;
         this.x3 = this.node1.x+this.length*dx*sqrt(2)/2-this.length*dy*sqrt(2)/2;
         this.y3 = this.node1.y+this.length*dy*sqrt(2)/2+this.length*dx*sqrt(2)/2;
     }
     if(type == tools.DOUBLE){
-        var dx = ((this.node2.x+this.node1.x)/2 - this.node1.x) / (w/2);
-        var dy = ((this.node2.y+this.node1.y)/2 - this.node1.y) / (w/2);
+        let dx = ((this.node2.x+this.node1.x)/2 - this.node1.x) / (w/2);
+        let dy = ((this.node2.y+this.node1.y)/2 - this.node1.y) / (w/2);
         this.x3 = this.node1.x + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
         this.y3 = this.node1.y + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
 
@@ -41,7 +41,7 @@ class Edge{
         this.x4 = this.node2.x - (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
         this.y4 = this.node2.y + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
         */
-        var dw = this.length * (sqrt(2) - 1) / sqrt(2);
+        let dw = this.length * (sqrt(2) - 1) / sqrt(2);
         this.x4 = this.x3 + dw / (sqrt(1 + sq(this.m)));
         this.y4 = this.y3 + this.m * dw / (sqrt(1 + sq(this.m)));
     }
@@ -70,16 +70,16 @@ class Edge{
   }
 
   setDim(){
-    var p1 = ftToPixels(this.node1.x,this.node1.y);
-    var p2 = ftToPixels(this.node2.x,this.node2.y);
+    let p1 = ftToPixels(this.node1.x,this.node1.y);
+    let p2 = ftToPixels(this.node2.x,this.node2.y);
 
     //var dim = dimension(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
-    var dim = dimension(p1.x,p1.y,p2.x,p2.y);
+    let dim = dimension(p1.x,p1.y,p2.x,p2.y);
     this.addDim(dim);
   }
 
   proj(x,y){
-    var q = pixelsToFt(x,y);
+    let q = pixelsToFt(x,y);
 
     let bs = q.y - this.ms * q.x;
     let x2 = (bs - this.b) / (this.m - this.ms);
@@ -117,19 +117,19 @@ class Edge{
   }
 
   check(x,y,d){
-    var r = false;
-    var pt = this.proj(x,y);
-    var x1 = pt.x;
-    var y1 = pt.y;
+    let r = false;
+    let pt = this.proj(x,y);
+    let x1 = pt.x;
+    let y1 = pt.y;
 
-    var dist=sqrt(sq(x1-x) + sq(y1-y));
+    let dist=sqrt(sq(x1-x) + sq(y1-y));
     if(dist < d){
-      var pmin = ftToPixels(this.xMin, this.yMin);
-      var pmax = ftToPixels(this.xMax, this.yMax);
+      let pmin = ftToPixels(this.xMin, this.yMin);
+      let pmax = ftToPixels(this.xMax, this.yMax);
       if(toolActual == tools.GATE || toolActual == tools.DOUBLE){
         if(((x1>=pmin.x && x1<=pmax.x) || this.ms == 0) && y1>=pmin.y && y1<=pmax.y){
-          var p1;
-          var p2;
+          let p1;
+          let p2;
           if(this.ms == 0){
               if (this.node1.y < this.node2.y) {
                   p1 = ftToPixels(this.node1.x, this.node1.y);
@@ -139,18 +139,16 @@ class Edge{
                   p1 = ftToPixels(this.node2.x, this.node2.y);
               }
           }
-          else {
-              if (this.node1.x < this.node2.x) {
+          else if (this.node1.x < this.node2.x) {
                   p1 = ftToPixels(this.node1.x, this.node1.y);
                   p2 = ftToPixels(this.node2.x, this.node2.y);
               } else {
                   p2 = ftToPixels(this.node1.x, this.node1.y);
                   p1 = ftToPixels(this.node2.x, this.node2.y);
               }
-          }
-          var w = wDoor * gridSpacing;
-          var x2 = x1 + w / (sqrt(1 + sq(this.m)));
-          var y2 = y1 + this.m * w / (sqrt(1 + sq(this.m)));
+          let w = wDoor * gridSpacing;
+          let x2 = x1 + w / (sqrt(1 + sq(this.m)));
+          let y2 = y1 + this.m * w / (sqrt(1 + sq(this.m)));
 
           if(this.ms == 0){
               x2 = x1;
@@ -164,29 +162,29 @@ class Edge{
 
               // Puerta
               if(toolActual == tools.GATE) {
-                  var dx = (x2 - x1) / w;
-                  var dy = (y2 - y1) / w;
-                  var x3 = x1 + w * dx * sqrt(2) / 2 - w * dy * sqrt(2) / 2;
-                  var y3 = y1 + w * dy * sqrt(2) / 2 + w * dx * sqrt(2) / 2;
+                  let dx = (x2 - x1) / w;
+                  let dy = (y2 - y1) / w;
+                  let x3 = x1 + w * dx * sqrt(2) / 2 - w * dy * sqrt(2) / 2;
+                  let y3 = y1 + w * dy * sqrt(2) / 2 + w * dx * sqrt(2) / 2;
                   line(x1, y1, x3, y3);
               }
               else{ //DOUBLE
-                  var dx = ((x2+x1)/2 - x1) / (w/2);
-                  var dy = ((y2+y1)/2 - y1) / (w/2);
-                  var x3 = x1 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
-                  var y3 = y1 + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
+                  let dx = ((x2+x1)/2 - x1) / (w/2);
+                  let dy = ((y2+y1)/2 - y1) / (w/2);
+                  let x3 = x1 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
+                  let y3 = y1 + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
                   line(x1, y1, x3, y3);
 
                   /*
                   dx = (x2 - (x2+x1)/2) / (w/2);
                   dy = (y2 - (y2+y1)/2) / (w/2);
-                  var x4 = x2 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
-                  var y4 = y2 - (w/2) * dy * sqrt(2) / 2 - (w/2) * dx * sqrt(2) / 2;
+                  let x4 = x2 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
+                  let y4 = y2 - (w/2) * dy * sqrt(2) / 2 - (w/2) * dx * sqrt(2) / 2;
                   line(x2, y2, x4, y4);
                    */
-                  var dw = w * (sqrt(2) - 1) / sqrt(2);
-                  var x4 = x3 + dw / (sqrt(1 + sq(this.m)));
-                  var y4 = y3 + this.m * dw / (sqrt(1 + sq(this.m)));
+                  let dw = w * (sqrt(2) - 1) / sqrt(2);
+                  let x4 = x3 + dw / (sqrt(1 + sq(this.m)));
+                  let y4 = y3 + this.m * dw / (sqrt(1 + sq(this.m)));
                   line(x2, y2, x4, y4);
               }
 
@@ -196,28 +194,26 @@ class Edge{
           }
         }
       }
-      else{
-        if(toolActual == tools.ERASER){
+      else if(toolActual == tools.ERASER){
             if(((x1>=pmin.x && x1<=pmax.x) || this.ms == 0) && y1>=pmin.y && y1<=pmax.y){
                 this.del = true;
                 r = true;
             }
         }
-      }
     }
     return r;
   }
 
   check2(x,y,d){
-    var pt = this.proj(x,y);
-    var x1 = pt.x;
-    var y1 = pt.y;
+    let pt = this.proj(x,y);
+    let x1 = pt.x;
+    let y1 = pt.y;
 
-    var dist=sqrt(sq(x1-x) + sq(y1-y));
+    let dist=sqrt(sq(x1-x) + sq(y1-y));
     if(dist < d){
       if(toolActual == tools.GATE){
-        var pmin = ftToPixels(this.xMin, this.yMin);
-        var pmax = ftToPixels(this.xMax, this.yMax);
+        let pmin = ftToPixels(this.xMin, this.yMin);
+        let pmax = ftToPixels(this.xMax, this.yMax);
         /*
         if(((pt.x>=this.xMin && pt.x<=this.xMax) || this.ms == 0) &&
            pt.y>=this.yMin && pt.y<=this.yMax){
@@ -225,15 +221,15 @@ class Edge{
         if(((x1>=pmin.x && x1<=pmax.x) || this.ms == 0) &&
            y1>=pmin.y && y1<=pmax.y){
 
-          var p1 = ftToPixels(this.node1.x, this.node1.y);
-          var p2 = ftToPixels(this.node2.x, this.node2.y);
+          let p1 = ftToPixels(this.node1.x, this.node1.y);
+          let p2 = ftToPixels(this.node2.x, this.node2.y);
           /*
           this.addDim(dimension(this.node1.x,this.node1.y,pt.x,pt.y));
           this.addDim(dimension(pt.x,pt.y,this.node2.x,this.node2.y));
           */
-          var w = wDoor * gridSpacing;
-          var x2 = x1 + w / (sqrt(1+sq(this.m)));
-          var y2 = y1 + this.m * w / (sqrt(1+sq(this.m)));
+          let w = wDoor * gridSpacing;
+          let x2 = x1 + w / (sqrt(1+sq(this.m)));
+          let y2 = y1 + this.m * w / (sqrt(1+sq(this.m)));
 
           ellipse(x1, y1, 5, 5);
           this.clearDims();
@@ -241,10 +237,10 @@ class Edge{
           //ellipse((pt.x+x2)/2, (pt.y+y2)/2, w, w, w);
 
           // Puerta
-          var dx = (x2-pt.x)/w;
-          var dy = (y2-pt.y)/w;
-          var x3 = x1+w*dx*sqrt(2)/2-w*dy*sqrt(2)/2;
-          var y3 = y1+w*dy*sqrt(2)/2+w*dx*sqrt(2)/2;
+          let dx = (x2-pt.x)/w;
+          let dy = (y2-pt.y)/w;
+          let x3 = x1+w*dx*sqrt(2)/2-w*dy*sqrt(2)/2;
+          let y3 = y1+w*dy*sqrt(2)/2+w*dx*sqrt(2)/2;
           line(x1,y1,x3,y3);
 
           if(p1.x <= p2.x){
@@ -258,8 +254,7 @@ class Edge{
               this.addDim(dimension(x2,y2,p2.x,p2.y));
             }
           }
-          else{
-            if(pt.x <= p2.x){
+          else if(pt.x <= p2.x){
               this.addDim(dimension(p2.x,p2.y,x1,y1));
               this.addDim(dimension(x1,y1,p1.x,p1.y));
             }
@@ -268,14 +263,11 @@ class Edge{
               this.addDim(dimension(x1,y1,x2,y2));
               this.addDim(dimension(x2,y2,p1.x,p1.y));
             }
-          }
         }
       }
-      else{
-        if(toolActual == tools.ERASER){
+      else if(toolActual == tools.ERASER){
           this.del = true;
         }
-      }
     }
     return (dist < d);
   }
@@ -305,35 +297,35 @@ class Edge{
     }
 
     if(this.type == tools.GATE || this.type == tools.DOUBLE) {
-        var p1 = ftToPixels(this.node1.x, this.node1.y);
-        var p3 = ftToPixels(this.x3, this.y3);
+        let p1 = ftToPixels(this.node1.x, this.node1.y);
+        let p3 = ftToPixels(this.x3, this.y3);
 
         line(p1.x, p1.y, p3.x, p3.y);
         if(this.type == tools.DOUBLE){
-            var p2 = ftToPixels(this.node2.x, this.node2.y);
-            var p4 = ftToPixels(this.x4, this.y4);
+            let p2 = ftToPixels(this.node2.x, this.node2.y);
+            let p4 = ftToPixels(this.x4, this.y4);
 
             line(p2.x, p2.y, p4.x, p4.y);
         }
     }
     else
     {
-        var p1 = ftToPixels(this.node1.x, this.node1.y);
-        var p2 = ftToPixels(this.node2.x, this.node2.y);
+        let p1 = ftToPixels(this.node1.x, this.node1.y);
+        let p2 = ftToPixels(this.node2.x, this.node2.y);
         //line(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
         line(p1.x, p1.y, p2.x, p2.y);
         //dimension(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
     }
     drawingContext.setLineDash([]);
     stroke(0);
-    for(var i=0;i<this.dims.length;i++){
-        this.dims[i].paint();
+    for (const dim of this.dims) {
+        dim.paint();
     }
     pop();
   }
 
   countId(id){
-    var c = 0;
+    let c = 0;
     if(this.node1.id == id){
       c++;
     }

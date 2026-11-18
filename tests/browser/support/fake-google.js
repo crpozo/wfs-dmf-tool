@@ -324,7 +324,7 @@
                 this.dot.setAttribute('visibility', 'hidden');
                 return;
             }
-            const [a, b] = [this.map.toPixel(this.path[0]), this.map.toPixel(this.path[this.path.length - 1])];
+            const [a, b] = [this.map.toPixel(this.path[0]), this.map.toPixel(this.path.at(-1))];
             const { strokeColor, strokeOpacity, strokeWeight, icons, zIndex, clickable } = this.options;
             const icon = icons?.[0];
             const dashed = strokeOpacity === 0 && icon;

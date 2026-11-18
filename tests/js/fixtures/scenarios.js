@@ -25,7 +25,7 @@ export function makeProject(points, { closed = false, gates = {}, extra = {}, ad
             is_existing_wall: false,
             material: 1,
             gates: gates[i] || [],
-            ...(extra[i] || {}),
+            ...extra[i],
         });
     }
     return { source: 'map', address, place_id: null, center: vertices[0], zoom: 20, vertices, runs };

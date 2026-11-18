@@ -38,14 +38,14 @@ class Tool {
   }
 
   clicked() {
-    var resp = null;
+    let resp = null;
     if (mouseX > this.x && mouseX < this.x + this.w && mouseY > this.y && mouseY < this.y + this.h) {
       resp = this;
       if(this.fnc){
         this.fnc();
       }
 
-      var btnActual = tb.getButton(toolActualGroup[this.group]);
+      let btnActual = tb.getButton(toolActualGroup[this.group]);
       if(btnActual){
           btnActual.setSelected(false);
       }
@@ -88,7 +88,7 @@ class Tool {
   }
 
   shortcutted(code) {
-    var resp = false;
+    let resp = false;
     if (this.shortcut == code) {
       resp = true;
       if(this.fnc){

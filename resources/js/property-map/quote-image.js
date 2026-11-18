@@ -366,7 +366,7 @@ function drawScaleBar(context, project, toPixels, area, scale) {
     const first = project.vertices[0];
     const metersPerWorldPixel = (156543.03392 * Math.cos((first.lat * Math.PI) / 180)) / 2 ** 20;
     const pixelsPerFoot = toPixels.scale / (metersPerWorldPixel * 3.28084);
-    const feet = SCALE_BAR_FEET.find((value) => value * pixelsPerFoot >= 60 * scale) ?? SCALE_BAR_FEET[SCALE_BAR_FEET.length - 1];
+    const feet = SCALE_BAR_FEET.find((value) => value * pixelsPerFoot >= 60 * scale) ?? SCALE_BAR_FEET.at(-1);
     const length = feet * pixelsPerFoot;
     const x = area.x + 16 * scale;
     const y = area.y + area.height - 16 * scale;

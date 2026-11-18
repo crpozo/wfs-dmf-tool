@@ -13,7 +13,7 @@ class Graph{
   addVertex(x,y){
     this.count++;
     //let vert= new Vert(this.count, x, y);
-    var p = pixelsToFt(x, y);
+    let p = pixelsToFt(x, y);
     let vert= new Vert(this.count, p.x, p.y);
     this.vertices.push(vert);
     return vert;
@@ -28,9 +28,8 @@ class Graph{
   }
 
   countEdgesVert(id){
-    var c = 0;
-    for(var i=0;i<this.vertices.length;i++){
-      var v = this.vertices[i];
+    let c = 0;
+    for (const v of this.vertices) {
       c = c + v.countEdgesId(id);
     }
     return c;
@@ -41,12 +40,12 @@ class Graph{
     vert1.removeEdge(vert2);
     vert2.removeEdge(vert1);
     /*
-    var c = vert1.countEdges();
-    for(var i=0;i<this.vertices.length;i++){
-      var v = this.vertices[i];
+    let c = vert1.countEdges();
+    for(let i=0;i<this.vertices.length;i++){
+      let v = this.vertices[i];
       if(v != vert1){
-        for(var j=0;j<v.edges.length;j++){
-          var e = v.edges[j];
+        for(let j=0;j<v.edges.length;j++){
+          let e = v.edges[j];
           if(e.node1 == vert1 || e.node2 == vert1){
             c++;
           }
@@ -57,11 +56,11 @@ class Graph{
       this.removeVertex(vert1);
     }
     c = 0;
-    for(var i=0;i<this.vertices.length;i++){
-      var v = this.vertices[i];
+    for(let i=0;i<this.vertices.length;i++){
+      let v = this.vertices[i];
       if(v != vert2){
-        for(var j=0;j<v.edges.length;j++){
-          var e = v.edges[j];
+        for(let j=0;j<v.edges.length;j++){
+          let e = v.edges[j];
           if(e.node1 == vert2 || e.node2 == vert2){
             c++;
           }
@@ -93,8 +92,7 @@ class Graph{
 
   check(x,y,d){
     let resp = null;
-    for(var i=0;i<this.vertices.length;i++){
-      let vertx = this.vertices[i];
+    for (const vertx of this.vertices) {
       if(actual == null || (vertx.id != actual.id)){
       //if(actual != null && (vertx.id != actual.id) ){
         if(vertx.check(x,y,d)){
@@ -108,14 +106,14 @@ class Graph{
   }
 
     addDoor(edge, x,y,type, width){
-        var pt = edge.proj(x,y);
-        var x1 = pt.x;
-        var y1 = pt.y;
+        let pt = edge.proj(x,y);
+        let x1 = pt.x;
+        let y1 = pt.y;
 
-        var p1;
-        var p2;
-        var n1 = edge.node1;
-        var n2 = edge.node2;
+        let p1;
+        let p2;
+        let n1 = edge.node1;
+        let n2 = edge.node2;
         if(edge.ms == 0) {
             if (edge.node1.y < edge.node2.y) {
                 p1 = ftToPixels(edge.node1.x, edge.node1.y);
@@ -127,8 +125,7 @@ class Graph{
                 n2 = edge.node1;
             }
         }
-        else {
-            if (edge.node1.x < edge.node2.x) {
+        else if (edge.node1.x < edge.node2.x) {
                 p1 = ftToPixels(edge.node1.x, edge.node1.y);
                 p2 = ftToPixels(edge.node2.x, edge.node2.y);
             } else {
@@ -137,15 +134,14 @@ class Graph{
                 n1 = edge.node2;
                 n2 = edge.node1;
             }
-        }
 
-        var w = width * gridSpacing;
-        var x2 = x1 + w / (sqrt(1+sq(edge.m)));
-        var y2 = y1 + edge.m * w / (sqrt(1+sq(edge.m)));
+        let w = width * gridSpacing;
+        let x2 = x1 + w / (sqrt(1+sq(edge.m)));
+        let y2 = y1 + edge.m * w / (sqrt(1+sq(edge.m)));
 
-        var v1 = this.addVertex(x1, y1);
-        var v2 = this.addVertex(x2, y2);
-        var typeF = edge.type;
+        let v1 = this.addVertex(x1, y1);
+        let v2 = this.addVertex(x2, y2);
+        let typeF = edge.type;
 
         this.addEdge(n1,v1,typeF);
         this.addEdge(v1,v2,type);
@@ -155,10 +151,8 @@ class Graph{
     }
 
     checkEdges(x,y,d){
-        for(var i=0;i<this.vertices.length;i++){
-          let vert = this.vertices[i];
-          for(var j=0;j<vert.edges.length;j++){
-            let edge = vert.edges[j];
+        for (const vert of this.vertices) {
+          for (const edge of vert.edges) {
             if(edge.type == tools.FENCE || edge.type == tools.FENCE_2){
               if(!edge.check(x,y,d)){
                 edge.setDel(false);
@@ -167,8 +161,7 @@ class Graph{
                   edge.setDim();
                 }
               }
-              else{
-                if (mouseIsPressed){
+              else if (mouseIsPressed){
                   if(toolActual == tools.ERASER){
                     this.removeEdge(edge.node1, edge.node2);
                   }
@@ -177,7 +170,6 @@ class Graph{
                   }
                   mouseIsPressed = false;
                 }
-              }
             }
           }
         }

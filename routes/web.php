@@ -367,7 +367,7 @@ Route::get('/test-create-odoo-quote', function () {
         ->post($baseUrl . '/sale.order/create', [
             'vals_list' => [
                 [
-                    'partner_id' => $customerId,                    
+                    'partner_id' => $customerId,
                     'client_order_ref' => 'Fence App Test Quote',
                     'order_line' => $orderLines,
                 ]
@@ -399,7 +399,7 @@ Route::get('/test-create-odoo-quote', function () {
         ];
     }
 
-    
+
     $writeResponse = Http::withHeaders($headers)
     ->post($baseUrl . '/sale.order/write', [
         'ids' => [$saleOrderId],
@@ -414,7 +414,7 @@ Route::get('/test-create-odoo-quote', function () {
             'mail_notify_force_send' => false,
         ],
     ]);
-    
+
 
     $readResponse = Http::withHeaders($headers)
         ->post($baseUrl . '/sale.order/read', [
@@ -425,7 +425,7 @@ Route::get('/test-create-odoo-quote', function () {
     return [
         'created' => true,
         'sale_order_id' => $saleOrderId,
-        'quote' => $readResponse->json()[0] ?? null,        
+        'quote' => $readResponse->json()[0] ?? null,
 
         'read_status' => $readResponse->status(),
         'read_body' => $readResponse->body(),

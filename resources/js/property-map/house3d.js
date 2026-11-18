@@ -378,7 +378,7 @@ function canvas(width, height) {
 }
 
 function hexToRgb(hex) {
-    return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+    return [Number.parseInt(hex.slice(1, 3), 16), Number.parseInt(hex.slice(3, 5), 16), Number.parseInt(hex.slice(5, 7), 16)];
 }
 
 const textureCache = {};
@@ -406,7 +406,7 @@ function roofTiles(tone) {
     const rowHeight = n / rows;
     const vary = (hex, j) => {
         const [r, v, b] = hexToRgb(hex);
-        const k = (value, f) => Math.max(0, Math.min(255, value + j * f)) | 0;
+        const k = (value, f) => Math.trunc(Math.max(0, Math.min(255, value + j * f)));
         return `rgb(${k(r, 1)},${k(v, 0.8)},${k(b, 0.7)})`;
     };
     for (let f = 0; f < rows; f++) {

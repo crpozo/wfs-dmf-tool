@@ -19,7 +19,7 @@ class OdooItem
         $this->description = $description;
     }
 
-    
+
     public function setOdooInfo($id){
         $this->id = $id;
     }

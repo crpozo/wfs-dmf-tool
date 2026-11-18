@@ -23,7 +23,6 @@ class QuoteRequestController extends Controller
 {
     public function store(StoreQuoteRequest $request)
     {
-        //$quoteRequest = QuoteRequest::create($request->validated());
         $data = $request->validated();
         $data['delivery'] = $data['fulfillment_method'] === 'delivery';
         $data['company_id'] = $data['delivery'] ? 1 : (int) $data['company_id'];
@@ -32,20 +31,12 @@ class QuoteRequestController extends Controller
         // Inject JSON from session (NOT from form)
         $data['sketch'] = session('sketch');
         $data['material'] = session()->get('materials', []);
-        
+
         $code = $data['material']['1']['code'];
         $pvc = (substr($code,0,1) == '4');
         $notes = null;
         if($pvc){
             $notes = [];
-            /*
-            if(substr($code,0,3) == '431'){
-                $notes[] = '3" Pickets';
-            }
-            if(substr($code,0,3) == '432'){
-                $notes[] = '3" Pickets + Dog ear';
-            } 
-            */           
             $notes[] = 'To ensure optimal results with an ideal aesthetic finish, please contact a sales representative.';
             $notes[] = 'Para garantizar una optimización con un acabado estético ideal, por favor comuníquese con un representante de ventas';
         }
@@ -199,23 +190,15 @@ class QuoteRequestController extends Controller
         $data['sketch'] = session('sketch');
         $data['material'] = session()->get('materials', []);
         $data['material']['concrete'] = (bool) session()->get('concrete', false);
-        
+
         $code = $data['material']['1']['code'];
         $pvc = (substr($code,0,1) == '4');
         $notes = null;
         if($pvc){
             $notes = [];
-            /*
-            if(substr($code,0,3) == '431'){
-                $notes[] = '3" Pickets';
-            }
-            if(substr($code,0,3) == '432'){
-                $notes[] = '3" Pickets + Dog ear';
-            }
-            */
-            $notes[] = 'To ensure optimal results with an ideal aesthetic finish, please contact a sales representative.';            
-            $notes[] = 'Para garantizar una optimización con un acabado estético ideal, por favor comuníquese con un representante de ventas';            
-        }    
+            $notes[] = 'To ensure optimal results with an ideal aesthetic finish, please contact a sales representative.';
+            $notes[] = 'Para garantizar una optimización con un acabado estético ideal, por favor comuníquese con un representante de ventas';
+        }
 
         $estimate = session('estimate');
         $data['estimate'] = $estimate;
@@ -237,7 +220,7 @@ class QuoteRequestController extends Controller
             $data['ref'] ?: 'Fence App Quote',
             null,
             $validated['pricelist'] ?? null,
-            $notes,            
+            $notes,
             $data['company_id'],
             isset($validated['lead_source_id']) ? (int) $validated['lead_source_id'] : null
         );
@@ -946,7 +929,7 @@ class QuoteRequestController extends Controller
         if($delivery){
             $default = 'Delivery';
         }
-        return $default;        
+        return $default;
     }
 
     private function formatPickupLocation($locationId): string

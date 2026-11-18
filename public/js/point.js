@@ -19,13 +19,11 @@ class Pt{
         textAlign(CENTER, BOTTOM);
         dy = -2;
       }
-      else{
-        if(n.y > this.y){
+      else if(n.y > this.y){
           textAlign(LEFT, CENTER);
           dx = 5;
         }
-        else{
-          if(this.y > n.y){
+        else if(this.y > n.y){
             textAlign(RIGHT, CENTER);
             dx = -5;
           } 
@@ -33,9 +31,6 @@ class Pt{
             textAlign(CENTER, TOP);
             dy = 2;
           }
-        }
-        
-      }
       text(d, this.x+(n.x-this.x)/2 + dx, this.y+(n.y-this.y)/2 + dy);      
       n.show();
     }

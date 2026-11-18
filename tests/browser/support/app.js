@@ -33,7 +33,7 @@ async function mirrorCdn(page) {
     await page.route('https://code.jquery.com/ui/**', serve('jquery-ui-dist/jquery-ui.min.js'));
     await page.route('https://cdnjs.cloudflare.com/ajax/libs/p5.js/**', serve('p5/lib/p5.js'));
     await page.route('https://cdn.jsdelivr.net/npm/**', (route) => {
-        const [, name, file] = new URL(route.request().url()).pathname.match(/^\/npm\/((?:@[^/]+\/)?[^@/]+)@[^/]+\/(.+)$/) || [];
+        const [, name, file] = /^\/npm\/((?:@[^/]+\/)?[^@/]+)@[^/]+\/(.+)$/.exec(new URL(route.request().url()).pathname) || [];
         return name ? serve(`${name}/${file}`)(route) : route.abort();
     });
 }

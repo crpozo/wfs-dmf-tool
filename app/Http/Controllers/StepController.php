@@ -144,8 +144,6 @@ class StepController extends Controller
         $this->importedResponses = [];
 
         DB::transaction(function () use ($data) {
-            //Step::truncate();
-            //Response::truncate();
 
             // Pass 1 – insert all without next_id
             foreach ($data as $rootNode) {
