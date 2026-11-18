@@ -1,0 +1,156 @@
+{
+ "before": {
+  "A-rectangle-two-gates-z18": {
+   "labels": 6,
+   "overlappingPairs": 11,
+   "cornersCovered": 4
+  },
+  "A-rectangle-two-gates-z20": {
+   "labels": 6,
+   "overlappingPairs": 2,
+   "cornersCovered": 2
+  },
+  "B-backyard-short-returns-z20": {
+   "labels": 7,
+   "overlappingPairs": 2,
+   "cornersCovered": 4
+  },
+  "B-backyard-short-returns-z21": {
+   "labels": 7,
+   "overlappingPairs": 2,
+   "cornersCovered": 4
+  },
+  "C-irregular-consecutive-gates-z18": {
+   "labels": 8,
+   "overlappingPairs": 25,
+   "cornersCovered": 5
+  },
+  "C-irregular-consecutive-gates-z20": {
+   "labels": 8,
+   "overlappingPairs": 4,
+   "cornersCovered": 2
+  },
+  "C-irregular-consecutive-gates-z21": {
+   "labels": 8,
+   "overlappingPairs": 4,
+   "cornersCovered": 1
+  },
+  "D-staircase-small-segments-z20": {
+   "labels": 11,
+   "overlappingPairs": 19,
+   "cornersCovered": 8
+  },
+  "D-staircase-small-segments-z21": {
+   "labels": 11,
+   "overlappingPairs": 10,
+   "cornersCovered": 6
+  },
+  "E-large-lot-z18": {
+   "labels": 6,
+   "overlappingPairs": 2,
+   "cornersCovered": 2
+  },
+  "E-large-lot-z19": {
+   "labels": 6,
+   "overlappingPairs": 2,
+   "cornersCovered": 0
+  },
+  "F-narrow-side-yard-z20": {
+   "labels": 6,
+   "overlappingPairs": 3,
+   "cornersCovered": 4
+  },
+  "F-narrow-side-yard-z21": {
+   "labels": 6,
+   "overlappingPairs": 2,
+   "cornersCovered": 4
+  },
+  "I-single-long-side-three-gates-z20": {
+   "labels": 4,
+   "overlappingPairs": 3,
+   "cornersCovered": 0
+  },
+  "J-dense-zigzag-z21": {
+   "labels": 15,
+   "overlappingPairs": 18,
+   "cornersCovered": 0
+  }
+ },
+ "after": {
+  "A-rectangle-two-gates-z18": {
+   "labels": 5,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "A-rectangle-two-gates-z20": {
+   "labels": 6,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "B-backyard-short-returns-z20": {
+   "labels": 7,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "B-backyard-short-returns-z21": {
+   "labels": 7,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "C-irregular-consecutive-gates-z18": {
+   "labels": 6,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "C-irregular-consecutive-gates-z20": {
+   "labels": 8,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "C-irregular-consecutive-gates-z21": {
+   "labels": 8,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "D-staircase-small-segments-z20": {
+   "labels": 9,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "D-staircase-small-segments-z21": {
+   "labels": 10,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "E-large-lot-z18": {
+   "labels": 6,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "E-large-lot-z19": {
+   "labels": 6,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "F-narrow-side-yard-z20": {
+   "labels": 6,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "F-narrow-side-yard-z21": {
+   "labels": 6,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "I-single-long-side-three-gates-z20": {
+   "labels": 4,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  },
+  "J-dense-zigzag-z21": {
+   "labels": 15,
+   "overlappingPairs": 0,
+   "cornersCovered": 0
+  }
+ }
+}
