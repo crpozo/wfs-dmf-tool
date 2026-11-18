@@ -19,7 +19,7 @@
  * project need no extra code here.
  */
 
-import { gateSpan, worldPoint, worldToLatLng } from './geometry.js';
+import { gateSpan, pointOnSide, worldPoint, worldToLatLng } from './geometry.js';
 import { layoutLabels, rememberLayout } from './label-layout.js';
 import { describeLabels } from './labels.js';
 import { hasFinePointer } from './mode.js';
@@ -42,7 +42,7 @@ const PENCIL_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
 const LEADER_DOT = 'M -1,0 A 1,1 0 1,1 1,0 A 1,1 0 1,1 -1,0 Z';
 
 export function mountDrawing({ map, store, mode, background, libs, onRunFocus, notify }) {
-    const { Polyline, InfoWindow, AdvancedMarkerElement, spherical } = libs;
+    const { Polyline, InfoWindow, AdvancedMarkerElement } = libs;
     const isPlan = () => background?.get() === 'plan';
     const theme = () => (isPlan() ? THEMES.plan : THEMES.satellite);
 
@@ -59,10 +59,12 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
     const preview = new Polyline({ map: null, clickable: false, zIndex: 5, ...previewStyle() });
     // Labels are laid out for a zoom level; when it changes they are placed again, once per frame.
     map.addListener('zoom_changed', scheduleLayout);
-    document.fonts?.ready.then(() => {
-        labelSizes.clear(); // measured before the brand font arrived
-        scheduleLayout();
-    });
+    document.fonts?.ready
+        .then(() => {
+            labelSizes.clear(); // measured before the brand font arrived
+            scheduleLayout();
+        })
+        .catch(() => {}); // without the brand font the labels keep the sizes already measured
     let draggingId = null;
     let draggingGateId = null;
     // Mouse press on the map in Draw mode (drag-to-draw): where it started and the last
@@ -316,7 +318,7 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
                     gateViews.set(gate.id, view);
                 }
                 const span = gateSpan(run, gate);
-                const path = [spherical.interpolate(a, b, span.from), spherical.interpolate(a, b, span.to)];
+                const path = [pointOnSide(a, b, span.from), pointOnSide(a, b, span.to)];
                 view.line.setPath(path);
                 view.line.setOptions({ strokeColor: run.gates_fit ? colors.gate : colors.gateProblem });
                 const outlined = Boolean(colors.gateOutline) && run.gates_fit;
@@ -588,7 +590,7 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
         if (!run) {
             return;
         }
-        const middle = spherical.interpolate({ lat: run.a.lat, lng: run.a.lng }, { lat: run.b.lat, lng: run.b.lng }, 0.5);
+        const middle = pointOnSide(run.a, run.b, 0.5);
         if (!map.getBounds()?.contains(middle)) {
             map.panTo(middle);
         }

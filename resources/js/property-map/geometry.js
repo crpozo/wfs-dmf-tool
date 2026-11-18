@@ -73,6 +73,17 @@ export function lerp(a, b, t) {
 }
 
 /*
+ * The point a fraction `t` of the way along a side, on the straight line the map draws.
+ * Not google.maps.geometry.spherical.interpolate: that one returns the start point when
+ * the two ends are closer than a millionth of a radian (about 21 ft), so anything placed
+ * with it on a short side collapses onto the side's first corner.
+ */
+export function pointOnSide(a, b, t) {
+    const zoom = 20;
+    return worldToLatLng(lerp(worldPoint(a, zoom), worldPoint(b, zoom), t), zoom);
+}
+
+/*
  * The stretch of a side a gate takes up, as fractions of the side. It is drawn to the
  * scale of the ground (the measured length), so it matches the photo even when the
  * customer typed a different length for the side; the quote keeps using the typed one.

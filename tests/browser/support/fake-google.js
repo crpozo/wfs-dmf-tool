@@ -507,8 +507,13 @@
 
     const spherical = {
         // Straight in latitude and longitude: the same as a great circle across a yard.
+        // Like Google's, it gives back the start point when the ends are closer than a
+        // millionth of a radian (about 21 ft): the app must not place anything with it.
         interpolate(a, b, t) {
             const [from, to] = [literal(a), literal(b)];
+            if (this.computeDistanceBetween(a, b) / 6378137 < 1e-6) {
+                return latLng(from);
+            }
             return latLng({ lat: from.lat + (to.lat - from.lat) * t, lng: from.lng + (to.lng - from.lng) * t });
         },
         computeDistanceBetween(a, b) {

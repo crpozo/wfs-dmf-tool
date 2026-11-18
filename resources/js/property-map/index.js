@@ -83,7 +83,6 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
             Polyline: maps.Polyline,
             InfoWindow: maps.InfoWindow,
             AdvancedMarkerElement: marker.AdvancedMarkerElement,
-            spherical,
         },
         onRunFocus: (key) => panel?.focusRun(key),
     });
