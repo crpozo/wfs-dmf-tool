@@ -65,6 +65,7 @@ export function mountPanel({ root, store, materials, notify, onRunFocus }) {
         return `
             <div class="pm-gate" data-gate-id="${gate.id}">
                 <div class="pm-gate-fields">
+                    <span class="pm-gate-id" data-role="gate-ref"></span>
                     <select class="form-select wfs-input" data-role="gate-type" aria-label="Gate type">
                         ${Object.entries(TYPE_LABELS).map(([value, label]) =>
                             `<option value="${value}" ${value === gate.type ? 'selected' : ''}>${label}</option>`).join('')}
@@ -142,6 +143,11 @@ export function mountPanel({ root, store, materials, notify, onRunFocus }) {
                 gatesBox.dataset.signature = signature;
             }
             row.querySelector('[data-role="gate-add"]').hidden = run.is_existing_wall;
+        });
+
+        // G1, G2...: the short name a gate has on the map when its full label does not fit.
+        list.querySelectorAll('[data-role="gate-ref"]').forEach((badge, index) => {
+            badge.textContent = `G${index + 1}`;
         });
 
         empty.hidden = runs.length > 0;

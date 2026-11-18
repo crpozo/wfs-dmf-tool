@@ -1,0 +1,95 @@
+# Checks a branch before it reaches staging or main: unit tests, build, PHP tests and the
+# browser tests of the property map. It deploys nothing and uses no secret: Google Maps is
+# replaced by a stand-in (tests/browser/support/fake-google.js) and the Maps key below is a
+# placeholder that never leaves the runner. The deploy workflow (deploy.yml) is untouched.
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  javascript:
+    name: Unit tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests (label placement, projection, materials graph)
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  php:
+    name: PHP tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Minimal environment (an app key and nothing else)
+        run: |
+          touch .env
+          echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
+      - name: Property map (framing of the photo, snapshot route)
+        run: php artisan test --filter PropertyMap
+      # The whole suite, for information: two older tests (the customizable embed and the
+      # quote email links) were already failing before this workflow existed. Remove
+      # continue-on-error once they are fixed.
+      - name: Whole suite
+        continue-on-error: true
+        run: php artisan test
+
+  browser:
+    name: Browser tests (property map)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Environment for the drawing page (placeholder key: the map partial needs one to render)
+        run: |
+          touch .env
+          echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
+          echo "APP_URL=http://127.0.0.1:8123" >> .env
+          echo "SESSION_DRIVER=file" >> .env
+          echo "GOOGLE_MAPS_BROWSER_KEY=placeholder-not-a-key" >> .env
+      - name: Browser tests, desktop and phone
+        env:
+          WFS_EVIDENCE_DIR: evidence
+        run: npx playwright test
+      - name: Keep the pictures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: property-map-pictures
+          path: evidence
+          if-no-files-found: ignore
+          retention-days: 14

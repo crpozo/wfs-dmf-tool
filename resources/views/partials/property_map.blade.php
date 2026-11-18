@@ -69,10 +69,24 @@
                 <p class="pm-hint" data-pm-hint aria-live="polite"></p>
                 <div class="pm-map-frame">
                     <div class="pm-map" data-pm-map></div>
+                    <div class="pm-background pm-mode" role="group" aria-label="Background">
+                        <button type="button" class="pm-tool" data-pm-action="bg-satellite" aria-pressed="true" title="Draw over the satellite image">
+                            <i class="fas fa-satellite" aria-hidden="true"></i><span>Satellite</span>
+                        </button>
+                        <button type="button" class="pm-tool" data-pm-action="bg-plan" aria-pressed="false" title="Technical plan: the same drawing without the satellite image">
+                            <i class="fas fa-drafting-compass" aria-hidden="true"></i><span>Plan</span>
+                        </button>
+                    </div>
                     <p class="pm-message" data-pm-message role="status" hidden></p>
                 </div>
                 <p class="pm-disclaimer">
                     Lengths are measured on satellite imagery and are approximate. Our sales team confirms them before your order.
+                </p>
+                <p class="pm-export" data-pm-export>
+                    <span class="pm-export-title"><i class="fas fa-download" aria-hidden="true"></i> Download image:</span>
+                    <button type="button" class="pm-link-button" data-pm-action="download-satellite">Satellite</button>
+                    <button type="button" class="pm-link-button" data-pm-action="download-plan">Plan</button>
+                    <button type="button" class="pm-link-button" data-pm-action="download-both">Both</button>
                 </p>
             </div>
 

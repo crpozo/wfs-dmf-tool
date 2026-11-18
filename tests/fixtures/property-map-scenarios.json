@@ -1,0 +1,1116 @@
+{
+    "A-rectangle-two-gates": {
+        "project": {
+            "source": "map",
+            "address": "100 Example St, Fort Myers, FL",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8721155869416
+                },
+                {
+                    "lat": 26.64081978021978,
+                    "lng": -81.8721155869416
+                },
+                {
+                    "lat": 26.64081978021978,
+                    "lng": -81.8723
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 60,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 80,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 60,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "double",
+                            "style": "swing",
+                            "width_ft": 10,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 3,
+                    "to": 0,
+                    "calc_ft": 80,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.64071,
+                "lng": -81.872208
+            },
+            "zoom": 20,
+            "size": {
+                "width": 200,
+                "height": 255
+            }
+        }
+    },
+    "B-backyard-short-returns": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87227541159221
+                },
+                {
+                    "lat": 26.64040769230769,
+                    "lng": -81.87227541159221
+                },
+                {
+                    "lat": 26.64040769230769,
+                    "lng": -81.87209099853382
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87209099853382
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87206641012602
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 8,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 70,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 60,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 3,
+                    "to": 4,
+                    "calc_ft": 70,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 4,
+                    "to": 5,
+                    "calc_ft": 8,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640504,
+                "lng": -81.872183
+            },
+            "zoom": 20,
+            "size": {
+                "width": 242,
+                "height": 223
+            }
+        }
+    },
+    "C-irregular-consecutive-gates": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.64061648351648,
+                    "lng": -81.87217705796107
+                },
+                {
+                    "lat": 26.64070989010989,
+                    "lng": -81.87213095469647
+                },
+                {
+                    "lat": 26.640770329670328,
+                    "lng": -81.87223852898053
+                },
+                {
+                    "lat": 26.640696153846154,
+                    "lng": -81.87232458840778
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 40,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.3
+                        },
+                        {
+                            "type": "double",
+                            "style": "sliding",
+                            "width_ft": 12,
+                            "t": 0.7
+                        }
+                    ]
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 37,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 5,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 41,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 3,
+                    "to": 4,
+                    "calc_ft": 39,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 4,
+                    "to": 0,
+                    "calc_ft": 36,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640685,
+                "lng": -81.872228
+            },
+            "zoom": 20,
+            "size": {
+                "width": 201,
+                "height": 200
+            }
+        }
+    },
+    "D-staircase-small-segments": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87223852898053
+                },
+                {
+                    "lat": 26.640613736263735,
+                    "lng": -81.87223852898053
+                },
+                {
+                    "lat": 26.640613736263735,
+                    "lng": -81.87222316122566
+                },
+                {
+                    "lat": 26.640627472527473,
+                    "lng": -81.87222316122566
+                },
+                {
+                    "lat": 26.640627472527473,
+                    "lng": -81.87220779347079
+                },
+                {
+                    "lat": 26.64064120879121,
+                    "lng": -81.87220779347079
+                },
+                {
+                    "lat": 26.64064120879121,
+                    "lng": -81.87214632245133
+                },
+                {
+                    "lat": 26.640764835164834,
+                    "lng": -81.87214632245133
+                },
+                {
+                    "lat": 26.640764835164834,
+                    "lng": -81.8723
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 20,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 5,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 5,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 3,
+                    "to": 4,
+                    "calc_ft": 5,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 4,
+                    "to": 5,
+                    "calc_ft": 5,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 5,
+                    "to": 6,
+                    "calc_ft": 5,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 6,
+                    "to": 7,
+                    "calc_ft": 20,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 7,
+                    "to": 8,
+                    "calc_ft": 45,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 8,
+                    "to": 9,
+                    "calc_ft": 50,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 9,
+                    "to": 0,
+                    "calc_ft": 60,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640682,
+                "lng": -81.872223
+            },
+            "zoom": 20,
+            "size": {
+                "width": 200,
+                "height": 200
+            }
+        }
+    },
+    "E-large-lot": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87137793470802
+                },
+                {
+                    "lat": 26.64114945054945,
+                    "lng": -81.87137793470802
+                },
+                {
+                    "lat": 26.64114945054945,
+                    "lng": -81.8723
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 300,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "double",
+                            "style": "cantilever",
+                            "width_ft": 12,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 200,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 300,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 3,
+                    "to": 0,
+                    "calc_ft": 200,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640875,
+                "lng": -81.871839
+            },
+            "zoom": 19,
+            "size": {
+                "width": 478,
+                "height": 359
+            }
+        }
+    },
+    "F-narrow-side-yard": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87226311738831
+                },
+                {
+                    "lat": 26.640764835164834,
+                    "lng": -81.87226311738831
+                },
+                {
+                    "lat": 26.640764835164834,
+                    "lng": -81.8723
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 12,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 60,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 12,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 3,
+                    "to": 0,
+                    "calc_ft": 60,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640682,
+                "lng": -81.872282
+            },
+            "zoom": 20,
+            "size": {
+                "width": 200,
+                "height": 200
+            }
+        }
+    },
+    "G-diagonal-diamond": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.64070989010989,
+                    "lng": -81.87217705796107
+                },
+                {
+                    "lat": 26.64081978021978,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.64070989010989,
+                    "lng": -81.87242294203892
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 57,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 57,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 6,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 57,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 3,
+                    "to": 0,
+                    "calc_ft": 57,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.64071,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "size": {
+                "width": 255,
+                "height": 255
+            }
+        }
+    },
+    "H-wall-and-adjusted": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87214632245133
+                },
+                {
+                    "lat": 26.64070989010989,
+                    "lng": -81.87214632245133
+                },
+                {
+                    "lat": 26.64070989010989,
+                    "lng": -81.8723
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 50,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 40,
+                    "override_ft": null,
+                    "is_existing_wall": true,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 50,
+                    "override_ft": 52,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "double",
+                            "style": "swing",
+                            "width_ft": 8,
+                            "t": 0.4
+                        }
+                    ]
+                },
+                {
+                    "from": 3,
+                    "to": 0,
+                    "calc_ft": 40,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640655,
+                "lng": -81.872223
+            },
+            "zoom": 20,
+            "size": {
+                "width": 200,
+                "height": 200
+            }
+        }
+    },
+    "I-single-long-side-three-gates": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.64068241758242,
+                    "lng": -81.87183896735401
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 153,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.2
+                        },
+                        {
+                            "type": "double",
+                            "style": "rolling",
+                            "width_ft": 12,
+                            "t": 0.5
+                        },
+                        {
+                            "type": "single",
+                            "style": "sliding",
+                            "width_ft": 6,
+                            "t": 0.8
+                        }
+                    ]
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640641,
+                "lng": -81.872069
+            },
+            "zoom": 20,
+            "size": {
+                "width": 478,
+                "height": 359
+            }
+        }
+    },
+    "J-dense-zigzag": {
+        "project": {
+            "source": "map",
+            "address": "",
+            "place_id": null,
+            "center": {
+                "lat": 26.6406,
+                "lng": -81.8723
+            },
+            "zoom": 20,
+            "vertices": [
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8723
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.87227233804124
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87224467608247
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.87221701412372
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87218935216495
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.8721616902062
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87213402824744
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.87210636628868
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87207870432992
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.87205104237117
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.8720233804124
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.87199571845365
+                },
+                {
+                    "lat": 26.6406,
+                    "lng": -81.87196805649488
+                },
+                {
+                    "lat": 26.640624725274723,
+                    "lng": -81.87194039453613
+                }
+            ],
+            "runs": [
+                {
+                    "from": 0,
+                    "to": 1,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 1,
+                    "to": 2,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 2,
+                    "to": 3,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 3,
+                    "to": 4,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 4,
+                    "to": 5,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 5,
+                    "to": 6,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 6,
+                    "to": 7,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 7,
+                    "to": 8,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 8,
+                    "to": 9,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": [
+                        {
+                            "type": "single",
+                            "style": "swing",
+                            "width_ft": 4,
+                            "t": 0.5
+                        }
+                    ]
+                },
+                {
+                    "from": 9,
+                    "to": 10,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 10,
+                    "to": 11,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 11,
+                    "to": 12,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                },
+                {
+                    "from": 12,
+                    "to": 13,
+                    "calc_ft": 13,
+                    "override_ft": null,
+                    "is_existing_wall": false,
+                    "material": 1,
+                    "gates": []
+                }
+            ]
+        },
+        "frame": {
+            "center": {
+                "lat": 26.640612,
+                "lng": -81.87212
+            },
+            "zoom": 20,
+            "size": {
+                "width": 373,
+                "height": 280
+            }
+        }
+    }
+}
