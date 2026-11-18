@@ -10,10 +10,10 @@ export const estimateSize = (text, round = false) => ({
     height: 24,
 });
 
-export function buildScene(project, zoom, { numbered = false } = {}) {
+export function buildScene(project, zoom) {
     const points = project.vertices.map((vertex) => worldPoint(vertex, zoom));
     const segments = project.runs.map((run, index) => ({ key: `side:${index}`, a: points[run.from], b: points[run.to] }));
-    const described = describeLabels(project.runs, { numbered });
+    const described = describeLabels(project.runs);
     const gates = described.gates.map((item) => {
         const { a, b } = segments[item.runIndex];
         const span = gateSpan(item.run, item.gate);

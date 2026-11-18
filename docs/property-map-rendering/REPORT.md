@@ -43,7 +43,7 @@ Google. Lo que falta comprobar con Google real está en
 | Etiquetas sobre esquinas, puertas y otros lados | Solo se comparaba etiqueta contra etiqueta | Esquinas, aberturas de puerta, lados y conectores son obstáculos |
 | Conectores sobre etiquetas | Se dibujaban en el mismo recorrido que las etiquetas | Se dibujan todos antes y no pueden cruzar una etiqueta ni otro lado |
 | Etiquetas de puerta demasiado grandes | Texto completo siempre | Si no hay sitio: `G1 · 4 ft`, luego `G1`; el nombre aparece en el panel |
-| Sin identificadores | "Side N" solo existía en el panel | Lados 1, 2, 3… y puertas G1, G2… iguales en mapa, panel, plano y leyenda |
+| Sin identificadores | "Side N" solo existía en el panel | Lados 1, 2, 3… y puertas G1, G2… en el panel. En el dibujo solo aparecen como referencia cuando una etiqueta no cabe, junto con una leyenda en las imágenes |
 | Las etiquetas no se reorganizaban con el zoom | No había nada que lo hiciera | Se recolocan al cambiar el dibujo o el zoom (una vez por cuadro); al desplazar no |
 | Líneas desfasadas de sus esquinas en la foto | Google redondea los `path` a 1e-5° (~3,6 ft) | La foto se pide sin dibujo; todo se dibuja en el navegador |
 | Encuadre pobre | Foto fija de 640 × 640 a zoom entero con tope 20 | Imagen del tamaño y forma de la cerca, que ocupa ~72 % |
@@ -58,8 +58,11 @@ Google. Lo que falta comprobar con Google real está en
   Both**. En el panel, cada puerta muestra su nombre corto (G1, G2…).
 - **Imagen del quote:** sigue siendo la foto satelital, ahora encuadrada en la cerca. Si
   Google no entrega la foto, se envía el plano técnico.
-- **Plano técnico:** el mismo dibujo sobre blanco, a escala, con lados numerados, barra de
-  escala y la lista de todas las medidas y puertas.
+- **Plano técnico:** el mismo dibujo y las mismas etiquetas sobre blanco, a escala y con
+  barra de escala.
+- **Etiquetas de medidas:** muestran solo la longitud (`39 ft`), nunca el número del lado,
+  en Satellite, en Plan y en las imágenes. El número solo sustituye a una etiqueta que no
+  cabe; en ese caso la imagen lleva una leyenda. Las puertas conservan `Gate · 4 ft`.
 
 No cambia nada en el proyecto guardado, los cálculos de materiales, los precios, la base
 de datos ni la vista 3D.

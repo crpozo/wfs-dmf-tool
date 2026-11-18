@@ -17,8 +17,10 @@ describe('label texts', () => {
     });
 
     it('says in the legend what a short label stands for', () => {
-        const { sides, gates } = describeLabels(SCENARIOS['H-wall-and-adjusted'].runs, { numbered: true });
-        expect(sides.map((side) => side.full)).toEqual(['1 · 50 ft', '2 · 40 ft · wall', '3 · 52 ft', '4 · 40 ft']);
+        const { sides, gates } = describeLabels(SCENARIOS['H-wall-and-adjusted'].runs);
+        // The length itself never shows the side's number, on any background.
+        expect(sides.map((side) => side.full)).toEqual(['50 ft', '40 ft · wall', '52 ft', '40 ft']);
+        expect(sides.map((side) => side.ref)).toEqual(['1', '2', '3', '4']);
         expect(sides[2].legend).toBe('Side 3: 52 ft * (measured 50 ft)');
         expect(gates[0].legend).toBe('G1: Double gate · 8 ft (side 3)');
     });

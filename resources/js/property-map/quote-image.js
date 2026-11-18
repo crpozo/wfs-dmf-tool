@@ -1,7 +1,6 @@
 /*
  * Images of the drawing: the satellite photo with the fence (what the quote sends to
- * email, Odoo and S3), the technical plan (same drawing on white, with every length
- * listed) and both together.
+ * email, Odoo and S3), the technical plan (same drawing on white) and both together.
  *
  * The server only returns the plain photo and the frame it asked Google for. The whole
  * fence (sides, walls, gates, corners, connectors, labels) is drawn here with the shared
@@ -157,16 +156,16 @@ function drawLabel(context, text, style, box, scale) {
 
 /**
  * Draws the fence and its labels. Returns what the legend must explain: the labels that
- * had to be shortened, or every label when `fullLegend` is set.
+ * had to be shortened to a reference for lack of room (none, on most drawings).
  */
-export function drawScene(context, { project, toPixels, scale, theme, bounds, exclusions = [], numbered = false, fullLegend = false }) {
+export function drawScene(context, { project, toPixels, scale, theme, bounds, exclusions = [] }) {
     const { vertices, runs } = project;
     const points = vertices.map(toPixels);
     const sides = runs
         .map((run, index) => ({ run, index, key: `side:${index}`, a: points[run.from], b: points[run.to] }))
         .filter(({ a, b }) => a && b);
     const sideOf = new Map(sides.map((side) => [side.index, side]));
-    const described = describeLabels(runs, { numbered });
+    const described = describeLabels(runs);
 
     const gates = described.gates
         .filter((item) => sideOf.has(item.runIndex))
@@ -247,7 +246,7 @@ export function drawScene(context, { project, toPixels, scale, theme, bounds, ex
         if (placement.box) {
             drawLabel(context, item[placement.level], style, placement.box, scale);
         }
-        if (fullLegend || placement.level !== 'full') {
+        if (placement.level !== 'full') {
             legend.push(item.legend);
         }
     }
@@ -377,9 +376,9 @@ function drawScaleBar(context, project, toPixels, area, scale) {
 }
 
 /**
- * The technical plan: the same drawing on white, to scale, every side numbered like the
- * Sides panel and every length and gate listed below. Needs nothing from Google, so it
- * is also what the quote sends when the satellite photo is not available.
+ * The technical plan: the same drawing and the same labels on white, to scale, with a
+ * scale bar. Needs nothing from Google, so it is also what the quote sends when the
+ * satellite photo is not available.
  */
 export async function renderPlanCanvas({ project }) {
     await ready();
@@ -427,8 +426,6 @@ export async function renderPlanCanvas({ project }) {
             theme: THEMES.plan,
             bounds: area,
             exclusions: [scaleBar],
-            numbered: true,
-            fullLegend: true,
         }));
     }
     const result = withLegend(canvas, legend, scale);

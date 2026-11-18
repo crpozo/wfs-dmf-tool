@@ -6,6 +6,9 @@
  *   full     "42 ft"            "Gate · 4 ft"
  *   compact                     "G1 · 4 ft"
  *   ref      "3"                "G1"            (the rest is in the panel or the legend)
+ *
+ * A length never carries its side's number: the number only stands in for a label that
+ * has no room, on the map, on the plan and on the images alike.
  */
 import { gateLabel } from './gates.js';
 
@@ -15,11 +18,8 @@ export function sideText(run) {
     return `${feet} ft${run.is_existing_wall ? ' · wall' : ''}`;
 }
 
-/**
- * @param {object[]} runs  runs of the project (store.runs() or project.runs)
- * @param {{numbered?: boolean}} [options]  numbered: every side label carries its number
- */
-export function describeLabels(runs, { numbered = false } = {}) {
+// runs: the runs of the project (store.runs() or project.runs).
+export function describeLabels(runs) {
     const sides = [];
     const gates = [];
     runs.forEach((run, index) => {
@@ -32,7 +32,7 @@ export function describeLabels(runs, { numbered = false } = {}) {
             id: String(number),
             adjusted,
             wall: Boolean(run.is_existing_wall),
-            full: numbered ? `${number} · ${text}` : text,
+            full: text,
             ref: String(number),
             title: `Side ${number}: ${text}${adjusted ? ` (adjusted by hand, measured ${run.calc_ft} ft)` : ''}`,
             legend: `Side ${number}: ${text}${adjusted ? ` * (measured ${run.calc_ft} ft)` : ''}`,

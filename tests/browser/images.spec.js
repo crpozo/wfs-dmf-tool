@@ -48,13 +48,18 @@ for (const name of names) {
         const image = await renderImage(page, 'plan', snapshot);
         const { scene, legend } = image.layout;
         expect(checkPlacement(scene)).toEqual([]);
-        // The plan lists every side and every gate under the drawing.
-        const gates = snapshot.project.runs.reduce((sum, run) => sum + run.gates.length, 0);
-        expect(legend).toHaveLength(snapshot.project.runs.length + gates);
-        expect(legend[0]).toMatch(/^Side 1: /);
-        // Sides carry their number, the one the Sides panel uses.
-        for (const label of scene.labels.filter((item) => item.kind === 'side' && item.box)) {
-            expect(label.text).toMatch(/^\d+( · |$)/);
+        // Same wording as the satellite image: a length never shows its side's number.
+        for (const label of scene.labels.filter((item) => item.kind === 'side' && item.level === 'full')) {
+            expect(label.text).toMatch(/^\d+ ft( · wall)?( \*)?$/);
+        }
+        for (const label of scene.labels.filter((item) => item.kind === 'gate' && item.level === 'full')) {
+            expect(label.text).toMatch(/^(Gate|Double gate)( \w+)? · \d+ ft$/);
+        }
+        // A legend appears only for labels that had to become a reference, one line each.
+        const shortened = scene.labels.filter((item) => item.level !== 'full');
+        expect(legend).toHaveLength(shortened.length);
+        for (const label of shortened.filter((item) => item.box)) {
+            expect(label.text).toMatch(/^(\d+|G\d+( · \d+ ft)?)$/);
         }
     });
 }
@@ -109,13 +114,14 @@ test('the combined image is the photo above the plan', async ({ page }) => {
     expect(combined.height).toBe(satellite.height + plan.height);
 });
 
-test('a length typed by hand is marked and the measured one is kept in the plan', async ({ page }) => {
+test('a length typed by hand is marked the same way on the photo and on the plan', async ({ page }) => {
     const snapshot = await fakeSnapshot(page, 'H-wall-and-adjusted');
     const satellite = await renderImage(page, 'satellite', snapshot);
     expect(satellite.layout.scene.labels.map((label) => label.text)).toContain('52 ft *');
     expect(satellite.layout.scene.labels.map((label) => label.text)).toContain('40 ft · wall');
     const plan = await renderImage(page, 'plan', snapshot);
-    expect(plan.layout.legend).toContain('Side 3: 52 ft * (measured 50 ft)');
+    expect(plan.layout.scene.labels.map((label) => label.text)).toContain('52 ft *');
+    expect(plan.layout.legend).toEqual([]);
 });
 
 // Evidence for people: set WFS_EVIDENCE_DIR to keep the pictures.

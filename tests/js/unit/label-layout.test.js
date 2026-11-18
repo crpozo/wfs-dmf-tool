@@ -6,8 +6,8 @@ import { buildScene, placedScene } from '../support/scene.js';
 
 const ZOOMS = [18, 19, 20, 21];
 
-function run(project, zoom, options) {
-    const scene = buildScene(project, zoom, options);
+function run(project, zoom) {
+    const scene = buildScene(project, zoom);
     const placements = layoutLabels(scene);
     return { scene, placements, placed: placedScene(scene, placements) };
 }
@@ -166,7 +166,7 @@ describe('geometric invariants on random drawings', () => {
             const project = randomProject(seed);
             let previous = null;
             for (const zoom of [18, 19.5, 20, 20.5, 21]) {
-                const scene = buildScene(project, zoom, { numbered: seed % 2 === 0 });
+                const scene = buildScene(project, zoom);
                 const placements = layoutLabels({ ...scene, previous });
                 previous = rememberLayout(placements);
                 expect(checkPlacement(placedScene(scene, placements)), `zoom ${zoom}`).toEqual([]);

@@ -104,7 +104,7 @@ test('no markers, lines or listeners pile up after many changes', async ({ page 
     expect(await listeners()).toEqual(listenersBefore);
 });
 
-test('Plan shows the same drawing on white, numbers the sides, and changes nothing in the project', async ({ page }) => {
+test('Plan shows the same drawing and the same labels on white, and changes nothing in the project', async ({ page }) => {
     await loadDrawing(page, SCENARIOS['A-rectangle-two-gates'], 21);
     const project = await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject()));
     const satellite = await readScene(page);
@@ -115,7 +115,8 @@ test('Plan shows the same drawing on white, numbers the sides, and changes nothi
     await expect(page.locator('[data-pm-action="bg-plan"]')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => window.__fakeMap.overlayMapTypes.getLength())).toBe(1);
     const plan = await readScene(page);
-    expect(plan.labels.filter((label) => label.kind === 'side').map((label) => label.text)).toEqual(['1 · 60 ft', '2 · 80 ft', '3 · 60 ft', '4 · 80 ft']);
+    // Same wording as on the satellite image: lengths carry no side number.
+    expect(plan.labels.map((label) => label.text)).toEqual(satellite.labels.map((label) => label.text));
     expect(checkPlacement(plan, RULES)).toEqual([]);
     expect(plan.vertices).toEqual(satellite.vertices);
     expect(await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject()))).toBe(project);

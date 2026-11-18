@@ -381,7 +381,7 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
         const runs = store.runs();
         const drawing = mode.isDrawing();
         const { selectedRun, vertices } = store.state;
-        const described = describeLabels(runs, { numbered: isPlan() });
+        const described = describeLabels(runs);
         const toWorld = (point) => worldPoint(point, zoom);
         const at = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 
