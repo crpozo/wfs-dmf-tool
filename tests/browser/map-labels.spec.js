@@ -165,5 +165,6 @@ test('the rest of the page still works: 3D button, classic canvas and back', asy
     await expect(page.locator('body')).not.toHaveClass(/pm-map-active/);
     await page.locator('[data-pm-action="map"]').click();
     await expect(page.locator('body')).toHaveClass(/pm-map-active/);
+    await settle(page); // the map was hidden: let it take its size back
     expect(checkPlacement(await readScene(page), RULES)).toEqual([]);
 });

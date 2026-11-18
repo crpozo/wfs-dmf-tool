@@ -60,14 +60,6 @@
                             <i class="fas fa-trash-alt" aria-hidden="true"></i><span>Clear all</span>
                         </button>
                     </div>
-                    <div class="pm-toolbar-group pm-mode" role="group" aria-label="Background">
-                        <button type="button" class="pm-tool" data-pm-action="bg-satellite" aria-pressed="true" title="Draw over the satellite image">
-                            <i class="fas fa-satellite" aria-hidden="true"></i><span>Satellite</span>
-                        </button>
-                        <button type="button" class="pm-tool" data-pm-action="bg-plan" aria-pressed="false" title="Technical plan: the same drawing without the satellite image">
-                            <i class="fas fa-drafting-compass" aria-hidden="true"></i><span>Plan</span>
-                        </button>
-                    </div>
                     <div class="pm-toolbar-group" role="group" aria-label="View">
                         <button type="button" class="pm-tool pm-tool-accent" data-pm-action="view3d" aria-label="View in 3D">
                             <i class="fas fa-cube" aria-hidden="true"></i><span>View in 3D</span>
@@ -77,6 +69,14 @@
                 <p class="pm-hint" data-pm-hint aria-live="polite"></p>
                 <div class="pm-map-frame">
                     <div class="pm-map" data-pm-map></div>
+                    <div class="pm-background pm-mode" role="group" aria-label="Background">
+                        <button type="button" class="pm-tool" data-pm-action="bg-satellite" aria-pressed="true" title="Draw over the satellite image">
+                            <i class="fas fa-satellite" aria-hidden="true"></i><span>Satellite</span>
+                        </button>
+                        <button type="button" class="pm-tool" data-pm-action="bg-plan" aria-pressed="false" title="Technical plan: the same drawing without the satellite image">
+                            <i class="fas fa-drafting-compass" aria-hidden="true"></i><span>Plan</span>
+                        </button>
+                    </div>
                     <p class="pm-message" data-pm-message role="status" hidden></p>
                 </div>
                 <p class="pm-disclaimer">
