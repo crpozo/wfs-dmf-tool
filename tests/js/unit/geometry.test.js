@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createFitProjection, createProjection, gateSpan, pointOnSide, worldPoint, worldToLatLng } from '../../../resources/js/property-map/geometry.js';
+import { createFitProjection, createProjection, fitView, gateSpan, pointOnSide, worldPoint, worldToLatLng } from '../../../resources/js/property-map/geometry.js';
 import { SCENARIOS } from '../fixtures/scenarios.js';
 
 const FIXTURES = JSON.parse(fs.readFileSync(new URL('../../fixtures/property-map-scenarios.json', import.meta.url), 'utf8'));
@@ -17,6 +17,27 @@ describe('a point along a side', () => {
             expect((to.lat - from.lat) * feetPerDegree, `${feet} ft side`).toBeCloseTo(feet * 0.4, 2);
             expect(from.lng).toBeCloseTo(a.lng, 9);
         }
+    });
+});
+
+describe('framing a drawing', () => {
+    it('centres it and picks the closest zoom that shows all of it', () => {
+        const { vertices } = SCENARIOS['A-rectangle-two-gates'];
+        const size = { width: 900, height: 600 };
+        const { center, zoom } = fitView(vertices, size, { minZoom: 18, maxZoom: 21 });
+        const points = vertices.map((vertex) => worldPoint(vertex, zoom));
+        const middle = worldPoint(center, zoom);
+        for (const point of points) {
+            expect(Math.abs(point.x - middle.x)).toBeLessThanOrEqual((size.width * 0.7) / 2 + 1);
+            expect(Math.abs(point.y - middle.y)).toBeLessThanOrEqual((size.height * 0.7) / 2 + 1);
+        }
+        expect(zoom).toBe(21); // 60 x 80 ft fits a 900 x 600 map at the closest zoom
+    });
+
+    it('stays within the zoom range of the map, for a single corner too', () => {
+        const [first] = SCENARIOS['E-large-lot'].vertices;
+        expect(fitView([first], { width: 400, height: 400 }, { minZoom: 18, maxZoom: 21 }).zoom).toBe(21);
+        expect(fitView(SCENARIOS['E-large-lot'].vertices, { width: 40, height: 40 }, { minZoom: 18, maxZoom: 21 }).zoom).toBe(18);
     });
 });
 

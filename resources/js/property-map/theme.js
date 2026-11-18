@@ -4,7 +4,7 @@
  *
  * One rule on every background and for every kind of gate: blue is fence, white is gate.
  * On the white of the plan a white stretch only shows with an edge, so there the gate
- * gets a thin outline in the fence blue (gateOutline). Nothing else is drawn white on a
+ * gets a dark blue outline all around (gateOutline). Nothing else is drawn white on a
  * side: a selected side keeps its color and is drawn heavier.
  */
 export const BRAND = {
@@ -36,7 +36,7 @@ export const THEMES = {
         fence: '#4f7dff',
         wall: '#9aa3b5',
         gate: BRAND.white,
-        gateOutline: '#4f7dff',
+        gateOutline: BRAND.ink,
         gateProblem: BRAND.danger,
         leader: BRAND.ink,
         leaderOpacity: 0.8,

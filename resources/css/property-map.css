@@ -103,6 +103,11 @@ body.drawing.pm-map-active { height: auto; min-height: 100%; overflow-y: auto; }
     overflow: hidden;
     background: var(--wfs-sea);
 }
+/* Plan: white behind the white tiles too, so nothing else shows while they load. */
+.pm-map.is-plan { background: var(--wfs-white); }
+/* Google fades each tile in over 0.2 s, and the imagery shows through meanwhile, on
+   switching to Plan and at the edges while panning. The white ones appear at once. */
+.pm-map div:has(> [data-pm-plan-tile]) { opacity: 1 !important; transition: none !important; }
 .pm-message {
     position: absolute;
     left: 50%;

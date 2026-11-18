@@ -68,6 +68,20 @@ export function createFitProjection(vertices, box, fill = 0.72) {
     return project;
 }
 
+/*
+ * Center and whole zoom level that show a drawing in a map of the given size in pixels,
+ * taking at most `fill` of each dimension.
+ */
+export function fitView(vertices, size, { minZoom = 0, maxZoom = 22, fill = 0.7 } = {}) {
+    const world = vertices.map((vertex) => worldPoint(vertex, 0));
+    const xs = world.map((p) => p.x);
+    const ys = world.map((p) => p.y);
+    const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    const scale = Math.min((size.width * fill) / (maxX - minX || 1e-12), (size.height * fill) / (maxY - minY || 1e-12));
+    const zoom = Math.max(minZoom, Math.min(maxZoom, Math.floor(Math.log2(scale))));
+    return { center: worldToLatLng({ x: (minX + maxX) / 2, y: (minY + maxY) / 2 }, 0), zoom };
+}
+
 export function lerp(a, b, t) {
     return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }

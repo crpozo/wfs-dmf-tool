@@ -104,6 +104,31 @@ test('no markers, lines or listeners pile up after many changes', async ({ page 
     expect(await listeners()).toEqual(listenersBefore);
 });
 
+// Corners relative to the first one, in whole pixels.
+const shape = (scene) => scene.vertices.map((vertex) => [Math.round(vertex.x - scene.vertices[0].x), Math.round(vertex.y - scene.vertices[0].y)]);
+
+test('Plan frames a drawing that is out of view or too small, and changes nothing in it', async ({ page }) => {
+    await loadDrawing(page, SCENARIOS['A-rectangle-two-gates'], 18);
+    await page.evaluate(() => {
+        const map = window.__fakeMap;
+        map.setCenter(map.toLatLng({ x: map.size().width * 3, y: map.size().height * 3 }));
+    });
+    await settle(page);
+    const project = await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject().vertices));
+
+    await page.locator('[data-pm-action="bg-plan"]').click();
+    await settle(page);
+    const framed = await page.evaluate(() => {
+        const map = window.__fakeMap;
+        const { width, height } = map.size();
+        const points = window.WFS.propertyMap.getProject().vertices.map((vertex) => map.toPixel(vertex));
+        return { zoom: map.getZoom(), inside: points.every((p) => p.x > 0 && p.y > 0 && p.x < width && p.y < height) };
+    });
+    expect(framed.inside).toBe(true);
+    expect(framed.zoom).toBeGreaterThan(18);
+    expect(await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject().vertices))).toBe(project);
+});
+
 test('Plan shows the same drawing and the same labels on white, and changes nothing in the project', async ({ page }) => {
     await loadDrawing(page, SCENARIOS['A-rectangle-two-gates'], 21);
     const project = await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject()));
@@ -114,16 +139,27 @@ test('Plan shows the same drawing and the same labels on white, and changes noth
     await settle(page);
     await expect(page.locator('[data-pm-action="bg-plan"]')).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => window.__fakeMap.overlayMapTypes.getLength())).toBe(1);
+    // Google's Map / Satellite switch changes an image Plan does not show.
+    expect(await page.evaluate(() => window.__fakeMap.options.mapTypeControl)).toBe(false);
     const plan = await readScene(page);
+    // Every gate is white with a dark blue outline; the sides stay fence blue.
+    const lines = await page.evaluate(() => [...window.__fakeMap.polylines].filter((line) => line.map)
+        .map((line) => [line.options.zIndex, line.options.strokeColor]));
+    expect(lines.filter(([z]) => z === 15).map(([, color]) => color)).toEqual(['#ffffff', '#ffffff']);
+    expect(lines.filter(([z]) => z === 14).map(([, color]) => color)).toEqual(['#263166', '#263166']);
+    expect(lines.filter(([z]) => z === 10).every(([, color]) => color === '#4f7dff')).toBe(true);
     // Same wording as on the satellite image: lengths carry no side number.
     expect(plan.labels.map((label) => label.text)).toEqual(satellite.labels.map((label) => label.text));
     expect(checkPlacement(plan, RULES)).toEqual([]);
-    expect(plan.vertices).toEqual(satellite.vertices);
+    // The drawing was already framed: Plan leaves it where it was. Positions are compared
+    // within the drawing, since the page itself may scroll by a few pixels on the click.
+    expect(shape(plan)).toEqual(shape(satellite));
     expect(await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject()))).toBe(project);
 
     await page.locator('[data-pm-action="bg-satellite"]').click();
     await settle(page);
     expect(await page.evaluate(() => window.__fakeMap.overlayMapTypes.getLength())).toBe(0);
+    expect(await page.evaluate(() => window.__fakeMap.options.mapTypeControl)).toBe(true);
     const back = await readScene(page);
     expect(back.labels.map((label) => label.text)).toEqual(satellite.labels.map((label) => label.text));
     expect(await page.evaluate(() => JSON.stringify(window.WFS.propertyMap.getProject()))).toBe(project);
