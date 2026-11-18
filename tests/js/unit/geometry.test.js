@@ -1,9 +1,24 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createFitProjection, createProjection, gateSpan, worldPoint, worldToLatLng } from '../../../resources/js/property-map/geometry.js';
+import { createFitProjection, createProjection, gateSpan, pointOnSide, worldPoint, worldToLatLng } from '../../../resources/js/property-map/geometry.js';
 import { SCENARIOS } from '../fixtures/scenarios.js';
 
 const FIXTURES = JSON.parse(fs.readFileSync(new URL('../../fixtures/property-map-scenarios.json', import.meta.url), 'utf8'));
+
+describe('a point along a side', () => {
+    // Sides under about 21 ft are where Google's spherical.interpolate gives up.
+    it('is where the fraction says, on short sides too', () => {
+        const feetPerDegree = 364000;
+        for (const feet of [4, 9, 16, 20, 21, 40]) {
+            const a = { lat: 26.6406, lng: -81.8723 };
+            const b = { lat: a.lat + feet / feetPerDegree, lng: a.lng };
+            const from = pointOnSide(a, b, 0.3);
+            const to = pointOnSide(a, b, 0.7);
+            expect((to.lat - from.lat) * feetPerDegree, `${feet} ft side`).toBeCloseTo(feet * 0.4, 2);
+            expect(from.lng).toBeCloseTo(a.lng, 9);
+        }
+    });
+});
 
 describe('projection', () => {
     it('goes to pixels and back', () => {
