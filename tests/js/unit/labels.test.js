@@ -12,7 +12,7 @@ describe('label texts', () => {
     it('keeps the wording the map always had', () => {
         const { sides, gates } = describeLabels(SCENARIOS['C-irregular-consecutive-gates'].runs);
         expect(sides[0].full).toBe('40 ft');
-        expect(gates.map((gate) => gate.full)).toEqual(['Gate · 4 ft', 'Double gate sliding · 12 ft', 'Gate · 5 ft']);
+        expect(gates.map((gate) => gate.full)).toEqual(['Single gate · 4 ft', 'Double gate sliding · 12 ft', 'Single gate · 5 ft']);
         expect(gates.map((gate) => gate.compact)).toEqual(['G1 · 4 ft', 'G2 · 12 ft', 'G3 · 5 ft']);
     });
 

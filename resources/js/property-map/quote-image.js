@@ -10,7 +10,7 @@
 import { createFitProjection, createProjection, gateSpan, lerp } from './geometry.js';
 import { layoutLabels } from './label-layout.js';
 import { describeLabels } from './labels.js';
-import { BRAND, THEMES } from './theme.js';
+import { BRAND, THEMES, WEIGHTS } from './theme.js';
 
 const OUTPUT_WIDTH = 1280;
 const UI_WIDTH = 640; // label sizes below are for an image this wide
@@ -81,15 +81,23 @@ function drawSides(context, sides, theme, scale) {
     context.setLineDash([]);
 }
 
+// Every gate, whatever its kind, is the same white stretch over its side; on a white
+// background the theme gives it an outline so the white shows.
 function drawGateStretches(context, gates, theme, scale) {
     context.lineCap = 'butt';
-    context.lineWidth = 7 * scale;
-    context.strokeStyle = theme.gate;
-    for (const gate of gates) {
+    const stroke = (gate, width, color) => {
+        context.lineWidth = width * scale;
+        context.strokeStyle = color;
         context.beginPath();
         context.moveTo(gate.from.x, gate.from.y);
         context.lineTo(gate.to.x, gate.to.y);
         context.stroke();
+    };
+    for (const gate of gates) {
+        if (theme.gateOutline) {
+            stroke(gate, WEIGHTS.gate + 2 * WEIGHTS.gateOutline, theme.gateOutline);
+        }
+        stroke(gate, WEIGHTS.gate, theme.gate);
     }
 }
 

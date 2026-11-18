@@ -23,7 +23,7 @@ import { gateSpan, worldPoint, worldToLatLng } from './geometry.js';
 import { layoutLabels, rememberLayout } from './label-layout.js';
 import { describeLabels } from './labels.js';
 import { hasFinePointer } from './mode.js';
-import { THEMES } from './theme.js';
+import { THEMES, WEIGHTS } from './theme.js';
 
 // Pointer travel that turns a press into a drag, and the snap radius to an existing corner.
 const DRAG_PX = 6;
@@ -251,9 +251,12 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
         return label;
     }
 
-    // Gates: a white stretch over the run plus a label that slides along the run in Draw mode.
+    // Gates: a white stretch over the run, the same for every kind of gate, plus a label
+    // that slides along the run in Draw mode. The outline is only on the map where the
+    // background needs it for the white to show (Plan).
     function createGateView(gateId) {
-        const line = new Polyline({ map, clickable: false, zIndex: 15, strokeWeight: 7, strokeOpacity: 1 });
+        const outline = new Polyline({ map: null, clickable: false, zIndex: 14, strokeOpacity: 1 });
+        const line = new Polyline({ map, clickable: false, zIndex: 15, strokeWeight: WEIGHTS.gate, strokeOpacity: 1 });
         const content = document.createElement('div');
         content.className = 'pm-gate-label';
         const marker = new AdvancedMarkerElement({ map: null, content, zIndex: 25, gmpDraggable: mode.isDrawing() });
@@ -285,7 +288,7 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
             }
         });
 
-        return { line, marker, map: null };
+        return { line, outline, marker, map: null };
     }
 
     // Fraction (0..1) of the run closest to a point; a flat projection is plenty for a yard.
@@ -313,8 +316,18 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
                     gateViews.set(gate.id, view);
                 }
                 const span = gateSpan(run, gate);
-                view.line.setPath([spherical.interpolate(a, b, span.from), spherical.interpolate(a, b, span.to)]);
+                const path = [spherical.interpolate(a, b, span.from), spherical.interpolate(a, b, span.to)];
+                view.line.setPath(path);
                 view.line.setOptions({ strokeColor: run.gates_fit ? colors.gate : colors.gateProblem });
+                const outlined = Boolean(colors.gateOutline) && run.gates_fit;
+                if (outlined) {
+                    view.outline.setPath(path);
+                    view.outline.setOptions({ strokeColor: colors.gateOutline, strokeWeight: WEIGHTS.gate + 2 * WEIGHTS.gateOutline });
+                }
+                const outlineMap = outlined ? map : null;
+                if (view.outline.getMap() !== outlineMap) {
+                    view.outline.setMap(outlineMap);
+                }
                 view.marker.gmpDraggable = mode.isDrawing();
                 view.marker.content.classList.toggle('is-problem', !run.gates_fit);
             }
@@ -322,6 +335,7 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
         for (const [id, view] of gateViews) {
             if (!live.has(id)) {
                 view.line.setMap(null);
+                view.outline.setMap(null);
                 view.marker.map = null;
                 gateViews.delete(id);
             }
@@ -502,16 +516,17 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
                 strokeOpacity: 0,
                 strokeWeight: 5,
                 icons: [{
-                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeWeight: isSelected ? 6 : 4, strokeColor: isSelected ? colors.selected : colors.wall, scale: 3 },
+                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeWeight: isSelected ? 6 : 4, strokeColor: colors.wall, scale: 3 },
                     offset: '0',
                     repeat: '14px',
                 }],
             };
         }
+        // A selected side stays blue and gets heavier: white on a side always means a gate.
         return {
-            strokeColor: isSelected ? colors.selected : colors.fence,
+            strokeColor: colors.fence,
             strokeOpacity: 1,
-            strokeWeight: isSelected ? 7 : 5,
+            strokeWeight: isSelected ? WEIGHTS.fenceSelected : WEIGHTS.fence,
             icons: [],
         };
     }

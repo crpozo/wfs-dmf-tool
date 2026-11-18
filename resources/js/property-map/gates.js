@@ -46,8 +46,10 @@ export function isStandard(gate) {
     return gate.style === 'swing' && STANDARD_WIDTHS[gate.type].includes(gate.width_ft);
 }
 
+// "Single gate · 4 ft", "Double gate · 8 ft", "Double gate sliding · 12 ft": the label is
+// what tells the kinds of gate apart; on the drawing every gate is the same white stretch.
 export function gateLabel(gate) {
-    const kind = gate.type === 'double' ? 'Double gate' : 'Gate';
+    const kind = TYPE_LABELS[gate.type] || TYPE_LABELS.single;
     const style = gate.style === 'swing' ? '' : ` ${STYLE_LABELS[gate.style].toLowerCase()}`;
     return `${kind}${style} · ${gate.width_ft} ft`;
 }
