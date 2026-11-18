@@ -37,7 +37,7 @@ class Gate extends Model
             ->where('width', $width)
             ->where('height', $height)
             ->first();
-        
+
         return $gate?->part;
     }
 }

@@ -48,20 +48,6 @@ class GoogleSheetsController extends Controller
 
         // 2) Map your results to specific columns (B..E in this example)
         // Adjust the columns/range as needed
-        /*
-        $updateRange = "{$tab}!B{$targetRow}:E{$targetRow}";
-        $body = new \Google\Service\Sheets\ValueRange([
-            'values' => [[
-                1,
-                2,
-                3,
-                4,
-            ]],
-        ]);
-
-        $params = ['valueInputOption' => 'USER_ENTERED'];
-        $sheets->spreadsheets_values->update($spreadsheetId, $updateRange, $body, $params);
-        */
         $row = $targetRow; // Found earlier
 
         $valuesToWrite = [

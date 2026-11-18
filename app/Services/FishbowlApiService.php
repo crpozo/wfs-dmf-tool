@@ -78,12 +78,6 @@ class FishbowlApiService
         if (!$this->token) {
             return null;
         }
-        /*
-        $response = Http::withToken($this->token)
-            ->get("{$this->baseUrl}/api/data-query", [
-                'query' => $query,
-            ]);
-        */
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/sql', 'Cache-Control' => 'no-cache', 'User-Agent' => 'PostmanRuntime/7.42.0', 'Accept' => '*/*', 'Connection' => 'keep-alive'])
             ->send('GET', "{$this->baseUrl}/api/data-query", [
@@ -110,10 +104,6 @@ class FishbowlApiService
             $this->login();
         }
 
-        /*
-        $response = Http::withToken($this->token)
-            ->post("{$this->baseUrl}/api/import/SalesOrderDetails", json_encode($salesOrderData,true));
-        */
         $response = Http::withToken($this->token)
             ->withHeaders(['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache', 'User-Agent' => 'PostmanRuntime/7.42.0', 'Accept' => '*/*', 'Connection' => 'keep-alive'])
             ->send('POST', "{$this->baseUrl}/api/import/SalesOrderDetails", [
@@ -154,7 +144,6 @@ class FishbowlApiService
             return $response->body();
         } else {
             return $response;
-            //return response()->json(['error' => 'Failed to retrieve data'], 400);
         }
     }
 

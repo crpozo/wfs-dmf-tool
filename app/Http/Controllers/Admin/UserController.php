@@ -115,10 +115,9 @@ class UserController extends Controller
         $loginUrl = route('login'); // or url('/login')
 
         $mailTo = $user->email;
-        //$mailTo = 'ednincer@gmail.com';
         Mail::to($mailTo)
         ->bcc('ednincer@gmail.com')
-        ->queue(new UserCreatedMail(    
+        ->queue(new UserCreatedMail(
             name: $user->name,
             email: $user->email,
             tempPassword: $plainPassword,

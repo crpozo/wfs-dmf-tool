@@ -43,7 +43,6 @@ class UpdateFishbowlSKU extends Command
 
 
         foreach ($products as $product) {
-            //$this->updateProductSku($product['ProductId'],$product['SKU'],);
 
             $productDetails = $this->getProductDetails($product['ProductId']);
 
@@ -65,17 +64,6 @@ class UpdateFishbowlSKU extends Command
 
     private function loginToFishbowl()
     {
-        /*
-        $response = Http::post("{$this->fishbowlUrl}/api/login", [
-            'username' => $this->username,
-            'password' => $this->password,
-        ]);
-
-        if ($response->failed()) {
-            $this->error('Failed to log in to Fishbowl');
-            exit;
-        }
-        */
 
         $this->fishbowl->login();
         $this->token =  $this->fishbowl->token;
@@ -189,10 +177,6 @@ class UpdateFishbowlSKU extends Command
 
     private function logoutFromFishbowl()
     {
-        /*
-        Http::withHeaders(['Authorization' => "Bearer {$this->token}"])
-            ->post("{$this->fishbowlUrl}/api/logout");
-        */
         $this->fishbowl->logout();
         $this->info('Logged out of Fishbowl.');
     }

@@ -162,7 +162,6 @@ class CustomerController extends Controller
     }
 
     public function getCustomer($id){
-        //$sql = "select c.name, t.code TaxCode, t.name TaxRateName from customer c, taxrate t, contact o WHERE c.accountId=$id and c.taxRateId=t.id and c.accountId=o.accountId and o.defaultFlag=true";
         $sql = "select c.name, t.code TaxCode, t.name TaxRateName from customer c LEFT JOIN taxrate t ON c.taxRateId=t.id WHERE c.accountId=$id;";
         $fbAC = new FishbowlAPIController();
         $customer = json_decode($fbAC->dataQuery($sql));
