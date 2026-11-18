@@ -81,12 +81,12 @@ class PropertyMapController extends Controller
             return response()->json(['message' => 'The satellite image is not available right now.'], 502);
         }
 
-        // The browser draws the length labels on the photo (quote-image.js).
-        [$center, $zoom] = $image->frame($project['vertices']);
+        // The browser draws the fence and its labels on the photo (quote-image.js).
+        [$center, $zoom, $size] = $image->frame($project['vertices']);
 
         return response()->json([
             'image' => $dataUrl,
-            'frame' => ['center' => $center, 'zoom' => $zoom],
+            'frame' => ['center' => $center, 'zoom' => $zoom, 'size' => $size],
             'project' => $project,
         ]);
     }
