@@ -13,10 +13,12 @@ import { createMap } from './map-view.js';
 import { createModeState, initialMode } from './mode.js';
 import { mountSearch } from './search.js';
 import { mountDrawing } from './drawing.js';
+import { mountPlanView } from './plan-view.js';
 import { mountPanel } from './panel.js';
 import { mountToolbar } from './toolbar.js';
 import { createViewSwitch } from './view-switch.js';
 import { loadSavedProject, mountActions } from './actions.js';
+import { renderCombinedCanvas, renderPlanCanvas, renderSatelliteCanvas } from './quote-image.js';
 
 const FEET_PER_METER = 3.28084;
 
@@ -63,6 +65,8 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
 
     const store = createProjectStore({ distanceFt });
     const mode = createModeState(initialMode());
+    // What is behind the drawing: the satellite image (default) or a plain white plan.
+    const background = createModeState('satellite');
     const notify = createNotifier(root.querySelector('[data-pm-message]'));
 
     const map = createMap({ element: root.querySelector('[data-pm-map]'), Map: maps.Map, mapId: config.mapId });
@@ -73,6 +77,7 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
         map,
         store,
         mode,
+        background,
         notify,
         libs: {
             Polyline: maps.Polyline,
@@ -90,7 +95,8 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
         onRunFocus: (key) => drawing.revealRun(key),
     });
     const actions = mountActions({ root, store, notify });
-    mountToolbar({ root, store, mode, onBeforeChange: drawing.closeMenu });
+    mountPlanView({ map, background, Size: google.maps.Size });
+    mountToolbar({ root, store, mode, background, onBeforeChange: drawing.closeMenu });
     mountSearch({
         root,
         map,
@@ -147,6 +153,10 @@ function start({ view, maps, marker, geometry, places, geocoding }) {
         loadProject,
         showMap: view.showMap,
         showClassic: view.showClassic,
+        // The images of the drawing as canvases (support and tests): the plan from a project,
+        // the satellite ones from what /property-map/snapshot returns.
+        images: { plan: renderPlanCanvas, satellite: renderSatelliteCanvas, combined: renderCombinedCanvas },
+        setBackground: (name) => background.set(name === 'plan' ? 'plan' : 'satellite'),
     };
 }
 

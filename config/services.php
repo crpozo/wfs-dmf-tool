@@ -15,6 +15,9 @@ return [
         'map_id' => env('GOOGLE_MAPS_MAP_ID', 'DEMO_MAP_ID'),
         // Maps Static API URL signing secret (optional but recommended by Google).
         'signing_secret' => env('GOOGLE_MAPS_SIGNING_SECRET'),
+        // Closest zoom asked of Static Maps for the quote photo. 20 has imagery everywhere we
+        // sell; 21 is sharper for small yards but only where Google has it (check before raising).
+        'static_max_zoom' => (int) env('GOOGLE_MAPS_STATIC_MAX_ZOOM', 20),
     ],
 
     /*

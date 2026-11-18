@@ -1,11 +1,13 @@
 /*
  * Panel actions: "Continue to materials" (the same materials calculation as the canvas,
  * through the map's POST route), "Request a quote" (the canvas quote flow, with the
- * satellite image as the sketch) and "Save link" (anonymous, kept for 90 days).
+ * satellite image as the sketch), "Save link" (anonymous, kept for 90 days) and
+ * "Download image" (satellite, technical plan or both).
  */
-import { gateLabel } from './gates.js';
 import { mapToGraph } from './map-to-graph.js';
-import { addLengthLabels } from './quote-image.js';
+import {
+    planImage, renderCombinedCanvas, renderPlanCanvas, renderSatelliteCanvas, satelliteImage,
+} from './quote-image.js';
 
 const ROUTES = {
     estimate: '/property-map/estimate',
@@ -26,18 +28,46 @@ export function mountActions({ root, store, notify }) {
 
     let estimatedSnapshot = null;
     let quoteImage = null;
+    // The satellite photo of the estimated drawing, kept so that asking for the quote and
+    // downloading the image don't each pay for a new Static Maps request.
+    let photo = null;
 
     estimateButton.addEventListener('click', getMaterials);
     saveButton.addEventListener('click', saveLink);
     copyButton.addEventListener('click', copyLink);
     quoteButton.addEventListener('click', requestQuote);
+    for (const kind of ['satellite', 'plan', 'both']) {
+        root.querySelector(`[data-pm-action="download-${kind}"]`)?.addEventListener('click', () => download(kind));
+    }
+
+    const isFresh = () => estimatedSnapshot !== null && JSON.stringify(store.toJSON()) === estimatedSnapshot;
+
+    /*
+     * Photo, frame and project from the server for the drawing behind the materials list.
+     * Returns { status } with the photo in `data` when status is 'ok'.
+     */
+    async function getPhoto() {
+        if (photo && photo.snapshot === estimatedSnapshot) {
+            return { status: 'ok', data: photo.data };
+        }
+        const response = await post(ROUTES.snapshot, {});
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 409) {
+            return { status: 'stale', message: data.message };
+        }
+        if (!response.ok || !data.image) {
+            return { status: 'unavailable' };
+        }
+        photo = { snapshot: estimatedSnapshot, data };
+        return { status: 'ok', data };
+    }
 
     /*
      * Gets the satellite image of the drawing behind the materials list, then runs the
      * page's own quote flow (#btnQuote): the guest form or the signed-in customer dialog.
      * That flow captures the sketch with exportSketchCanvasImage(), which returns this
-     * image while the map is in use. If Google can't produce the image, a plain drawing
-     * of the fence is sent instead so the quote is never blocked.
+     * image while the map is in use. If Google can't produce the image, the technical
+     * plan of the fence is sent instead so the quote is never blocked.
      */
     async function requestQuote() {
         const canvasQuoteButton = window.jQuery?.('#btnQuote');
@@ -47,20 +77,59 @@ export function mountActions({ root, store, notify }) {
         }
         quoteButton.disabled = true;
         try {
-            const response = await post(ROUTES.snapshot, {});
-            const data = await response.json().catch(() => ({}));
-            if (response.status === 409) {
-                notify(data.message || 'Get the materials list for your drawing first.');
+            const result = await getPhoto();
+            if (result.status === 'stale') {
+                notify(result.message || 'Get the materials list for your drawing first.');
                 return;
             }
-            quoteImage = response.ok && data.image ? await addLengthLabels(data) : drawFallbackImage(store.toJSON());
+            quoteImage = result.status === 'ok' ? await satelliteImage(result.data) : await planImage(store.toJSON());
             canvasQuoteButton.trigger('click');
         } catch (error) {
             console.error(error);
-            quoteImage = drawFallbackImage(store.toJSON());
+            quoteImage = await planImage(store.toJSON()).catch(() => null);
             canvasQuoteButton.trigger('click');
         } finally {
             quoteButton.disabled = false;
+        }
+    }
+
+    /*
+     * Saves the drawing as a JPEG: on the satellite photo, as a technical plan, or both in
+     * one image. The plan is drawn in the browser and is always available; the photo is the
+     * one of the quote, so it exists once the materials list is up to date.
+     */
+    async function download(kind) {
+        if (!store.runs().length) {
+            notify('Draw at least one side of fence first.');
+            return;
+        }
+        try {
+            let canvas;
+            if (kind === 'plan') {
+                canvas = await renderPlanCanvas({ project: store.toJSON() });
+            } else {
+                if (!isFresh()) {
+                    notify('Select "Continue to materials" first: the satellite image is made for that drawing. The plan can be downloaded at any time.');
+                    return;
+                }
+                const result = await getPhoto();
+                if (result.status !== 'ok') {
+                    notify('The satellite image is not available right now. You can download the plan instead.');
+                    return;
+                }
+                canvas = kind === 'both' ? await renderCombinedCanvas(result.data) : await renderSatelliteCanvas(result.data);
+            }
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `fence-drawing-${kind === 'both' ? 'satellite-and-plan' : kind}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+        } catch (error) {
+            console.error(error);
+            notify('The image could not be created. Please try again.');
         }
     }
 
@@ -160,7 +229,7 @@ export function mountActions({ root, store, notify }) {
         estimateButton.disabled = !hasFence;
         saveButton.disabled = store.isEmpty();
         if (!materialsBox.hidden) {
-            const fresh = JSON.stringify(store.toJSON()) === estimatedSnapshot;
+            const fresh = isFresh();
             materialsStale.hidden = fresh;
             quoteButton.disabled = !fresh;
         }
@@ -173,67 +242,6 @@ export function mountActions({ root, store, notify }) {
         // Read by exportSketchCanvasImage() in the drawing page; only while the map is showing.
         quoteImage: () => (document.body.classList.contains('pm-map-active') ? quoteImage : null),
     };
-}
-
-// Plain drawing of the fence (white background, sides, lengths and gates) as a JPEG data URL.
-function drawFallbackImage(project) {
-    const size = 1280;
-    const margin = 120;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const context = canvas.getContext('2d');
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, size, size);
-
-    const { vertices, runs } = project;
-    if (vertices.length) {
-        const scaleX = Math.cos((vertices[0].lat * Math.PI) / 180);
-        const raw = vertices.map(({ lat, lng }) => ({ x: lng * scaleX, y: -lat }));
-        const minX = Math.min(...raw.map((p) => p.x));
-        const minY = Math.min(...raw.map((p) => p.y));
-        const span = Math.max(Math.max(...raw.map((p) => p.x)) - minX, Math.max(...raw.map((p) => p.y)) - minY) || 1;
-        const k = (size - 2 * margin) / span;
-        const points = raw.map((p) => ({ x: margin + (p.x - minX) * k, y: margin + (p.y - minY) * k }));
-
-        context.lineCap = 'round';
-        context.font = 'bold 28px Montserrat, Arial, sans-serif';
-        context.textAlign = 'center';
-        for (const run of runs) {
-            const a = points[run.from];
-            const b = points[run.to];
-            context.strokeStyle = run.is_existing_wall ? '#9aa3b5' : '#2e59c1';
-            context.lineWidth = 10;
-            context.beginPath();
-            context.moveTo(a.x, a.y);
-            context.lineTo(b.x, b.y);
-            context.stroke();
-
-            for (const gate of run.gates) {
-                const length = run.override_ft ?? run.calc_ft;
-                const half = length > 0 ? gate.width_ft / 2 / length : 0;
-                const from = Math.max(0, gate.t - half);
-                const to = Math.min(1, gate.t + half);
-                context.strokeStyle = '#cf2e2e';
-                context.lineWidth = 14;
-                context.beginPath();
-                context.moveTo(a.x + (b.x - a.x) * from, a.y + (b.y - a.y) * from);
-                context.lineTo(a.x + (b.x - a.x) * to, a.y + (b.y - a.y) * to);
-                context.stroke();
-                context.fillStyle = '#cf2e2e';
-                context.fillText(gateLabel(gate), a.x + (b.x - a.x) * gate.t, a.y + (b.y - a.y) * gate.t + 44);
-            }
-
-            context.fillStyle = '#263166';
-            context.fillText(`${run.override_ft ?? run.calc_ft} ft`, (a.x + b.x) / 2, (a.y + b.y) / 2 - 18);
-        }
-    }
-
-    context.fillStyle = '#263166';
-    context.textAlign = 'left';
-    context.font = '24px Montserrat, Arial, sans-serif';
-    context.fillText(project.address || 'Property map drawing', 40, size - 40);
-    return canvas.toDataURL('image/jpeg', 0.9);
 }
 
 // Loads a project saved by link when the page was opened with ?project=<token>.

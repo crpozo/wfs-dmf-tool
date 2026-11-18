@@ -1,11 +1,11 @@
 /*
- * Map toolbar: Draw / Navigate, undo, redo, close shape, clear all, plus keyboard
+ * Map toolbar: Draw / Navigate, undo, redo, close shape, clear all, Satellite / Plan, plus keyboard
  * shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z) and the contextual hint under the toolbar.
  */
 
 import { hasFinePointer } from './mode.js';
 
-export function mountToolbar({ root, store, mode, onBeforeChange }) {
+export function mountToolbar({ root, store, mode, background, onBeforeChange }) {
     const button = (action) => root.querySelector(`[data-pm-action="${action}"]`);
     const drawButton = button('mode-draw');
     const navigateButton = button('mode-navigate');
@@ -13,6 +13,8 @@ export function mountToolbar({ root, store, mode, onBeforeChange }) {
     const redoButton = button('redo');
     const closeButton = button('close');
     const clearButton = button('clear');
+    const satelliteButton = button('bg-satellite');
+    const planButton = button('bg-plan');
     const hint = root.querySelector('[data-pm-hint]');
 
     drawButton.addEventListener('click', () => mode.set('draw'));
@@ -21,6 +23,8 @@ export function mountToolbar({ root, store, mode, onBeforeChange }) {
     redoButton.addEventListener('click', () => run(() => store.redo()));
     closeButton.addEventListener('click', () => run(() => store.closeShape()));
     clearButton.addEventListener('click', confirmClear);
+    satelliteButton?.addEventListener('click', () => background.set('satellite'));
+    planButton?.addEventListener('click', () => background.set('plan'));
 
     function run(action) {
         onBeforeChange?.();
@@ -82,6 +86,11 @@ export function mountToolbar({ root, store, mode, onBeforeChange }) {
         redoButton.disabled = !store.canRedo();
         closeButton.disabled = !store.canClose();
         clearButton.disabled = store.isEmpty();
+        const plan = background?.get() === 'plan';
+        satelliteButton?.classList.toggle('is-active', !plan);
+        satelliteButton?.setAttribute('aria-pressed', String(!plan));
+        planButton?.classList.toggle('is-active', plan);
+        planButton?.setAttribute('aria-pressed', String(plan));
         const view3dButton = button('view3d');
         if (view3dButton) {
             view3dButton.disabled = !store.runs().some((run) => !run.is_existing_wall);
@@ -113,5 +122,6 @@ export function mountToolbar({ root, store, mode, onBeforeChange }) {
 
     store.subscribe(render);
     mode.subscribe(render);
+    background?.subscribe(render);
     render();
 }
