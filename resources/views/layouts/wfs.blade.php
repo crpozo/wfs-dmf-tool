@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Draw Your Fence') | Western Fence Supply</title>
+    @include('partials.tracking_head')
     <link rel="icon" href="@assetv('images/favicon.ico')" />
     <link rel="stylesheet" href="@assetv('css/fontawesome.css')" />
     <link rel="stylesheet" href="@assetv('css/bootstrap.css')" />
@@ -16,6 +17,7 @@
     @stack('head')
 </head>
 <body class="wfs-page @yield('body-class')">
+    @include('partials.tracking_body')
 
     {{-- Top bar and navigation mirror westernfencesupply.com; links go to the website. --}}
     <div class="wfs-topbar">

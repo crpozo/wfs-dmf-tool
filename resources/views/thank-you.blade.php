@@ -2,6 +2,15 @@
 
 @section('title', 'Thank You')
 
+@if (session('dmf_form_submit'))
+    @push('scripts')
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({ event: 'form_submit', form_name: 'dmf_app', page_url: @json(session('dmf_form_submit')) });
+        </script>
+    @endpush
+@endif
+
 @section('content')
     <div class="wfs-thanks">
         <img src="@assetv('images/success.png')" alt="" />

@@ -35,6 +35,7 @@ class QuoteRequest extends Model
         'sent_id',
         'map_data',
         'sketch_image_path',
+        'attribution',
     ];
 
     protected $casts = [
@@ -47,6 +48,7 @@ class QuoteRequest extends Model
         'code_id' => 'integer',
         'customer_id' => 'integer',
         'map_data' => 'array',
+        'attribution' => 'array',
     ];
 
     public function user()

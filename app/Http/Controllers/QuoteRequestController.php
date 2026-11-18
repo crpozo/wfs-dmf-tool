@@ -11,6 +11,7 @@ use App\Models\Customer;
 use App\Models\QuoteRequest;
 use App\Mail\QuoteRequestReceived;
 use App\Services\PropertyMapQuote;
+use App\Support\QuoteAttribution;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,8 @@ class QuoteRequestController extends Controller
             $data['customer_id']
         );
 
+        $data['attribution'] = QuoteAttribution::fromJson($data['attribution'] ?? null);
+
         $odooQuote = $this->createOdooQuoteData(
             $estimateObj,
             null,
@@ -72,7 +75,10 @@ class QuoteRequestController extends Controller
             'HO',
             $notes,
             $data['company_id'],
-            (int) $data['lead_source_id']
+            (int) $data['lead_source_id'],
+            config('services.odoo.send_attribution')
+                ? QuoteAttribution::odooFields($data['attribution'], $data['full_name'], $data['email'], $data['phone'] ?? null)
+                : []
         );
 
         $data['odoo_id'] = $odooQuote['odoo_id'];
@@ -112,7 +118,8 @@ class QuoteRequestController extends Controller
         session()->forget('estimate');
 
         return redirect()
-            ->route('thank-you');
+            ->route('thank-you')
+            ->with('dmf_form_submit', url()->previous());
     }
 
     public function estimate(){
@@ -1190,7 +1197,8 @@ class QuoteRequestController extends Controller
         ?string $pricelist,
         ?array $notes,
         ?int $companyId,
-        ?int $leadSourceId
+        ?int $leadSourceId,
+        array $extraFields = []
     ): array {
         try {
             $result = $estimate->createOdooQuote(
@@ -1200,7 +1208,8 @@ class QuoteRequestController extends Controller
                 $pricelist,
                 $notes,
                 $companyId,
-                $leadSourceId
+                $leadSourceId,
+                $extraFields
             );
 
             return [

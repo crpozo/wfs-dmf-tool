@@ -78,8 +78,10 @@
             border-radius: 8px;
         }
     </style>
+    @include('partials.tracking_head')
 </head>
 <body class="drawing drawing-standalone">
+    @include('partials.tracking_body')
 
     
     <nav id="navbar" class="navbar" role="navigation">
