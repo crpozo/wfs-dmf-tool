@@ -26,7 +26,7 @@ class Dim{
 
   // Refresh the painted position from the anchor for the current zoom/pan.
   update(){
-    var p = ftToPixels(this.anchor.x, this.anchor.y);
+    let p = ftToPixels(this.anchor.x, this.anchor.y);
     this.x = p.x + this.dx;
     this.y = p.y + this.dy;
   }

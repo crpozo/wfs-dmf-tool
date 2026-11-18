@@ -35,7 +35,7 @@ class Tool {
   }
 
   clicked() {
-    var resp = false;
+    let resp = false;
     if (mouseX > this.x && mouseX < this.x + this.w && mouseY > this.y && mouseY < this.y + this.h) {
       resp = true;
       if(this.fnc){
@@ -66,7 +66,7 @@ class Tool {
   }
 
   shortcutted(code) {
-    var resp = false;
+    let resp = false;
     if (this.shortcut == code) {
       resp = true;
       if(this.fnc){

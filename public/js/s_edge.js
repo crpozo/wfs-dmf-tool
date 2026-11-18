@@ -33,23 +33,23 @@ class Edge{
         }
 
         if(type == tools.GATE){
-            var dx = (this.node2.x-this.node1.x)/this.length;
-            var dy = (this.node2.y-this.node1.y)/this.length;
+            let dx = (this.node2.x-this.node1.x)/this.length;
+            let dy = (this.node2.y-this.node1.y)/this.length;
             this.x3 = this.node1.x+this.length*dx*sqrt(2)/2-this.length*dy*sqrt(2)/2;
             this.y3 = this.node1.y+this.length*dy*sqrt(2)/2+this.length*dx*sqrt(2)/2;
             this.doorType = doorType;
         }
         if(type == tools.DOUBLE){
             // <<< 06/09/25 error en carga de wfs caso 186, w undefined
-            var w = ft
+            let w = ft
             // 06/09/25 >>>
-            var dx = ((this.node2.x+this.node1.x)/2 - this.node1.x) / (w/2);
-            var dy = ((this.node2.y+this.node1.y)/2 - this.node1.y) / (w/2);
+            let dx = ((this.node2.x+this.node1.x)/2 - this.node1.x) / (w/2);
+            let dy = ((this.node2.y+this.node1.y)/2 - this.node1.y) / (w/2);
 
             this.x3 = this.node1.x + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
             this.y3 = this.node1.y + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
 
-            var dw = this.length * (sqrt(2) - 1) / sqrt(2);
+            let dw = this.length * (sqrt(2) - 1) / sqrt(2);
             this.x4 = this.x3 + dw / (sqrt(1 + sq(this.m)));
             this.y4 = this.y3 + this.m * dw / (sqrt(1 + sq(this.m)));
             this.doorType = doorType;
@@ -97,7 +97,7 @@ class Edge{
     }
 
   addInput(){
-    var item = inputRow.replace("%%%ID%%%", "input_" + this.id);
+    let item = inputRow.replace("%%%ID%%%", "input_" + this.id);
     item = item.replace("%%%ROW_ID%%%", "row_" + this.id);
     item = item.replace("%%%D%%%", "d" + this.id);
     item = item.replace("%%%NAME%%%", "d" + this.id);
@@ -123,9 +123,9 @@ class Edge{
   }
 
   over(){
-    var odim = null;
+    let odim = null;
     if(toolActualGroup[1] != tools.GATE && toolActualGroup[1] != tools.DOUBLE) {
-        for (var i = 0; i < this.dims.length; i++) {
+        for (let i = 0; i < this.dims.length; i++) {
             odim = this.dims[i].over();
             if (odim != null) {
                 break;
@@ -139,8 +139,8 @@ class Edge{
       /*
       if(this.linked == null) {
           this.linked = edge2;
-          var dim1 = this.getDim();
-          var dim2 = edge2.getDim();
+          let dim1 = this.getDim();
+          let dim2 = edge2.getDim();
           if(dim1 != null && dim2 != null){
               dim1.link(dim2);
           }
@@ -169,9 +169,9 @@ class Edge{
   }
 
   getNodeAsoc(){
-      var nodeAsoc = null;
-      for(var i=0;i<this.node1.edges.length;i++){
-          var edge = this.node1.edges[i];
+      let nodeAsoc = null;
+      for(let i=0;i<this.node1.edges.length;i++){
+          let edge = this.node1.edges[i];
           if(edge == this){
               nodeAsoc = this.node1;
               break;
@@ -187,7 +187,7 @@ class Edge{
   // Para "rehacer" cercas al borrar puertas, el que queda es el edge1 (debería ser cerca)
   merge(edge2){
       // Si el nodo que se elimina es el que tiene asociado al edge, es necesario re-asociarlo a alguno de los nodos
-      var nodeAsoc = this.getNodeAsoc();
+      let nodeAsoc = this.getNodeAsoc();
 
       if(this.node1 == edge2.node1){
           if(nodeAsoc == this.node1){
@@ -195,30 +195,24 @@ class Edge{
           }
           this.node1 = edge2.node2;
       }
-      else{
-          if(this.node2 == edge2.node2){
+      else if(this.node2 == edge2.node2){
               if(nodeAsoc == this.node2){
                   edge2.node1.edges.push(this);
               }
               this.node2 = edge2.node1;
           }
-          else{
-              if(this.node1 == edge2.node2){
+          else if(this.node1 == edge2.node2){
                   if(nodeAsoc == this.node1){
                       edge2.node1.edges.push(this);
                   }
                   this.node1 = edge2.node1;
               }
-              else{
-                  if(this.node2 == edge2.node1){
+              else if(this.node2 == edge2.node1){
                       if(nodeAsoc == this.node2){
                           edge2.node2.edges.push(this);
                       }
                       this.node2 = edge2.node2;
                   }
-              }
-          }
-      }
       if(this.node2.x < this.node1.x){
           this.xMin = this.node2.x;
           this.xMax = this.node1.x;
@@ -264,12 +258,12 @@ class Edge{
   }
 
   setDim(texto, gap){
-    var p1 = ftToPixels(this.node1.x,this.node1.y);
-    var p2 = ftToPixels(this.node2.x,this.node2.y);
+    let p1 = ftToPixels(this.node1.x,this.node1.y);
+    let p2 = ftToPixels(this.node2.x,this.node2.y);
 
     this.ft = parseInt(texto);
     //var dim = dimension(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
-    var dim = dimension(p1.x,p1.y,p2.x,p2.y, texto, gap);
+    let dim = dimension(p1.x,p1.y,p2.x,p2.y, texto, gap);
     this.addDim(dim);
     if(this.linked != null){
         dim.link(this.linked.getDim());
@@ -277,7 +271,7 @@ class Edge{
   }
 
   proj(x,y){
-    var q = pixelsToFt(x,y);
+    let q = pixelsToFt(x,y);
 
     let bs = q.y - this.ms * q.x;
     let x2 = (bs - this.b) / (this.m - this.ms);
@@ -317,23 +311,23 @@ class Edge{
   check(x,y,d){
     push();
 
-    var r = false;
-    var pt = this.proj(x,y);
-    var x1 = pt.x;
-    var y1 = pt.y;
+    let r = false;
+    let pt = this.proj(x,y);
+    let x1 = pt.x;
+    let y1 = pt.y;
 
-    var dist=sqrt(sq(x1-x) + sq(y1-y));
+    let dist=sqrt(sq(x1-x) + sq(y1-y));
     if(dist < d){
-      var pmin = ftToPixels(this.xMin, this.yMin);
-      var pmax = ftToPixels(this.xMax, this.yMax);
+      let pmin = ftToPixels(this.xMin, this.yMin);
+      let pmax = ftToPixels(this.xMax, this.yMax);
 
       this.ms = round(this.ms, 5);
       //if(this.type != types.WALL && (toolActual == tools.GATE || toolActual == tools.DOUBLE)){
       //if(this.type != types.WALL && (toolActualGroup[1] == tools.GATE || toolActualGroup[1] == tools.DOUBLE)){
       if((this.type == types.FENCE || this.type == types.FENCE_2 || this.type == types.FENCE_3) && (toolActualGroup[1] == tools.GATE || toolActualGroup[1] == tools.DOUBLE)){
         if(((x1>=pmin.x && x1<=pmax.x) || this.ms == 0) && y1>=pmin.y && y1<=pmax.y){
-          var p1;
-          var p2;
+          let p1;
+          let p2;
           if(this.ms == 0){
               if (this.node1.y < this.node2.y) {
                   p1 = ftToPixels(this.node1.x, this.node1.y);
@@ -343,23 +337,21 @@ class Edge{
                   p1 = ftToPixels(this.node2.x, this.node2.y);
               }
           }
-          else {
-              if (this.node1.x < this.node2.x) {
+          else if (this.node1.x < this.node2.x) {
                   p1 = ftToPixels(this.node1.x, this.node1.y);
                   p2 = ftToPixels(this.node2.x, this.node2.y);
               } else {
                   p2 = ftToPixels(this.node1.x, this.node1.y);
                   p1 = ftToPixels(this.node2.x, this.node2.y);
               }
-          }
           // Debe hacerse proporcional al largo del edge
           //var w = wDoor * gridSpacing;
-          var edgeLength = sqrt(sq(this.xMax-this.xMin) + sq(this.yMax-this.yMin));
+          let edgeLength = sqrt(sq(this.xMax-this.xMin) + sq(this.yMax-this.yMin));
           edgeLength = this.length;
-          var w = this.length / this.ft * wDoor * gridSpacing;
+          let w = this.length / this.ft * wDoor * gridSpacing;
           //console.log("W: ", w);
-          var x2 = x1 + w / (sqrt(1 + sq(this.m)));
-          var y2 = y1 + this.m * w / (sqrt(1 + sq(this.m)));
+          let x2 = x1 + w / (sqrt(1 + sq(this.m)));
+          let y2 = y1 + this.m * w / (sqrt(1 + sq(this.m)));
 
           // Door width = section length
           if(w == this.length){
@@ -386,10 +378,10 @@ class Edge{
               if(toolActualGroup[1] == tools.GATE) {
                   switch(doorType) {
                       case doorTypes.SWING_GATE:
-                          var dx = (x2 - x1) / w;
-                          var dy = (y2 - y1) / w;
-                          var x3 = x1 + w * dx * sqrt(2) / 2 - w * dy * sqrt(2) / 2;
-                          var y3 = y1 + w * dy * sqrt(2) / 2 + w * dx * sqrt(2) / 2;
+                          let dx = (x2 - x1) / w;
+                          let dy = (y2 - y1) / w;
+                          let x3 = x1 + w * dx * sqrt(2) / 2 - w * dy * sqrt(2) / 2;
+                          let y3 = y1 + w * dy * sqrt(2) / 2 + w * dx * sqrt(2) / 2;
                           line(x1, y1, x3, y3);
                           break;
                       case doorTypes.ROLLING_GATE:
@@ -402,33 +394,21 @@ class Edge{
                            */
                           push();
                           translate(x1,y1);
-                          var alpha = HALF_PI;
-                          if(x1!=x2){
-                              alpha = atan((y2-y1)/(x2-x1));
-                          }
-                          rotate(alpha);
+                          rotate(x1!=x2 ? atan((y2-y1)/(x2-x1)) : HALF_PI);
                           this.rollingGate(sqrt(sq(x2-x1)+sq(y2-y1)));
                           pop();
                           break;
                       case doorTypes.SLIDING_GATE:
                           push();
                           translate(x1,y1);
-                          var alpha = HALF_PI;
-                          if(x1!=x2){
-                              alpha = atan((y2-y1)/(x2-x1));
-                          }
-                          rotate(alpha);
+                          rotate(x1!=x2 ? atan((y2-y1)/(x2-x1)) : HALF_PI);
                           this.slidingGate(sqrt(sq(x2-x1)+sq(y2-y1)));
                           pop();
                           break;
                       case doorTypes.CANTILEVER_GATE:
                           push();
                           translate(x1,y1);
-                          var alpha = HALF_PI;
-                          if(x1!=x2){
-                              alpha = atan((y2-y1)/(x2-x1));
-                          }
-                          rotate(alpha);
+                          rotate(x1!=x2 ? atan((y2-y1)/(x2-x1)) : HALF_PI);
                           this.cantileverGate(sqrt(sq(x2-x1)+sq(y2-y1)));
                           pop();
                           break;
@@ -437,62 +417,50 @@ class Edge{
               else{ //DOUBLE
                   switch(doorType) {
                       case doorTypes.SWING_GATE:
-                          var dx = ((x2+x1)/2 - x1) / (w/2);
-                          var dy = ((y2+y1)/2 - y1) / (w/2);
-                          var x3 = x1 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
-                          var y3 = y1 + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
+                          let dx = ((x2+x1)/2 - x1) / (w/2);
+                          let dy = ((y2+y1)/2 - y1) / (w/2);
+                          let x3 = x1 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
+                          let y3 = y1 + (w/2) * dy * sqrt(2) / 2 + (w/2) * dx * sqrt(2) / 2;
                           line(x1, y1, x3, y3);
 
                           /*
                           dx = (x2 - (x2+x1)/2) / (w/2);
                           dy = (y2 - (y2+y1)/2) / (w/2);
-                          var x4 = x2 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
-                          var y4 = y2 - (w/2) * dy * sqrt(2) / 2 - (w/2) * dx * sqrt(2) / 2;
+                          let x4 = x2 + (w/2) * dx * sqrt(2) / 2 - (w/2) * dy * sqrt(2) / 2;
+                          let y4 = y2 - (w/2) * dy * sqrt(2) / 2 - (w/2) * dx * sqrt(2) / 2;
                           line(x2, y2, x4, y4);
                            */
-                          var dw = w * (sqrt(2) - 1) / sqrt(2);
-                          var x4 = x3 + dw / (sqrt(1 + sq(this.m)));
-                          var y4 = y3 + this.m * dw / (sqrt(1 + sq(this.m)));
+                          let dw = w * (sqrt(2) - 1) / sqrt(2);
+                          let x4 = x3 + dw / (sqrt(1 + sq(this.m)));
+                          let y4 = y3 + this.m * dw / (sqrt(1 + sq(this.m)));
                           line(x2, y2, x4, y4);
                           break;
                       case doorTypes.ROLLING_GATE:
                           push();
                           translate(x1,y1);
-                          var alpha = HALF_PI;
-                          if(x1!=x2){
-                              alpha = atan((y2-y1)/(x2-x1));
-                          }
-                          rotate(alpha);
+                          rotate(x1!=x2 ? atan((y2-y1)/(x2-x1)) : HALF_PI);
                           this.rollingDoubleGate(sqrt(sq(x2-x1)+sq(y2-y1)));
                           pop();
                           break;
                       case doorTypes.SLIDING_GATE:
                           push();
                           translate(x1,y1);
-                          var alpha = HALF_PI;
-                          if(x1!=x2){
-                              alpha = atan((y2-y1)/(x2-x1));
-                          }
-                          rotate(alpha);
+                          rotate(x1!=x2 ? atan((y2-y1)/(x2-x1)) : HALF_PI);
                           this.slidingDoubleGate(sqrt(sq(x2-x1)+sq(y2-y1)));
                           pop();
                           break;
                       case doorTypes.CANTILEVER_GATE:
                           push();
                           translate(x1,y1);
-                          var alpha = HALF_PI;
-                          if(x1!=x2){
-                              alpha = atan((y2-y1)/(x2-x1));
-                          }
-                          rotate(alpha);
+                          rotate(x1!=x2 ? atan((y2-y1)/(x2-x1)) : HALF_PI);
                           this.cantileverDoubleGate(sqrt(sq(x2-x1)+sq(y2-y1)));
                           pop();
                           break;
                   }
               }
 
-              var sp1 = round(wDoor / sqrt(sq(x1-x2) + sq(y1-y2)) * sqrt(sq(x1-p1.x) + sq(y1-p1.y)), 0);
-              var sp2 = this.ft - sp1 - wDoor;
+              let sp1 = round(wDoor / sqrt(sq(x1-x2) + sq(y1-y2)) * sqrt(sq(x1-p1.x) + sq(y1-p1.y)), 0);
+              let sp2 = this.ft - sp1 - wDoor;
 
               if(sp1 > 0) {
                   this.addDim(dimension(p1.x, p1.y, x1, y1, sp1, sep));
@@ -502,21 +470,18 @@ class Edge{
                   this.addDim(dimension(x2, y2, p2.x, p2.y, sp2, sep));
               }
               // dim total
-              var pi = ftToPixels(this.node1.x, this.node1.y);
-              var pf = ftToPixels(this.node2.x, this.node2.y);
+              let pi = ftToPixels(this.node1.x, this.node1.y);
+              let pf = ftToPixels(this.node2.x, this.node2.y);
               this.addDim(dimension(pi.x, pi.y, pf.x, pf.y, this.ft, sep2));
           }
         }
       }
-      else{
-        //if(toolActual == tools.ERASER){
-        if(toolActualGroup[1] == tools.ERASER){
+      else if(toolActualGroup[1] == tools.ERASER){
             if(((x1>=pmin.x && x1<=pmax.x) || this.ms == 0) && y1>=pmin.y && y1<=pmax.y){
                 this.del = true;
                 r = true;
             }
         }
-      }
     }
 
     pop();
@@ -524,16 +489,16 @@ class Edge{
   }
 
   check2(x,y,d){
-    var pt = this.proj(x,y);
-    var x1 = pt.x;
-    var y1 = pt.y;
+    let pt = this.proj(x,y);
+    let x1 = pt.x;
+    let y1 = pt.y;
 
-    var dist=sqrt(sq(x1-x) + sq(y1-y));
+    let dist=sqrt(sq(x1-x) + sq(y1-y));
     if(dist < d){
       //if(toolActual == tools.GATE){
       if(toolActualGroup[1] == tools.GATE){
-        var pmin = ftToPixels(this.xMin, this.yMin);
-        var pmax = ftToPixels(this.xMax, this.yMax);
+        let pmin = ftToPixels(this.xMin, this.yMin);
+        let pmax = ftToPixels(this.xMax, this.yMax);
         /*
         if(((pt.x>=this.xMin && pt.x<=this.xMax) || this.ms == 0) &&
            pt.y>=this.yMin && pt.y<=this.yMax){
@@ -541,15 +506,15 @@ class Edge{
         if(((x1>=pmin.x && x1<=pmax.x) || this.ms == 0) &&
            y1>=pmin.y && y1<=pmax.y){
 
-          var p1 = ftToPixels(this.node1.x, this.node1.y);
-          var p2 = ftToPixels(this.node2.x, this.node2.y);
+          let p1 = ftToPixels(this.node1.x, this.node1.y);
+          let p2 = ftToPixels(this.node2.x, this.node2.y);
           /*
           this.addDim(dimension(this.node1.x,this.node1.y,pt.x,pt.y));
           this.addDim(dimension(pt.x,pt.y,this.node2.x,this.node2.y));
           */
-          var w = wDoor * gridSpacing;
-          var x2 = x1 + w / (sqrt(1+sq(this.m)));
-          var y2 = y1 + this.m * w / (sqrt(1+sq(this.m)));
+          let w = wDoor * gridSpacing;
+          let x2 = x1 + w / (sqrt(1+sq(this.m)));
+          let y2 = y1 + this.m * w / (sqrt(1+sq(this.m)));
 
           ellipse(x1, y1, 5, 5);
           this.clearDims();
@@ -557,10 +522,10 @@ class Edge{
           //ellipse((pt.x+x2)/2, (pt.y+y2)/2, w, w, w);
 
           // Puerta
-          var dx = (x2-pt.x)/w;
-          var dy = (y2-pt.y)/w;
-          var x3 = x1+w*dx*sqrt(2)/2-w*dy*sqrt(2)/2;
-          var y3 = y1+w*dy*sqrt(2)/2+w*dx*sqrt(2)/2;
+          let dx = (x2-pt.x)/w;
+          let dy = (y2-pt.y)/w;
+          let x3 = x1+w*dx*sqrt(2)/2-w*dy*sqrt(2)/2;
+          let y3 = y1+w*dy*sqrt(2)/2+w*dx*sqrt(2)/2;
           line(x1,y1,x3,y3);
 
           if(p1.x <= p2.x){
@@ -574,8 +539,7 @@ class Edge{
               this.addDim(dimension(x2,y2,p2.x,p2.y));
             }
           }
-          else{
-            if(pt.x <= p2.x){
+          else if(pt.x <= p2.x){
               this.addDim(dimension(p2.x,p2.y,x1,y1));
               this.addDim(dimension(x1,y1,p1.x,p1.y));
             }
@@ -584,15 +548,11 @@ class Edge{
               this.addDim(dimension(x1,y1,x2,y2));
               this.addDim(dimension(x2,y2,p1.x,p1.y));
             }
-          }
         }
       }
-      else{
-        //if(toolActual == tools.ERASER){
-        if(toolActualGroup[1] == tools.ERASER){
+      else if(toolActualGroup[1] == tools.ERASER){
           this.del = true;
         }
-      }
     }
     return (dist < d);
   }
@@ -600,9 +560,9 @@ class Edge{
   slidingGate(xDoor){
 
     translate(0,5);
-    var wFrame = 4;
-    var lSupport = 4;
-    var wSupport = 2;
+    let wFrame = 4;
+    let lSupport = 4;
+    let wSupport = 2;
 
     strokeWeight(1);
     fill(255,255,0);
@@ -619,9 +579,9 @@ class Edge{
     slidingDoubleGate(xDoor){
 
         translate(0,5);
-        var wFrame = 4;
-        var lSupport = 4;
-        var wSupport = 2;
+        let wFrame = 4;
+        let lSupport = 4;
+        let wSupport = 2;
 
         strokeWeight(1);
         fill(255,255,0);
@@ -648,9 +608,9 @@ class Edge{
 
   rollingGate(xDoor){
       translate(0,8);
-      var wTire = 8;
-      var lAxis = 8;
-      var posTire = 0.85;
+      let wTire = 8;
+      let lAxis = 8;
+      let posTire = 0.85;
       //var pDoor = ftToPixels(wDoor,0);
       //var xDoor = pDoor.x;
       strokeWeight(2);
@@ -664,9 +624,9 @@ class Edge{
 
     rollingDoubleGate(xDoor){
         translate(0,8);
-        var wTire = 8;
-        var lAxis = 8;
-        var posTire = 0.85;
+        let wTire = 8;
+        let lAxis = 8;
+        let posTire = 0.85;
         //var pDoor = ftToPixels(wDoor,0);
         //var xDoor = pDoor.x;
         strokeWeight(2);
@@ -686,8 +646,8 @@ class Edge{
 
   cantileverGate(xDoor){
       translate(0,5);
-      var cantilever = 0.5;
-      var wRoll = 6;
+      let cantilever = 0.5;
+      let wRoll = 6;
       fill(255,0,0);
       ellipse(-xDoor*cantilever,wRoll,wRoll, wRoll);
       ellipse(0,wRoll,wRoll, wRoll);
@@ -697,8 +657,8 @@ class Edge{
 
     cantileverDoubleGate(xDoor){
         translate(0,5);
-        var cantilever = 0.25;
-        var wRoll = 6;
+        let cantilever = 0.25;
+        let wRoll = 6;
         fill(255,0,0);
         ellipse(-xDoor*cantilever,wRoll,wRoll, wRoll);
         ellipse(0,wRoll,wRoll, wRoll);
@@ -740,14 +700,14 @@ class Edge{
     }
 
     if(this.type == tools.GATE || this.type == tools.DOUBLE) {
-        var p1 = ftToPixels(this.node1.x, this.node1.y);
-        var p2 = ftToPixels(this.node2.x, this.node2.y);
-        var p3 = ftToPixels(this.x3, this.y3);
+        let p1 = ftToPixels(this.node1.x, this.node1.y);
+        let p2 = ftToPixels(this.node2.x, this.node2.y);
+        let p3 = ftToPixels(this.x3, this.y3);
 
         if(this.type == tools.DOUBLE){
             switch(this.doorType){
                 case doorTypes.SWING_GATE:
-                    var p4 = ftToPixels(this.x4, this.y4);
+                    let p4 = ftToPixels(this.x4, this.y4);
                     line(p1.x, p1.y, p3.x, p3.y);
                     line(p2.x, p2.y, p4.x, p4.y);
                     break;
@@ -755,11 +715,7 @@ class Edge{
                     push();
 
                     translate(p1.x, p1.y);
-                    var alpha = HALF_PI;
-                    if (p1.x != p2.x) {
-                        alpha = atan((p2.y - p1.y) / (p2.x - p1.x));
-                    }
-                    rotate(alpha);
+                    rotate(p1.x != p2.x ? atan((p2.y - p1.y) / (p2.x - p1.x)) : HALF_PI);
                     this.rollingDoubleGate(sqrt(sq(p2.x - p1.x) + sq(p2.y - p1.y)));
 
                     pop();
@@ -768,11 +724,7 @@ class Edge{
                     push();
 
                     translate(p1.x, p1.y);
-                    var alpha = HALF_PI;
-                    if (p1.x != p2.x) {
-                        alpha = atan((p2.y - p1.y) / (p2.x - p1.x));
-                    }
-                    rotate(alpha);
+                    rotate(p1.x != p2.x ? atan((p2.y - p1.y) / (p2.x - p1.x)) : HALF_PI);
                     this.slidingDoubleGate(sqrt(sq(p2.x - p1.x) + sq(p2.y - p1.y)));
 
                     pop();
@@ -781,11 +733,7 @@ class Edge{
                     push();
 
                     translate(p1.x, p1.y);
-                    var alpha = HALF_PI;
-                    if (p1.x != p2.x) {
-                        alpha = atan((p2.y - p1.y) / (p2.x - p1.x));
-                    }
-                    rotate(alpha);
+                    rotate(p1.x != p2.x ? atan((p2.y - p1.y) / (p2.x - p1.x)) : HALF_PI);
                     this.cantileverDoubleGate(sqrt(sq(p2.x - p1.x) + sq(p2.y - p1.y)));
 
                     pop();
@@ -808,11 +756,7 @@ class Edge{
                     push();
 
                     translate(p1.x, p1.y);
-                    var alpha = HALF_PI;
-                    if (p1.x != p2.x) {
-                        alpha = atan((p2.y - p1.y) / (p2.x - p1.x));
-                    }
-                    rotate(alpha);
+                    rotate(p1.x != p2.x ? atan((p2.y - p1.y) / (p2.x - p1.x)) : HALF_PI);
                     this.rollingGate(sqrt(sq(p2.x - p1.x) + sq(p2.y - p1.y)));
 
                     pop();
@@ -822,11 +766,7 @@ class Edge{
                     push();
 
                     translate(p1.x, p1.y);
-                    var alpha = HALF_PI;
-                    if (p1.x != p2.x) {
-                        alpha = atan((p2.y - p1.y) / (p2.x - p1.x));
-                    }
-                    rotate(alpha);
+                    rotate(p1.x != p2.x ? atan((p2.y - p1.y) / (p2.x - p1.x)) : HALF_PI);
                     this.slidingGate(sqrt(sq(p2.x - p1.x) + sq(p2.y - p1.y)));
 
                     pop();
@@ -835,11 +775,7 @@ class Edge{
                     push();
 
                     translate(p1.x, p1.y);
-                    var alpha = HALF_PI;
-                    if (p1.x != p2.x) {
-                        alpha = atan((p2.y - p1.y) / (p2.x - p1.x));
-                    }
-                    rotate(alpha);
+                    rotate(p1.x != p2.x ? atan((p2.y - p1.y) / (p2.x - p1.x)) : HALF_PI);
                     this.cantileverGate(sqrt(sq(p2.x - p1.x) + sq(p2.y - p1.y)));
 
                     pop();
@@ -849,22 +785,22 @@ class Edge{
     }
     else
     {
-        var p1 = ftToPixels(this.node1.x, this.node1.y);
-        var p2 = ftToPixels(this.node2.x, this.node2.y);
+        let p1 = ftToPixels(this.node1.x, this.node1.y);
+        let p2 = ftToPixels(this.node2.x, this.node2.y);
         //line(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
         line(p1.x, p1.y, p2.x, p2.y);
         //dimension(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
     }
     drawingContext.setLineDash([]);
     stroke(0);
-    for(var i=0;i<this.dims.length;i++){
+    for(let i=0;i<this.dims.length;i++){
         this.dims[i].paint();
     }
     pop();
   }
 
   countId(id){
-    var c = 0;
+    let c = 0;
     if(this.node1.id == id){
       c++;
     }
@@ -884,18 +820,16 @@ class Edge{
   }
 
     getData(){
-        var edge;
+        let edge;
         if(this.type == tools.GATE || this.type == tools.DOUBLE){
             edge = {node1:this.node1.id, node2:this.node2.id, x1:this.node1.x, y1:this.node1.y, x2:this.node2.x, y2:this.node2.y, door:1, type:this.type, material:this.fenceMaterial, doorType:this.doorType, length:this.getDim().texto};
         }
-        else {
-            if(this.type == tools.WALL){
+        else if(this.type == tools.WALL){
                 edge = {node1:this.node1.id, node2:this.node2.id, x1:this.node1.x, y1:this.node1.y, x2:this.node2.x, y2:this.node2.y, door:0, type:this.type, material:this.fenceMaterial};
             }
             else{
                 edge = {node1:this.node1.id, node2:this.node2.id, x1:this.node1.x, y1:this.node1.y, x2:this.node2.x, y2:this.node2.y, door:0, type:this.type, material:this.fenceMaterial, length:this.getDim().texto};
             }
-        }
         return edge;
     }
 

@@ -96,7 +96,7 @@ export function mountDrawing({ map, store, mode, background, libs, onRunFocus, n
     }
 
     map.addListener('mousedown', (event) => {
-        if (!dragToDraw() || !event.domEvent || event.domEvent.button !== 0) {
+        if (!dragToDraw() || event.domEvent?.button !== 0) {
             return;
         }
         menu.close();

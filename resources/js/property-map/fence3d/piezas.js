@@ -85,7 +85,7 @@ Ensamblador.prototype.grupo = function () {
     im.receiveShadow = true;
     /* Las mallas de chain link son planos con recorte: si proyectan sombra
        opaca se ve un muro negro en el suelo, asi que solo la reciben. */
-    if (claves[i].indexOf('plano|') === 0 && l.material.alphaMap) { im.castShadow = false; }
+    if (claves[i].startsWith('plano|') && l.material.alphaMap) { im.castShadow = false; }
     im.frustumCulled = false;
     g.add(im);
   }

@@ -26,7 +26,7 @@ let zoomMin = 0;
 let zoomMax = 6;
 let gridSpacing = (_W-toolbarWidth)/zoomLevels[zoomLevel];
 // ****
-var graph;
+let graph;
 
 
 function clearSc(){
@@ -53,6 +53,7 @@ function zoomIn(){
 }
 
 function toolbar(){
+  let btnClear, btnEraser, btnGate, btnWall, btnZoomIn, btnZoomOut;
   btnZoomIn = createImg('img/plus.png','plus');
   btnZoomIn.position(5, 0);
   btnZoomIn.mousePressed(function(){ zoomIn(); });
@@ -123,6 +124,7 @@ function toolClick(tool){
 }
 
 function draw() { 
+  let vertfin, x, y;
   image(buffer, toolbarWidth, 0);
   if(graph.vertices.length > 0){
     graph.paint();
@@ -134,8 +136,7 @@ function draw() {
   if(x < toolbarWidth){
     cursor(ARROW);  
   }
-  else{
-    if(toolActual == 1 || toolActual == 2){
+  else if(toolActual == 1 || toolActual == 2){
       cursor(cursorActual);
       
       if (drawable && mouseIsPressed) {
@@ -145,7 +146,7 @@ function draw() {
 
         if(actual){
           if(shift){
-            var pActual = ftToPixels(actual.x, actual.y);
+            let pActual = ftToPixels(actual.x, actual.y);
             if(abs(pActual.x-xo) > abs(pActual.y-yo)){
               yo = pActual.y 
             }
@@ -160,16 +161,16 @@ function draw() {
             actual = null;
           }
           else{
-            var v = graph.addVertex(xo,yo);
+            let v = graph.addVertex(xo,yo);
             //console.log(v.x, v.y);
-            var edge = graph.addEdge(actual, v, toolActual);      
+            let edge = graph.addEdge(actual, v, toolActual);      
             //actual = v;
             setActual(v);
           }
         }
         else{
           vertfin = graph.check(xo,yo,snapV);
-          var v;
+          let v;
           if(vertfin != null){
             //actual = vertfin;
             //xo = vertfin.x;
@@ -185,8 +186,7 @@ function draw() {
                 
         }
       }
-      else{
-        if(actual){
+      else if(actual){
           if(xo && mouseX > toolbarWidth){
             //var v = graph.addVertex(xo,yo);
             //v.paint();
@@ -220,13 +220,11 @@ function draw() {
         else{
           graph.check(x,y,snapV);
         }
-      }
     }
     else
       if(toolActual == 3){
         graph.checkEdges(x,y,snapE);
     }
-  }
 }
 
 function mouseReleased(){

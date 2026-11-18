@@ -70,8 +70,8 @@ export function cesped() {
   for (var i = 0; i < 34000; i++) {
     var x = Math.random() * n, y = Math.random() * n;
     var l = 4 + Math.random() * 9, a = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
-    g.strokeStyle = 'rgba(' + (74 + Math.random() * 64 | 0) + ',' +
-      (104 + Math.random() * 66 | 0) + ',' + (48 + Math.random() * 36 | 0) + ',0.55)';
+    g.strokeStyle = 'rgba(' + Math.trunc(74 + Math.random() * 64) + ',' +
+      Math.trunc(104 + Math.random() * 66) + ',' + Math.trunc(48 + Math.random() * 36) + ',0.55)';
     g.lineWidth = 1 + Math.random();
     g.beginPath();
     g.moveTo(x, y);
@@ -86,7 +86,7 @@ export function estuco(hex) {
   var k = 'estuco' + hex;
   if (cache[k]) { return cache[k]; }
   var n = 384, c = lienzo(n), g = c.getContext('2d');
-  var r = parseInt(hex.slice(1, 3), 16), v = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  var r = Number.parseInt(hex.slice(1, 3), 16), v = Number.parseInt(hex.slice(3, 5), 16), b = Number.parseInt(hex.slice(5, 7), 16);
   ruido(g, n, 9, 0.13, [r, v, b]);
   for (var i = 0; i < 11000; i++) {
     g.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.07) + ')';
@@ -113,10 +113,10 @@ export function teja() {
          un estampado; la teja real varia pieza a pieza. */
       var j = (Math.sin((x + desfase) * 0.7 + f * 13.7) * 0.5 + 0.5) * 26 - 13;
       var aj = function (hx) {
-        var r = Math.max(0, Math.min(255, parseInt(hx.slice(1, 3), 16) + j));
-        var v = Math.max(0, Math.min(255, parseInt(hx.slice(3, 5), 16) + j * 0.6));
-        var b = Math.max(0, Math.min(255, parseInt(hx.slice(5, 7), 16) + j * 0.4));
-        return 'rgb(' + (r | 0) + ',' + (v | 0) + ',' + (b | 0) + ')';
+        var r = Math.max(0, Math.min(255, Number.parseInt(hx.slice(1, 3), 16) + j));
+        var v = Math.max(0, Math.min(255, Number.parseInt(hx.slice(3, 5), 16) + j * 0.6));
+        var b = Math.max(0, Math.min(255, Number.parseInt(hx.slice(5, 7), 16) + j * 0.4));
+        return 'rgb(' + Math.trunc(r) + ',' + Math.trunc(v) + ',' + Math.trunc(b) + ')';
       };
       var grd = g.createLinearGradient(x + desfase, 0, x + desfase + n / 6, 0);
       grd.addColorStop(0, aj('#7d4229'));
@@ -169,7 +169,7 @@ export function frondaHoja() {
     var largo = Math.sin(Math.min(1, t * 1.15) * Math.PI) * w * 0.48 + 6;
     var ang = 0.55 + t * 0.5;                           // mas caidos hacia la punta
     for (var lado = -1; lado <= 1; lado += 2) {
-      g.strokeStyle = 'rgba(' + (40 + Math.random() * 40 | 0) + ',' + (100 + Math.random() * 50 | 0) + ',' + (40 + Math.random() * 20 | 0) + ',0.95)';
+      g.strokeStyle = 'rgba(' + Math.trunc(40 + Math.random() * 40) + ',' + Math.trunc(100 + Math.random() * 50) + ',' + Math.trunc(40 + Math.random() * 20) + ',0.95)';
       /* Foliolos de 3px cada 6px: con 2px y alphaTest, los mipmaps los
          diluian y a distancia la copa quedaba rala; con 4px cada 4px se
          tocaban y de cerca la hoja era una lamina rayada. */
@@ -192,8 +192,8 @@ export function veta() {
   g.fillRect(0, 0, n, n);
   for (var i = 0; i < 150; i++) {
     var y = Math.random() * n;
-    g.strokeStyle = 'rgba(' + (60 + Math.random() * 40 | 0) + ',' +
-      (42 + Math.random() * 30 | 0) + ',' + (26 + Math.random() * 22 | 0) + ',' + (0.15 + Math.random() * 0.35) + ')';
+    g.strokeStyle = 'rgba(' + Math.trunc(60 + Math.random() * 40) + ',' +
+      Math.trunc(42 + Math.random() * 30) + ',' + Math.trunc(26 + Math.random() * 22) + ',' + (0.15 + Math.random() * 0.35) + ')';
     g.lineWidth = 0.6 + Math.random() * 2.2;
     g.beginPath();
     g.moveTo(0, y);
@@ -254,7 +254,7 @@ export function fronda() {
     var a = (i / 11) * Math.PI * 2 + 0.2;
     var largo = n * (0.36 + Math.random() * 0.12);
     var caida = 0.55;
-    g.strokeStyle = 'rgba(' + (44 + Math.random() * 34 | 0) + ',' + (96 + Math.random() * 40 | 0) + ',48,0.95)';
+    g.strokeStyle = 'rgba(' + Math.trunc(44 + Math.random() * 34) + ',' + Math.trunc(96 + Math.random() * 40) + ',48,0.95)';
     g.lineWidth = 3;
     g.beginPath();
     g.moveTo(cx, cy);
@@ -265,7 +265,7 @@ export function fronda() {
     for (var t = 0.15; t < 1; t += 0.075) {
       var px = cx + (ex - cx) * t, py = cy + (ey - cy) * t;
       var ancho = Math.sin(t * Math.PI) * n * 0.055;
-      g.strokeStyle = 'rgba(' + (52 + Math.random() * 40 | 0) + ',' + (108 + Math.random() * 44 | 0) + ',52,0.9)';
+      g.strokeStyle = 'rgba(' + Math.trunc(52 + Math.random() * 40) + ',' + Math.trunc(108 + Math.random() * 44) + ',52,0.9)';
       g.lineWidth = 2;
       g.beginPath();
       g.moveTo(px, py);
@@ -287,7 +287,7 @@ export function follaje() {
   for (var i = 0; i < 210; i++) {
     var a = Math.random() * 6.284, r = Math.pow(Math.random(), 0.6) * n * 0.46;
     var x = n / 2 + Math.cos(a) * r, y = n / 2 + Math.sin(a) * r * 0.9;
-    g.fillStyle = 'rgba(' + (40 + Math.random() * 46 | 0) + ',' + (86 + Math.random() * 56 | 0) + ',' + (40 + Math.random() * 30 | 0) + ',0.92)';
+    g.fillStyle = 'rgba(' + Math.trunc(40 + Math.random() * 46) + ',' + Math.trunc(86 + Math.random() * 56) + ',' + Math.trunc(40 + Math.random() * 30) + ',0.92)';
     g.beginPath();
     g.arc(x, y, 4 + Math.random() * 8, 0, 6.284);
     g.fill();

@@ -41,15 +41,15 @@ let pinch = null;         // two-finger touch gesture in progress
 let zoomControls = null;  // HTML overlay built by createZoomControls()
 
 // ****
-var graph;
+let graph;
 let tb;
 let wDoor = 4;
 let wSDoor = 4;
 let wDDoor = 8;
 
-var modal = false;
+let modal = false;
 let inputRow = "<tr id='%%%ROW_ID%%%' class='rowDim'><td><div id='formDimsRight'><div class='input-group'><span id='%%%ID%%%' class='input-group-text'>%%%D%%%</span><input id='%%%ID_TXT%%%' name='%%%NAME%%%' type='text' class='form-control' placeholder='Enter length' aria-label='Enter length' aria-describedby='basic-addon2'><span class='input-group-text' id='basic-addon2'>ft</span></div></div></td></tr>";
-var redrawing = false;
+let redrawing = false;
 
 const dimensions = new Map();
 
@@ -60,7 +60,7 @@ function preload() {
 
 function createEnum(values) {
   const enumObject = {};
-  var i = 0;
+  let i = 0;
   for (const val of values) {
     enumObject[val] = i;
     i++;
@@ -129,7 +129,7 @@ function confirmClearSc(){
       clearSc();
     }
 
-    var clearButton = tb && tb.getButton ? tb.getButton(tools.BIN) : null;
+    let clearButton = tb && tb.getButton ? tb.getButton(tools.BIN) : null;
     if (clearButton) {
       clearButton.setSelected(false);
     }
@@ -149,11 +149,11 @@ function zoomViewCenter(){
 function setZoom(scale, cx, cy){
   scale = constrain(scale, zoomMin, zoomMax);
   if (cx == null || cy == null) {
-    var c = zoomViewCenter();
+    let c = zoomViewCenter();
     cx = c.x;
     cy = c.y;
   }
-  var ratio = scale / gridSpacing;
+  let ratio = scale / gridSpacing;
   panX = (cx - toolbarWidth) - ((cx - toolbarWidth) - panX) * ratio;
   panY = cy - (cy - panY) * ratio;
   gridSpacing = scale;
@@ -187,16 +187,16 @@ function zoomToFit(){
     zoomReset();
     return;
   }
-  var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (var i = 0; i < graph.vertices.length; i++) {
-    var v = graph.vertices[i];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i < graph.vertices.length; i++) {
+    let v = graph.vertices[i];
     minX = min(minX, v.x); maxX = max(maxX, v.x);
     minY = min(minY, v.y); maxY = max(maxY, v.y);
   }
-  var areaW = max(1, _W - toolbarWidth - 2 * zoomFitPadding);
-  var areaH = max(1, _H - 2 * zoomFitPadding);
-  var w = max(maxX - minX, 1);
-  var h = max(maxY - minY, 1);
+  let areaW = max(1, _W - toolbarWidth - 2 * zoomFitPadding);
+  let areaH = max(1, _H - 2 * zoomFitPadding);
+  let w = max(maxX - minX, 1);
+  let h = max(maxY - minY, 1);
   gridSpacing = constrain(min(areaW / w, areaH / h), zoomMin, zoomMax);
   panX = (_W - toolbarWidth - w * gridSpacing) / 2 - minX * gridSpacing;
   panY = (_H - h * gridSpacing) / 2 - minY * gridSpacing;
@@ -206,7 +206,7 @@ function zoomToFit(){
 // Keep the in-progress line start in sync with the view and repaint.
 function afterViewChange(){
   if (actual) {
-    var po = ftToPixels(actual.x, actual.y);
+    let po = ftToPixels(actual.x, actual.y);
     xo = po.x;
     yo = po.y;
   }
@@ -219,7 +219,7 @@ function isOverDrawingArea(x, y){
 }
 
 function isTypingInField(){
-  var el = document.activeElement;
+  let el = document.activeElement;
   return !!el && (el.tagName == 'INPUT' || el.tagName == 'TEXTAREA' || el.tagName == 'SELECT' || el.isContentEditable);
 }
 
@@ -244,7 +244,7 @@ function createZoomControls(){
   if (zoomControls) {
     return;
   }
-  var style = document.createElement('style');
+  let style = document.createElement('style');
   style.textContent =
     '.wfs-zoom-controls{position:absolute;right:12px;bottom:12px;z-index:5;display:flex;align-items:center;gap:2px;padding:3px;' +
       'border-radius:10px;background:var(--wfs-white,#fff);border:1px solid rgba(38,49,102,.25);box-shadow:0 2px 8px rgba(38,49,102,.15);' +
@@ -259,12 +259,12 @@ function createZoomControls(){
     '@media (max-width:600px){.wfs-zoom-controls{right:8px;bottom:8px}.wfs-zoom-controls button{height:36px;min-width:36px}}';
   document.head.appendChild(style);
 
-  var svgMinus = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h10"/></svg>';
-  var svgPlus = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>';
-  var svgFit = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+  let svgMinus = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h10"/></svg>';
+  let svgPlus = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>';
+  let svgFit = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/><rect x="5.5" y="5.5" width="5" height="5" rx="1"/></svg>';
 
-  var box = document.createElement('div');
+  let box = document.createElement('div');
   box.className = 'wfs-zoom-controls';
   box.setAttribute('role', 'group');
   box.setAttribute('aria-label', 'Zoom');
@@ -286,7 +286,7 @@ function createZoomControls(){
     event.stopPropagation();
   });
   box.addEventListener('click', function (event) {
-    var btn = event.target.closest('button[data-zoom]');
+    let btn = event.target.closest('button[data-zoom]');
     if (!btn) {
       return;
     }
@@ -311,8 +311,8 @@ function mountZoomControls(){
   if (!zoomControls) {
     return;
   }
-  var canvasEl = document.querySelector('canvas');
-  var host = canvasEl ? canvasEl.parentElement : null;
+  let canvasEl = document.querySelector('canvas');
+  let host = canvasEl ? canvasEl.parentElement : null;
   if (!host || host === document.body || zoomControls.parentElement === host) {
     return;
   }
@@ -326,12 +326,12 @@ function updateZoomControls(){
   if (!zoomControls) {
     return;
   }
-  var label = zoomControls.querySelector('.wfs-zoom-level');
+  let label = zoomControls.querySelector('.wfs-zoom-level');
   if (label) {
     label.textContent = round(gridSpacing * 100) + '%';
   }
-  var outBtn = zoomControls.querySelector('[data-zoom="out"]');
-  var inBtn = zoomControls.querySelector('[data-zoom="in"]');
+  let outBtn = zoomControls.querySelector('[data-zoom="out"]');
+  let inBtn = zoomControls.querySelector('[data-zoom="in"]');
   if (outBtn) { outBtn.disabled = gridSpacing <= zoomMin + 0.0001; }
   if (inBtn) { inBtn.disabled = gridSpacing >= zoomMax - 0.0001; }
 }
@@ -341,11 +341,11 @@ function mouseWheel(event){
   if (!canvasEnabled || modal || !isOverDrawingArea(mouseX, mouseY)) {
     return;
   }
-  var canvasEl = document.querySelector('canvas');
+  let canvasEl = document.querySelector('canvas');
   if (canvasEl && event.target && event.target !== canvasEl) {
     return;
   }
-  var factor = event.delta > 0 ? 1 / zoomWheelStep : zoomWheelStep;
+  let factor = event.delta > 0 ? 1 / zoomWheelStep : zoomWheelStep;
   setZoom(gridSpacing * factor, mouseX, mouseY);
   return false;
 }
@@ -369,7 +369,7 @@ function touchStarted(){
         graph.removeVertex(actual);
         actual = null;
       }
-      var a = touches[0], b = touches[1];
+      let a = touches[0], b = touches[1];
       pinch = {
         dist: max(1, dist(a.x, a.y, b.x, b.y)),
         cx: (a.x + b.x) / 2,
@@ -385,10 +385,10 @@ function touchStarted(){
 
 function touchMoved(){
   if (pinch && touches.length >= 2) {
-    var a = touches[0], b = touches[1];
-    var d = max(1, dist(a.x, a.y, b.x, b.y));
-    var cx = (a.x + b.x) / 2;
-    var cy = (a.y + b.y) / 2;
+    let a = touches[0], b = touches[1];
+    let d = max(1, dist(a.x, a.y, b.x, b.y));
+    let cx = (a.x + b.x) / 2;
+    let cy = (a.y + b.y) / 2;
     setZoom(pinch.scale * d / pinch.dist, pinch.cx, pinch.cy);
     panBy(cx - pinch.cx, cy - pinch.cy);
     pinch.cx = cx;
@@ -413,8 +413,9 @@ function touchEnded(){
 }
 
 function toolbar(){
+  let btnChannel, btnClear, btnEraser, btnFence, btnWall;
   //btnFence.mousePressed(toolClick(1));
-  var posX = 5
+  let posX = 5
   //let btnFence = createImg('img/fence2.png','Fence');
   //btnFence.position(posX, toolPos[tools.FENCE]);
   //btnFence.mousePressed(function(){ toolClick(tools.FENCE); });
@@ -517,6 +518,7 @@ function toolClick(tool){
 }
 
 function draw() {
+    let vertfin;
     if(canvasEnabled) {
         ortogonal = shift || ortoShift;
 
@@ -569,10 +571,7 @@ function draw() {
                     } else if (panning || spaceDown || pinch) {
                         // View is being moved: no drawing, just the pan cursor.
                         cursor(panning ? 'grabbing' : 'grab');
-                    } else {
-                        //  if (toolActual == tools.FENCE || toolActual == tools.WALL) {
-                        //if (toolActual == tools.LINE) {
-                        if (toolActualGroup[1] == tools.LINE) {
+                    } else if (toolActualGroup[1] == tools.LINE) {
                             cursor(cursorActual);
 
                             if (drawable && mouseIsPressed && !isToolTooltipPointerActive()) {
@@ -581,7 +580,7 @@ function draw() {
                                 yo = mouseY;
 
                                 if (actual) {
-                                    var pActual = ftToPixels(actual.x, actual.y);
+                                    let pActual = ftToPixels(actual.x, actual.y);
                                     if (ortogonal) {
                                         if (abs(pActual.x - xo) > abs(pActual.y - yo)) {
                                             yo = pActual.y
@@ -601,10 +600,10 @@ function draw() {
                                                 actual = null;
                                             }
                                         } else {
-                                            var v = graph.addVertex(xo, yo);
+                                            let v = graph.addVertex(xo, yo);
                                             //console.log(v.x, v.y);
                                             //var edge = graph.addEdge(actual, v, toolActual);
-                                            var edge = graph.addEdge(actual, v, type);
+                                            let edge = graph.addEdge(actual, v, type);
 
                                             //actual = v;
                                             setActual(v);
@@ -612,7 +611,7 @@ function draw() {
                                     }
                                 } else {
                                     vertfin = graph.check(xo, yo, snapV);
-                                    var v;
+                                    let v;
                                     if (vertfin != null) {
                                         //actual = vertfin;
                                         //xo = vertfin.x;
@@ -626,8 +625,7 @@ function draw() {
                                     }
 
                                 }
-                            } else {
-                                if (actual) {
+                            } else if (actual) {
                                     if (xo && mouseX > toolbarWidth) {
                                         //var v = graph.addVertex(xo,yo);
                                         //v.paint();
@@ -661,7 +659,6 @@ function draw() {
                                 } else {
                                     graph.check(x, y, snapV);
                                 }
-                            }
                         } else {
                             //if (toolActual == tools.GATE || toolActual == tools.DOUBLE) {
                             if (toolActualGroup[1] == tools.GATE || toolActualGroup[1] == tools.DOUBLE) {
@@ -681,7 +678,7 @@ function draw() {
                                     yo = mouseY;
 
                                     if (actual) {
-                                        var pActual = ftToPixels(actual.x, actual.y);
+                                        let pActual = ftToPixels(actual.x, actual.y);
                                         if (abs(pActual.x - xo) > 0.001 && abs(pActual.y - yo) > 0.001) {
                                             vertfin = graph.check(xo, yo, snapV);
                                             if (vertfin != null) {
@@ -690,13 +687,13 @@ function draw() {
                                                     actual = null;
                                                 }
                                             } else {
-                                                var v1 = graph.addVertex(xo, pActual.y);
-                                                var v2 = graph.addVertex(pActual.x, yo);
-                                                var v3 = graph.addVertex(xo, yo);
-                                                var edge1 = graph.addEdge(actual, v1, type);
-                                                var edge2 = graph.addEdge(v2, actual, type);
-                                                var edge3 = graph.addEdge(v1, v3, type);
-                                                var edge4 = graph.addEdge(v3, v2, type);
+                                                let v1 = graph.addVertex(xo, pActual.y);
+                                                let v2 = graph.addVertex(pActual.x, yo);
+                                                let v3 = graph.addVertex(xo, yo);
+                                                let edge1 = graph.addEdge(actual, v1, type);
+                                                let edge2 = graph.addEdge(v2, actual, type);
+                                                let edge3 = graph.addEdge(v1, v3, type);
+                                                let edge4 = graph.addEdge(v3, v2, type);
                                                 if (type != types.WALL) {
                                                     edge1.link(edge4);
                                                     edge2.link(edge3);
@@ -706,7 +703,7 @@ function draw() {
                                         }
                                     } else {
                                         vertfin = graph.check(xo, yo, snapV);
-                                        var v;
+                                        let v;
                                         if (vertfin != null) {
                                             setActual(vertfin);
                                         } else {
@@ -716,8 +713,7 @@ function draw() {
                                         }
 
                                     }
-                                } else {
-                                    if (actual) {
+                                } else if (actual) {
                                         if (xo && mouseX > toolbarWidth) {
                                             graph.check(x, y, snapV);
                                             if (x - toolbarWidth > vSize) {
@@ -739,10 +735,8 @@ function draw() {
                                     } else {
                                         graph.check(x, y, snapV);
                                     }
-                                }
                             }
                         }
-                    }
                 }
                 pop();
             }

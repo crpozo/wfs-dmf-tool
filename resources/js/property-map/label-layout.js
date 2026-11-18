@@ -278,7 +278,7 @@ function gateCandidates(segment, frame, gate, size, inward, options) {
 export function layoutLabels(input) {
     const scale = input.scale || 1;
     const options = { scale };
-    for (const [name, value] of Object.entries({ ...LAYOUT_DEFAULTS, ...(input.options || {}) })) {
+    for (const [name, value] of Object.entries({ ...LAYOUT_DEFAULTS, ...input.options })) {
         options[name] = name === 'keepCost' ? value : value * scale;
     }
 

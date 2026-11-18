@@ -277,7 +277,7 @@ function pavers() {
         for (let col = -1; col < 2; col++) {
             const x = col * size + (row % 2) * (size / 2);
             const tone = 188 + Math.random() * 26;
-            g.fillStyle = `rgb(${tone | 0},${(tone - 18) | 0},${(tone - 40) | 0})`;
+            g.fillStyle = `rgb(${Math.trunc(tone)},${Math.trunc(tone - 18)},${Math.trunc(tone - 40)})`;
             g.fillRect(x + 3, row * size + 3, size - 6, size - 6);
         }
     }
@@ -606,8 +606,10 @@ function ribbon(points, width, y) {
         const nx = -tangent.z;
         const nz = tangent.x;
         const norm = Math.hypot(nx, nz) || 1;
-        positions.push(p.x + (nx / norm) * (width / 2), y, p.z + (nz / norm) * (width / 2));
-        positions.push(p.x - (nx / norm) * (width / 2), y, p.z - (nz / norm) * (width / 2));
+        positions.push(
+            p.x + (nx / norm) * (width / 2), y, p.z + (nz / norm) * (width / 2),
+            p.x - (nx / norm) * (width / 2), y, p.z - (nz / norm) * (width / 2),
+        );
         uvs.push(0, (t * length) / width, 1, (t * length) / width);
         if (i < steps) {
             const k = i * 2;
@@ -780,7 +782,7 @@ export function buildSite({ plan, fence, gate = null, seed = 1, view = 0, ground
         if (p[0] < board.x0 + 9 || p[0] > board.x1 - 9 || p[1] < board.z0 + 9 || p[1] > sidewalk - 7) return false;
         if (fence.yard && pointInPolygon(p, fence.yard)) return false;
         if (fence.segments.some(([a, b]) => distanceToSegment(p, a, b) < 9)) return false;
-        if (plan && plan.parts.concat([plan.porch]).some((r) => insideRect(p, r, 8))) return false;
+        if (plan?.parts.concat([plan.porch]).some((r) => insideRect(p, r, 8))) return false;
         if (driveway && insideRect(p, driveway, 7)) return false;
         if (walkSamples.some((w) => Math.hypot(w.x - p[0], w.z - p[1]) < 7)) return false;
         return !ground || ground.plantable(p);

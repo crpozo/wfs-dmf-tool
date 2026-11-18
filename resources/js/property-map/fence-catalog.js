@@ -80,7 +80,7 @@ function chainLinkStyle(colorChoice, type) {
 }
 
 function heightFt(text) {
-    const value = parseFloat(String(text || '').replace(/[^0-9.]/g, ''));
+    const value = Number.parseFloat(String(text || '').replace(/[^0-9.]/g, ''));
     return Number.isFinite(value) && value > 0 ? value : 6;
 }
 

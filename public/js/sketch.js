@@ -25,13 +25,13 @@ let zoomMin = 0;
 let zoomMax = 6;
 let gridSpacing = (_W-toolbarWidth)/zoomLevels[zoomLevel];
 // ****
-var graph;
+let graph;
 let tb;
 let wDoor = 4;
 let wSDoor = 4;
 let wDDoor = 10;
 
-var btnZoomIn, btnZoomOut;
+let btnZoomIn, btnZoomOut;
 
 function preload() {
     btnZoomIn = createImg("/img/plus.png", "Zoom In");
@@ -40,7 +40,7 @@ function preload() {
 
 function createEnum(values) {
   const enumObject = {};
-  var i = 0;
+  let i = 0;
   for (const val of values) {
     enumObject[val] = i;
     i++;
@@ -75,6 +75,7 @@ function zoomIn(){
 }
 
 function toolbar(){
+  let btnChannel, btnClear, btnEraser, btnFence, btnGate, btnWall;
   btnZoomIn = createImg('img/plus.png','plus');
   btnZoomIn.position(5, 0);
   btnZoomIn.mousePressed(function(){ zoomIn(); });
@@ -83,7 +84,7 @@ function toolbar(){
   btnZoomOut.mousePressed(function(){ zoomOut(); });
 
   //btnFence.mousePressed(toolClick(1));
-  var posX = 5
+  let posX = 5
   //let btnFence = createImg('img/fence2.png','Fence');
   //btnFence.position(posX, toolPos[tools.FENCE]);
   //btnFence.mousePressed(function(){ toolClick(tools.FENCE); });
@@ -157,6 +158,7 @@ function toolClick(tool){
 }
 
 function draw() {
+  let vertfin, x, y;
   strokeWeight(1);
   stroke(0);
 
@@ -174,8 +176,7 @@ function draw() {
   if(x < toolbarWidth){
     cursor(ARROW);
   }
-  else{
-    if(toolActual == tools.FENCE || toolActual == tools.FENCE_2 || toolActual == tools.WALL){
+  else if(toolActual == tools.FENCE || toolActual == tools.FENCE_2 || toolActual == tools.WALL){
       cursor(cursorActual);
 
       if (drawable && mouseIsPressed) {
@@ -185,7 +186,7 @@ function draw() {
 
         if(actual){
           if(shift){
-            var pActual = ftToPixels(actual.x, actual.y);
+            let pActual = ftToPixels(actual.x, actual.y);
             if(abs(pActual.x-xo) > abs(pActual.y-yo)){
               yo = pActual.y
             }
@@ -200,16 +201,16 @@ function draw() {
             actual = null;
           }
           else{
-            var v = graph.addVertex(xo,yo);
+            let v = graph.addVertex(xo,yo);
             //console.log(v.x, v.y);
-            var edge = graph.addEdge(actual, v, toolActual);
+            let edge = graph.addEdge(actual, v, toolActual);
             //actual = v;
             setActual(v);
           }
         }
         else{
           vertfin = graph.check(xo,yo,snapV);
-          var v;
+          let v;
           if(vertfin != null){
             //actual = vertfin;
             //xo = vertfin.x;
@@ -225,8 +226,7 @@ function draw() {
 
         }
       }
-      else{
-        if(actual){
+      else if(actual){
           if(xo && mouseX > toolbarWidth){
             //var v = graph.addVertex(xo,yo);
             //v.paint();
@@ -260,7 +260,6 @@ function draw() {
         else{
           graph.check(x,y,snapV);
         }
-      }
     }
     else{
       if(toolActual == tools.GATE || toolActual == tools.DOUBLE){
@@ -270,7 +269,6 @@ function draw() {
         graph.checkEdges(x,y,snapE_Eraser);
       }
     }
-  }
 }
 
 function mousePressed() {

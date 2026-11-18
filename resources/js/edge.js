@@ -45,16 +45,16 @@ class Edge{
   }
   
   setDim(){
-    var p1 = ftToPixels(this.node1.x,this.node1.y);
-    var p2 = ftToPixels(this.node2.x,this.node2.y);
+    let p1 = ftToPixels(this.node1.x,this.node1.y);
+    let p2 = ftToPixels(this.node2.x,this.node2.y);
     
     //var dim = dimension(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
-    var dim = dimension(p1.x,p1.y,p2.x,p2.y);
+    let dim = dimension(p1.x,p1.y,p2.x,p2.y);
     this.addDim(dim);
   }
   
   proj(x,y){
-    var q = pixelsToFt(x,y);
+    let q = pixelsToFt(x,y);
     
     let bs = q.y - this.ms * q.x;
     let x2 = (bs - this.b) / (this.m - this.ms);
@@ -86,13 +86,13 @@ class Edge{
   }
   
   check(x,y,d){
-    var pt = this.proj(x,y);
+    let pt = this.proj(x,y);
     
-    var dist=sqrt(sq(pt.x-x) + sq(pt.y-y));
+    let dist=sqrt(sq(pt.x-x) + sq(pt.y-y));
     
     if(dist < d){
-      var pmin = ftToPixels(this.xMin, this.yMin);
-      var pmax = ftToPixels(this.xMax, this.yMax);
+      let pmin = ftToPixels(this.xMin, this.yMin);
+      let pmax = ftToPixels(this.xMax, this.yMax);
       /*
       if(((pt.x>=this.xMin && pt.x<=this.xMax) || this.ms == 0) && 
          pt.y>=this.yMin && pt.y<=this.yMax){
@@ -100,14 +100,14 @@ class Edge{
       if(((pt.x>=pmin.x && pt.x<=pmax.x) || this.ms == 0) && 
          pt.y>=pmin.y && pt.y<=pmax.y){
         
-        var p1 = ftToPixels(this.node1.x, this.node1.y);
-        var p2 = ftToPixels(this.node2.x, this.node2.y);
+        let p1 = ftToPixels(this.node1.x, this.node1.y);
+        let p2 = ftToPixels(this.node2.x, this.node2.y);
  /*     this.addDim(dimension(this.node1.x,this.node1.y,pt.x,pt.y));
         this.addDim(dimension(pt.x,pt.y,this.node2.x,this.node2.y));
         */
-        var w = wDoor * gridSpacing;
-        var x2 = pt.x + w / (sqrt(1+sq(this.m)));
-        var y2 = pt.y + this.m * w / (sqrt(1+sq(this.m)));
+        let w = wDoor * gridSpacing;
+        let x2 = pt.x + w / (sqrt(1+sq(this.m)));
+        let y2 = pt.y + this.m * w / (sqrt(1+sq(this.m)));
         
         
         ellipse(pt.x, pt.y, 5, 5);
@@ -116,10 +116,10 @@ class Edge{
         //ellipse((pt.x+x2)/2, (pt.y+y2)/2, w, w, w);
 
         // Puerta
-        var dx = (x2-pt.x)/w;
-        var dy = (y2-pt.y)/w;
-        var x3 = pt.x+w*dx*sqrt(2)/2-w*dy*sqrt(2)/2;
-        var y3 = pt.y+w*dy*sqrt(2)/2+w*dx*sqrt(2)/2;
+        let dx = (x2-pt.x)/w;
+        let dy = (y2-pt.y)/w;
+        let x3 = pt.x+w*dx*sqrt(2)/2-w*dy*sqrt(2)/2;
+        let y3 = pt.y+w*dy*sqrt(2)/2+w*dx*sqrt(2)/2;
         line(pt.x,pt.y,x3,y3);
         
         if(p1.x <= p2.x){
@@ -133,8 +133,7 @@ class Edge{
             this.addDim(dimension(x2,y2,p2.x,p2.y));
           }
         }
-        else{
-          if(pt.x <= p2.x){
+        else if(pt.x <= p2.x){
             this.addDim(dimension(p2.x,p2.y,pt.x,pt.y));
             this.addDim(dimension(pt.x,pt.y,p1.x,p1.y));
           }
@@ -143,7 +142,6 @@ class Edge{
             this.addDim(dimension(pt.x,pt.y,x2,y2));         
             this.addDim(dimension(x2,y2,p1.x,p1.y));
           }
-        }
       }
     }
     return (dist < d);
@@ -158,12 +156,12 @@ class Edge{
         strokeWeight(5);
         break;
     }
-    var p1 = ftToPixels(this.node1.x, this.node1.y);
-    var p2 = ftToPixels(this.node2.x, this.node2.y);
+    let p1 = ftToPixels(this.node1.x, this.node1.y);
+    let p2 = ftToPixels(this.node2.x, this.node2.y);
       //line(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
     line(p1.x,p1.y,p2.x,p2.y);
     //dimension(this.node1.x,this.node1.y,this.node2.x,this.node2.y);
-    for(var i=0;i<this.dims.length;i++){
+    for(let i=0;i<this.dims.length;i++){
         this.dims[i].paint();
     }
     /*

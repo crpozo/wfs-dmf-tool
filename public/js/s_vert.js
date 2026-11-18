@@ -10,8 +10,8 @@ class Vert{
   }
 
   over(){
-    var oedge = null;
-    for(var i=0;i<this.edges.length;i++){
+    let oedge = null;
+    for(let i=0;i<this.edges.length;i++){
         oedge = this.edges[i].over();
         if(oedge != null){
             break;
@@ -25,9 +25,9 @@ class Vert{
   }
 
   countEdgesId(id){
-    var c = 0;
-    for(var i=0;i<this.edges.length;i++){
-      var edge = this.edges[i];
+    let c = 0;
+    for(let i=0;i<this.edges.length;i++){
+      let edge = this.edges[i];
       //console.log("EDGE",edge.nodo1.id, edge.nodo2.id);
       c = c + edge.countId(id);
     }
@@ -53,8 +53,8 @@ class Vert{
   }
 
   removeEdge(vert){
-    var id = 0;
-    var edge = this.edges.filter((item) => item.node2 == vert);
+    let id = 0;
+    let edge = this.edges.filter((item) => item.node2 == vert);
     if(edge.length == 1) {
         id = edge[0].id;
         $("#row_" + edge[0].id).remove();
@@ -64,9 +64,9 @@ class Vert{
   }
 
   getEdgeSameLine(edge){
-      var sameEdge = null;
-      for(var i=0;i<this.edges.length;i++){
-          var edgeActual = this.edges[i];
+      let sameEdge = null;
+      for(let i=0;i<this.edges.length;i++){
+          let edgeActual = this.edges[i];
           if(edge != edgeActual && edge.m == edgeActual.m){
               sameEdge = edgeActual;
               break;
@@ -81,8 +81,8 @@ class Vert{
 
   // Operacion a nivel de pixels
   check(x,y,d){
-    var q = ftToPixels(this.x,this.y);
-    var dr = sqrt(sq(q.x-x) + sq(q.y-y));
+    let q = ftToPixels(this.x,this.y);
+    let dr = sqrt(sq(q.x-x) + sq(q.y-y));
     //console.log(q.x,q.y);
     //console.log("p",p.x,p.y);
     return(dr < d);
@@ -101,7 +101,7 @@ class Vert{
       edge.paint();
     }
     //ellipse(this.x, this.y, radius);
-    var p = ftToPixels(this.x, this.y);
+    let p = ftToPixels(this.x, this.y);
 
     noFill();
     ellipse(p.x, p.y, radius);
@@ -111,15 +111,15 @@ class Vert{
 
   print(){
     //console.log(this.id + "_(" + this.x + "," + this.y + ")");
-    for(var i=0; i<this.edges.length; i++){
+    for(let i=0; i<this.edges.length; i++){
       //console.log("->" + this.edges[i].node2.id + ":" + this.edges[i].type + " - " + this.edges[i].getDim().texto);
         this.edges[i].print();
     }
   }
 
   getData(){
-      var data = [];
-      for(var i=0; i<this.edges.length; i++){
+      let data = [];
+      for(let i=0; i<this.edges.length; i++){
           if(this.edges[i].node1.id != this.edges[i].node2.id) {
               data.push(this.edges[i].getData());
           }

@@ -91,7 +91,7 @@ export function mountSearch({ root, map, store, places, geocoder, onLocated, not
 
     function renderAddress() {
         const { address } = store.state;
-        addressLine.textContent = address ? address : '';
+        addressLine.textContent = address || '';
         addressLine.hidden = !address;
     }
 

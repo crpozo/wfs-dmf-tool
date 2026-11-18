@@ -13,7 +13,7 @@ import { Group, Mesh, SphereGeometry, CapsuleGeometry,
 
 /* 5 pies 9: la estatura media de un adulto en Estados Unidos, redondeada.
    Cambiarla desajusta la lectura de todas las alturas. */
-export var ALTURA = 5.75;
+export const ALTURA = 5.75;
 
 var GEO = null;
 
