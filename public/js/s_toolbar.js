@@ -1,3 +1,25 @@
+// Actions of the single gate, double gate and orthogonal-lines buttons.
+function fncGate(){
+    wDoor = wSDoor;
+    toolClick(tools.GATE);
+    document.getElementById("btnGate").click();
+}
+
+function fncDouble(){
+    wDoor = wDDoor;
+    toolClick(tools.DOUBLE);
+    document.getElementById("btnDblGate").click();
+}
+
+function fncOrto(){
+    ortoShift = !ortoShift;
+    toolClick(tools.ORTO);
+    let btnOrto = tb?.getButton ? tb.getButton(tools.ORTO) : null;
+    if (btnOrto) {
+        btnOrto.setSelected(ortoShift);
+    }
+}
+
 class Toolbar{
   createEnum(values) {
     const enumObject = {};
@@ -46,25 +68,6 @@ class Toolbar{
     */
 
     let cursors = [CROSS, CROSS, HAND, CROSS, CROSS, CROSS, CROSS, CROSS, CROSS, HAND, CROSS];
-
-    let fncGate = function(){
-        wDoor = wSDoor;
-        toolClick(tools.GATE);
-        document.getElementById("btnGate").click();
-    };
-    let fncDouble = function(){
-        wDoor = wDDoor;
-        toolClick(tools.DOUBLE);
-        document.getElementById("btnDblGate").click();
-    };
-    let fncOrto = function(){
-        ortoShift = !ortoShift;
-        toolClick(tools.ORTO);
-        let btnOrto = tb && tb.getButton ? tb.getButton(tools.ORTO) : null;
-        if (btnOrto) {
-            btnOrto.setSelected(ortoShift);
-        }
-    }
 
     let posX = 5;
     let posY = 0;
@@ -158,9 +161,9 @@ class Toolbar{
 
   getButton(tipo){
       let btn = null;
-      for(let i=0;i<this.buttons.length;i++){
-          if(this.buttons[i].val == tipo){
-              btn = this.buttons[i];
+      for (const candidate of this.buttons) {
+          if(candidate.val == tipo){
+              btn = candidate;
               break;
           }
       }
@@ -170,11 +173,11 @@ class Toolbar{
   clicked(){
 
 
-    for(let i=0;i<this.buttons.length;i++){
-      let r = this.buttons[i].clicked();
+    for (const button of this.buttons) {
+      let r = button.clicked();
 
       if(r != null){
-          this.actual = this.buttons[i];
+          this.actual = button;
           for (const btn of this.buttons) {
               if(btn != r && r.group == btn.group) {
                   btn.setSelected(false);
