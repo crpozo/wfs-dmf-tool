@@ -66,6 +66,13 @@ jobs:
           extensions: pdo_pgsql
           coverage: none
       - run: composer install --no-interaction --no-progress --prefer-dist
+      # The pages under test load the built assets (public/build/manifest.json).
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
       - name: Minimal environment (an app key and nothing else)
         run: |
           touch .env
