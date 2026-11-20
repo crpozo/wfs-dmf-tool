@@ -15,6 +15,10 @@ class QuoteRequestReceivedMailTest extends TestCase
             'services.odoo.base_url' => 'odoo.test',
         ]);
 
+        // Links are built from the request host; outside a request that is the forced root.
+        \Illuminate\Support\Facades\URL::forceRootUrl('https://fence.test');
+        \Illuminate\Support\Facades\URL::forceScheme('https');
+
         $quoteRequest = new QuoteRequest([
             'full_name' => 'Jane Customer',
             'email' => 'jane@example.com',

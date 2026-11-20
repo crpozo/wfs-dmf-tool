@@ -1,5 +1,5 @@
-# Checks a branch before it reaches staging or main: unit tests, build, PHP tests and the
-# browser tests of the property map. It deploys nothing and uses no secret: Google Maps is
+# Checks a branch before it reaches staging or main: unit tests, build, PHP tests (with a
+# throwaway PostgreSQL) and the browser tests of the property map. It deploys nothing and uses no secret: Google Maps is
 # replaced by a stand-in (tests/browser/support/fake-google.js) and the Maps key below is a
 # placeholder that never leaves the runner. The deploy workflow (deploy.yml) is untouched.
 name: Tests
@@ -36,11 +36,34 @@ jobs:
     name: PHP tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # A throwaway database for the quote tests (tests/Feature/QuoteRequestStoreTest.php): the
+    # public quote is saved for real, with every migration applied. Odoo and mail are stand-ins.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: wfsdb
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: wfsdb
+      DB_USERNAME: postgres
+      DB_PASSWORD: ci-only
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.3'
+          extensions: pdo_pgsql
           coverage: none
       - run: composer install --no-interaction --no-progress --prefer-dist
       - name: Minimal environment (an app key and nothing else)
@@ -49,11 +72,7 @@ jobs:
           echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
       - name: Property map (framing of the photo, snapshot route)
         run: php artisan test --filter PropertyMap
-      # The whole suite, for information: two older tests (the customizable embed and the
-      # quote email links) were already failing before this workflow existed. Remove
-      # continue-on-error once they are fixed.
       - name: Whole suite
-        continue-on-error: true
         run: php artisan test
 
   browser:

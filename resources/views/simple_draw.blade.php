@@ -1988,6 +1988,19 @@
                         $('#btnQuote').css('display','block');
                     },
                     error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        // 409: the fence configuration is no longer in the session.
+                        const expired = XMLHttpRequest.status === 409;
+                        Swal.fire({
+                            icon: 'error',
+                            title: expired ? 'Your session has expired' : 'Estimate unavailable',
+                            text: expired
+                                ? 'Please choose your fence again to get your estimate.'
+                                : 'The materials list could not be calculated. Please try again in a moment.'
+                        }).then(function () {
+                            if (expired) {
+                                window.location.href = '/';
+                            }
+                        });
                     }
                 });
             });
