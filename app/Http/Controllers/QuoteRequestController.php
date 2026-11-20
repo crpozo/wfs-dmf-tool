@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class QuoteRequestController extends Controller
 {
@@ -27,6 +28,12 @@ class QuoteRequestController extends Controller
         $data['delivery'] = $data['fulfillment_method'] === 'delivery';
         $data['company_id'] = $data['delivery'] ? 1 : (int) $data['company_id'];
         unset($data['fulfillment_method']);
+
+        // The fence lives in the session. Without it (expired session, form opened directly,
+        // or sent a second time) there is nothing to quote.
+        if (! $this->sessionHasFence()) {
+            return $this->fenceMissingResponse();
+        }
 
         // Inject JSON from session (NOT from form)
         $data['sketch'] = session('sketch');
@@ -58,6 +65,13 @@ class QuoteRequestController extends Controller
 
         $data['attribution'] = QuoteAttribution::fromJson($data['attribution'] ?? null);
 
+        $canvasImage = $data['canvas_image'];
+        $leadSourceId = (int) $data['lead_source_id'];
+        unset($data['canvas_image'], $data['lead_source_id']);
+
+        // Saved before Odoo is called: if the quote cannot be saved, nothing is created in Odoo.
+        $qr = QuoteRequest::create($data);
+
         $odooQuote = $this->createOdooQuoteData(
             $estimateObj,
             null,
@@ -66,20 +80,22 @@ class QuoteRequestController extends Controller
             'HO',
             $notes,
             $data['company_id'],
-            (int) $data['lead_source_id'],
+            $leadSourceId,
             config('services.odoo.send_attribution')
                 ? QuoteAttribution::odooFields($data['attribution'], $data['full_name'], $data['email'], $data['phone'] ?? null)
                 : []
         );
 
-        $data['odoo_id'] = $odooQuote['odoo_id'];
-        $data['odoo_quote'] = $odooQuote['odoo_quote'];
+        $odooFields = [
+            'odoo_id' => $odooQuote['odoo_id'],
+            'odoo_quote' => $odooQuote['odoo_quote'],
+        ];
 
         if ($odooQuote['odoo_id']) {
             try {
                 $this->addOdooQuotationLogNote(
                     (int) $odooQuote['odoo_id'],
-                    $data['canvas_image'],
+                    $canvasImage,
                     'DrawMyFence App Sketch '
                 );
             } catch (\Throwable $exception) {
@@ -93,12 +109,10 @@ class QuoteRequestController extends Controller
         // Drawn on the property map: keep the project and its satellite image (S3).
         $propertyMap = app(PropertyMapQuote::class);
         if ($propertyMap->isMapQuote()) {
-            $data = array_merge($data, $propertyMap->quoteFields($data['canvas_image'] ?? null, $data['odoo_id']));
+            $odooFields = array_merge($odooFields, $propertyMap->quoteFields($canvasImage, $odooQuote['odoo_id']));
         }
 
-        unset($data['canvas_image'], $data['lead_source_id']);
-
-        $qr = QuoteRequest::create($data);
+        $qr->update($odooFields);
         $propertyMap->forget();
 
         $this->sendQuoteRequestEmail($qr, $request->safe()->except('canvas_image'));
@@ -186,6 +200,10 @@ class QuoteRequestController extends Controller
                 ? (int) $validated['company_id']
                 : 1,
         ];
+
+        if (! $this->sessionHasFence()) {
+            return $this->fenceMissingResponse();
+        }
 
         $data['sketch'] = session('sketch');
         $data['material'] = session()->get('materials', []);
@@ -280,7 +298,31 @@ class QuoteRequestController extends Controller
             return;
         }
 
-        Mail::to($recipient)->send(new QuoteRequestReceived($quoteRequest, $submittedData));
+        // The quote is already saved (and in Odoo). A mail server failure must not turn it into
+        // an error page for the customer; it is logged as an error so sales can be told.
+        try {
+            Mail::to($recipient)->send(new QuoteRequestReceived($quoteRequest, $submittedData));
+        } catch (TransportExceptionInterface $exception) {
+            Log::error('Quote request email could not be sent.', [
+                'stage' => 'quote.mail',
+                'quote_request_id' => $quoteRequest->id,
+                'exception' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function sessionHasFence(): bool
+    {
+        $materials = session('materials');
+
+        return is_array($materials) && isset($materials[1]['code']);
+    }
+
+    private function fenceMissingResponse()
+    {
+        return redirect()
+            ->route('quote.create')
+            ->with('status', 'Your fence configuration has expired. Please choose your fence again.');
     }
 
     public function openSketch(QuoteRequest $quoteRequest)

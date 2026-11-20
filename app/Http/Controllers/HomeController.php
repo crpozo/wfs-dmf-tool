@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -301,6 +302,11 @@ class HomeController extends Controller
 
     public function step($material, $step){
 
+        // Anything that is not a slot (1-3) and a numeric code is not a step of the configurator.
+        if (!in_array((string) $material, ['1', '2', '3'], true) || !ctype_digit((string) $step) || !is_array($this->json_data)) {
+            abort(404);
+        }
+
         $route = str_split($step);
         $sel = $this->json_data;
         $size = count($route);
@@ -344,6 +350,9 @@ class HomeController extends Controller
         for($i=0;$i<$size;$i++){
             $acum = $acum . $route[$i];
             if($route[$i] == "0"){
+                if (!isset($sel["name"], $sel["responses"])) {
+                    abort(404);
+                }
                 // Ya sé la siguiente pregunta
                 $title = $sel["name"];
                 $cards = $sel["responses"];
@@ -480,6 +489,10 @@ class HomeController extends Controller
             }
             else{
                 if($i+1 == $size){
+                    // A code that is not an answer of this question (old link, crawler).
+                    if (!isset($sel["responses"][$acum]["name"])) {
+                        abort(404);
+                    }
                     // Es hoja final
                     //$material_data[] = $sel["responses"][$acum]["name"];
                     $material_data[$this->getMaterialInfo($step)] = $sel["responses"][$acum]["name"];
@@ -507,6 +520,9 @@ class HomeController extends Controller
                 }
                 else{
                     if(($i == 0) || (array_key_exists("id", $sel) && $acum == $sel["id"])){
+                        if (!isset($sel[$acum]["name"], $sel[$acum]["next"])) {
+                            abort(404);
+                        }
                         $breadcrum .= "<li class='breadcrumb-item'><a href='#'>" . $sel[$acum]["name"]. "</a></li>";
                         $material_data[$this->getMaterialInfo($acum)] = $sel[$acum]["name"];
                         $ch = session('custom_heights', [0, 0, 0]);
@@ -516,7 +532,11 @@ class HomeController extends Controller
                         $sel = $sel[$acum]["next"];
                     }
                     else{
-                        if(array_key_exists($acum, $sel["responses"])) {
+                        if(isset($sel["responses"]) && array_key_exists($acum, $sel["responses"])) {
+                            // An answer with nothing after it cannot have more digits behind.
+                            if (!isset($sel["responses"][$acum]["name"], $sel["responses"][$acum]["next"])) {
+                                abort(404);
+                            }
                             $material_data[$this->getMaterialInfo($acum)] = $sel["responses"][$acum]["name"];
                             $ch = session('custom_heights', [0, 0, 0]);
                             if($ch[$material-1] > 0){
@@ -529,6 +549,8 @@ class HomeController extends Controller
                 }
             }
         }
+
+        abort(404);
     }
 
     public function stepold($step)
@@ -595,7 +617,14 @@ class HomeController extends Controller
 
     public function getDims($dims){
         $dimArray = json_decode($dims);
+        if (!is_array($dimArray)) {
+            abort(404);
+        }
         foreach($dimArray as $dim){
+            if (!is_scalar($dim)) {
+                continue;
+            }
+            $dim = e((string) $dim);
             echo '<div class="input-group mb-3"><span id="spDim" class="input-group-text">' . $dim . '</span><input id="txt_' . $dim . '" type="text" name="' . $dim . '" class="form-control" placeholder="Enter length" aria-label="Enter length"><span class="input-group-text">ft</span></div>';
         }
     }
@@ -690,9 +719,16 @@ class HomeController extends Controller
         $nodeSections = [];
         $gateNodes = [];
 
-        $specialPriceResponse = app(CustomerController::class)
-            ->specialPriceNotes(request(), $customer_id);
-        $specialPriceData = $specialPriceResponse->getData(true);
+        // Odoo unreachable: the quote goes on without the special prices flag, and the failure
+        // is reported (error level) so it is seen.
+        try {
+            $specialPriceResponse = app(CustomerController::class)
+                ->specialPriceNotes(request(), $customer_id);
+            $specialPriceData = $specialPriceResponse->getData(true);
+        } catch (ConnectionException $exception) {
+            report($exception);
+            $specialPriceData = [];
+        }
         $specialPriceNotes = $specialPriceData['special_price_notes'] ?? null;
         $hasSpecialPrices = $specialPriceNotes !== null
             && trim((string) $specialPriceNotes) !== '';
@@ -2792,6 +2828,10 @@ class HomeController extends Controller
     public function loadTemplate($template){
         $path = resource_path() . '/templates/' . $template . ".wfs";
 
+        if (!preg_match('/^[A-Za-z0-9_-]+$/', (string) $template) || !is_file($path)) {
+            abort(404);
+        }
+
         $fileContent = file_get_contents($path);
         $data = Crypt::decrypt($fileContent);
 
@@ -2825,6 +2865,18 @@ class HomeController extends Controller
 
     public function estimate($json){
         $options = session('materials');
+
+        // No fence in the session (expired, or the drawing page was left open): the drawing
+        // cannot be priced. The page shows this message and sends the customer back to the start.
+        if (!is_array($options) || !isset($options[1]['code'])) {
+            return response('Your fence configuration has expired. Please choose your fence again.', 409)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        if (!is_array(json_decode($json, true))) {
+            return response('The drawing could not be read.', 422)->header('Content-Type', 'text/plain');
+        }
+
         session(['sketch' => $json ]);
 
         $mat_names = [];

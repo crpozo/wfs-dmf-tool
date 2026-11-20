@@ -5,4 +5,7 @@
 @section('heading', 'Something went wrong.')
 @section('message')
     We ran into an unexpected problem while processing your request. Our team can review the error details in the system logs. Please try again in a moment.
+    @if (request()->attributes->get('request_id'))
+        <br><small>Reference: {{ request()->attributes->get('request_id') }}</small>
+    @endif
 @endsection

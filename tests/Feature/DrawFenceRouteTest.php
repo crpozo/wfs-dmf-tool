@@ -103,7 +103,8 @@ class DrawFenceRouteTest extends TestCase
             ->assertDontSee('Restart Project')
             ->assertDontSee('Print Sketch')
             ->assertSee('--wfs-canvas-min-height', false)
-            ->assertSee('minimumCanvasHeight', false)
+            // The canvas sizing moved to the shared layout adapter (public/js/drawfence-layout.js).
+            ->assertSee('js/drawfence-layout.js', false)
             ->assertSee('buttonRect.bottom + 6', false)
             ->assertSee("toolbarVideoTooltip.addEventListener('pointerdown'", false)
             ->assertSee('suppressCanvasPointerInteraction(event, false)', false)
